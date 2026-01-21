@@ -24,6 +24,7 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Software Developer
+- [Dominic Siino](https://www.linkedin.com/in/dominic-siino/) - Software Developer
 
 ## Getting Started And Contributing
 
