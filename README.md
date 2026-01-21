@@ -26,6 +26,9 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [Ida Voong](https://www.linkedin.com/in/ida-voong-6b87a1201/) - Software Developer
+- [Sophia Chang](https://www.linkedin.com/) - Tech Lead
+- [Angela Chen](https://www.linkedin.com/) - Tech Lead
+- [First Last](https://www.linkedin.com/) - Software Developer
 
 ## Getting Started And Contributing
 
