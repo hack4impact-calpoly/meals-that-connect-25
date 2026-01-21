@@ -4,10 +4,12 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-  - [Purpose](#purpose)
-  - [Team](#team)
-- [Getting Started And Contributing](#getting-started-and-contributing)
+- [name of non-profit](#name-of-non-profit)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+    - [Purpose](#purpose)
+    - [Team](#team)
+  - [Getting Started And Contributing](#getting-started-and-contributing)
 
 ## Overview
 
@@ -23,7 +25,7 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [First Last](https://www.linkedin.com/) - Designer
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Tech Lead
-- [First Last](https://www.linkedin.com/) - Software Developer
+- [Ida Voong](https://www.linkedin.com/in/ida-voong-6b87a1201/) - Software Developer
 
 ## Getting Started And Contributing
 
