@@ -24,6 +24,7 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Tech Lead
 - [First Last](https://www.linkedin.com/) - Software Developer
+- [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
 
 ## Getting Started And Contributing
 
