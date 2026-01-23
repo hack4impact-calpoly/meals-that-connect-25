@@ -4,12 +4,10 @@
 
 ## Table of Contents
 
-- [name of non-profit](#name-of-non-profit)
-  - [Table of Contents](#table-of-contents)
-  - [Overview](#overview)
-    - [Purpose](#purpose)
-    - [Team](#team)
-  - [Getting Started And Contributing](#getting-started-and-contributing)
+- [Overview](#overview)
+  - [Purpose](#purpose)
+  - [Team](#team)
+- [Getting Started And Contributing](#getting-started-and-contributing)
 
 ## Overview
 
