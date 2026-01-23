@@ -27,6 +27,7 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [Kevin Diaz](https://www.linkedin.com/in/kjdiaz508/) - Software Developer
 - [Dominic Siino](https://www.linkedin.com/in/dominic-siino/) - Software Developer
 - [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
+- [Xavier Royer] - Software Developer
 
 ## Getting Started And Contributing
 
