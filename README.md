@@ -39,8 +39,8 @@ This system will directly help Meals That Connect scale its services and better 
 The **Meals That Connect** team consists of **13 Cal Poly students. Over the course of about 9 months, we worked as a team to deploy this web application. The team members are listed below:
 
 - [Bryan Lai](https://www.linkedin.com/in/bryanlai2004/) - Project Manager
-- [Sophia Chang](https://www.linkedin.com/) - Tech Lead
-- [Angela Chen](https://www.linkedin.com/) - Tech Lead
+- [Sophia Chang](https://www.linkedin.com/in/sophiachang7/) - Tech Lead
+- [Angela Chen](https://www.linkedin.com/in/anvch/) - Tech Lead
 - [Stella Kwon](https://www.linkedin.com/) - Designer
 - [Apoorva Gowda](https://www.linkedin.com/) - Designer
 - [Kevin Diaz](https://www.linkedin.com/in/kjdiaz508/) - Software Developer
