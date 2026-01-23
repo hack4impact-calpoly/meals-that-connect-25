@@ -25,6 +25,7 @@ The {non-profit name} team consists of {#} Cal Poly students. Over the course of
 - [Stella Kwon](https://www.linkedin.com/) - Designer
 - [Apoorva Gowda](https://www.linkedin.com/) - Designer
 - [Kevin Diaz](https://www.linkedin.com/in/kjdiaz508/) - Software Developer
+- [Ida Voong](https://www.linkedin.com/in/ida-voong-6b87a1201/) - Software Developer
 - [Dominic Siino](https://www.linkedin.com/in/dominic-siino/) - Software Developer
 - [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
 - [Srinithi Doddapaneni](https://www.linkedin.com/in/srinithi-doddapaneni-5592b0309/) - Software Developer
