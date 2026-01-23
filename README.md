@@ -19,14 +19,13 @@
 
 The {non-profit name} team consists of {#} Cal Poly students. Over the course of about 9 months, we worked as a team to deploy this web application. The team members are listed below:
 
-- [First Last](https://www.linkedin.com/) - Project Manager
+- [Bryan Lai](https://www.linkedin.com/) - Project Manager
 - [Sophia Chang](https://www.linkedin.com/) - Tech Lead
 - [Angela Chen](https://www.linkedin.com/) - Tech Lead
-- [First Last](https://www.linkedin.com/) - Designer
-- [First Last](https://www.linkedin.com/) - Tech Lead
-- [First Last](https://www.linkedin.com/) - Tech Lead
+- [Stella Kwon](https://www.linkedin.com/) - Designer
+- [Apoorva Gowda](https://www.linkedin.com/) - Designer
 - [Kevin Diaz](https://www.linkedin.com/in/kjdiaz508/) - Software Developer
-- [First Last](https://www.linkedin.com/) - Software Developer
+- [Dominic Siino](https://www.linkedin.com/in/dominic-siino/) - Software Developer
 - [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
 
 ## Getting Started And Contributing
