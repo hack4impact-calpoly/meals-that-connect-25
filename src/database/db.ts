@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import RecipeModel from "./RecipeSchema";
 const url: string = process.env.MONGO_URI as string;
 let connection: typeof mongoose;
 
@@ -14,5 +14,12 @@ const connectDB = async () => {
     return connection;
   }
 };
+
+export async function postRecipe(recipeData: typeof RecipeModel.prototype) {
+  const connection = await connectDB();
+  const recipe = new RecipeModel(recipeData);
+  await recipe.save();
+  return recipe;
+}
 
 export default connectDB;
