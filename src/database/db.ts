@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import RecipeModel from "./RecipeSchema";
-import type { Recipe } from "./Recipe";
 const url: string = process.env.MONGO_URI as string;
 let connection: typeof mongoose;
 
@@ -16,7 +15,7 @@ const connectDB = async () => {
   }
 };
 
-export async function postRecipe(recipeData: typeof Recipe) {
+export async function postRecipe(recipeData: typeof RecipeModel.prototype) {
   const connection = await connectDB();
   const recipe = new RecipeModel(recipeData);
   await recipe.save();
