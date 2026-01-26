@@ -8,6 +8,28 @@ type Params = {
   };
 };
 
+export async function GET(req: NextRequest, { params }: Params) {
+  const { id } = params;
+
+  if (!id) {
+    return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+    const getRecipe = await Recipe.findById(id);
+
+    if (!getRecipe) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(getRecipe, { status: 200 });
+  } catch (err) {
+    console.error("Error fetching recipe:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = params;
 
