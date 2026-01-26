@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import IngredientSchema from "./IngredientSchema";
+import Ingredient from "./IngredientSchema";
 
 const RecipeSchema = new Schema(
   {
@@ -7,7 +7,7 @@ const RecipeSchema = new Schema(
     name: { type: String, required: true, unique: false },
     serving: { type: Number, required: true },
     tags: { type: [String], required: false },
-    ingredients: { type: [IngredientSchema], required: true },
+    ingredients: { type: [Ingredient.schema], required: true },
     instructions: { type: String, required: false },
     comments: { type: String, required: false },
     lastVerified: { type: Date, required: false },
@@ -18,4 +18,4 @@ const RecipeSchema = new Schema(
   },
 );
 
-export default mongoose.models.User || mongoose.model("Recipe", RecipeSchema);
+export default mongoose.models.Recipe || mongoose.model("Recipe", RecipeSchema);

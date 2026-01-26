@@ -5,4 +5,4 @@ const IngredientSchema = new Schema({
   quantity: { type: String, required: true },
 });
 
-export default mongoose.models.User || mongoose.model("Ingredient", IngredientSchema);
+export default mongoose.models.Ingredient || mongoose.model("Ingredient", IngredientSchema);
