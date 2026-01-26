@@ -1,28 +1,66 @@
 type Recipe = {
-  name: String;
-  serving: Number;
-  tags: [String];
+  name: string;
+  servings: number;
+  tags: string[];
   ingredients: {
-    name: String;
-    quantity: String;
-  };
-  instructions: String;
-  comments: String;
+    name: string;
+    quantity: string;
+  }[];
+  instructions: string;
+  comments: string;
   lastVerified: Date;
-  verifiedBy: String;
+  verifiedBy: string;
 };
 //{ recipe }: { recipe: Recipe }
-export default function RecipeCard() {
+export default async function RecipeCard({ id }: { id: string }) {
+  //const response = await fetch("/api/recipes/" + id);
+  //const recipe: Recipe = await response.json();
+
+  const recipe: Recipe = {
+    name: "Test Recipe",
+    servings: 4,
+    tags: ["Dinner", "Easy"],
+    ingredients: [
+      { name: "Chicken", quantity: "2 lbs" },
+      { name: "Salt", quantity: "1 tsp" },
+    ],
+    instructions: "Cook the chicken with salt.",
+    comments: "Delicious and easy to make!",
+    lastVerified: new Date(),
+    verifiedBy: "Chef John",
+  };
+
   return (
-    <div className="border">
-      <h1>Recipe Name</h1>
-      <p>Tags</p>
-      <p>Servings</p>
-      <h2>Ingredients: 1, 2, 3</h2>
-      <p>Instructions</p>
-      <p>Comments</p>
-      <p>Last Verified Date</p>
-      <p>Verified By</p>
+    <div className="border w-fit p-3">
+      <h1 className="text-xl p-2 pl-0 font-bold">{recipe.name}</h1>
+      <p>
+        <b>Tags:</b> {recipe.tags.join(", ")}
+      </p>
+      <p>
+        <b>Servings:</b> {recipe.servings}
+      </p>
+      <h2>
+        <b>Ingredients:</b>
+      </h2>
+      <ul>
+        {recipe.ingredients.map((ingredient, index) => (
+          <li key={index}>
+            {ingredient.quantity} {ingredient.name}
+          </li>
+        ))}
+      </ul>
+      <p>
+        <b>Instructions:</b> {recipe.instructions}
+      </p>
+      <p>
+        <b>Comments:</b> {recipe.comments}
+      </p>
+      <p>
+        <b>Last Verified Date:</b> {recipe.lastVerified.toLocaleDateString()}
+      </p>
+      <p>
+        <b>Verified By:</b> {recipe.verifiedBy}
+      </p>
     </div>
   );
 }
