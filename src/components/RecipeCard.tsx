@@ -13,10 +13,17 @@ type Recipe = {
 };
 //{ recipe }: { recipe: Recipe }
 export default async function RecipeCard({ id }: { id: string }) {
-  //const response = await fetch("/api/recipes/" + id);
-  //const recipe: Recipe = await response.json();
+  let recipe: Recipe;
+  try {
+    let response = await fetch("/api/recipes/" + id);
+    console.log(response);
+    recipe = await response.json();
+  } catch (error) {
+    console.log(error);
+    return <div>Error loading recipe.</div>;
+  }
 
-  const recipe: Recipe = {
+  /*const recipe: Recipe = {
     name: "Test Recipe",
     servings: 4,
     tags: ["Dinner", "Easy"],
@@ -28,7 +35,7 @@ export default async function RecipeCard({ id }: { id: string }) {
     comments: "Delicious and easy to make!",
     lastVerified: new Date(),
     verifiedBy: "Chef John",
-  };
+  };*/
 
   return (
     <div className="border w-fit p-3">
