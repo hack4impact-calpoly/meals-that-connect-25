@@ -1,6 +1,8 @@
+import { getRecipeById } from "@/database/db";
+
 type Recipe = {
   name: string;
-  servings: number;
+  serving: number;
   tags: string[];
   ingredients: {
     name: string;
@@ -15,36 +17,23 @@ type Recipe = {
 export default async function RecipeCard({ id }: { id: string }) {
   let recipe: Recipe;
   try {
-    let response = await fetch("/api/recipes/" + id);
-    console.log(response);
-    recipe = await response.json();
+    recipe = await getRecipeById(id);
+    if (!recipe) {
+      return <div className="border w-fit">Recipe not found.</div>;
+    }
   } catch (error) {
     console.log(error);
-    return <div>Error loading recipe.</div>;
+    return <div className="border w-fit">Error loading recipe.</div>;
   }
-
-  /*const recipe: Recipe = {
-    name: "Test Recipe",
-    servings: 4,
-    tags: ["Dinner", "Easy"],
-    ingredients: [
-      { name: "Chicken", quantity: "2 lbs" },
-      { name: "Salt", quantity: "1 tsp" },
-    ],
-    instructions: "Cook the chicken with salt.",
-    comments: "Delicious and easy to make!",
-    lastVerified: new Date(),
-    verifiedBy: "Chef John",
-  };*/
 
   return (
     <div className="border w-fit p-3">
-      <h1 className="text-xl p-2 pl-0 font-bold">{recipe.name}</h1>
+      <h1 className="text-xl p-2 font-bold">{recipe.name}</h1>
       <p>
         <b>Tags:</b> {recipe.tags.join(", ")}
       </p>
       <p>
-        <b>Servings:</b> {recipe.servings}
+        <b>Servings:</b> {recipe.serving}
       </p>
       <h2>
         <b>Ingredients:</b>
