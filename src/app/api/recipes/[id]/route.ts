@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/database/db";
+import connectDB, { getRecipeById } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 
 type Params = {
@@ -16,8 +16,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 
   try {
-    await connectDB();
-    const getRecipe = await Recipe.findById(id);
+    const getRecipe = await getRecipeById(id);
 
     if (!getRecipe) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
