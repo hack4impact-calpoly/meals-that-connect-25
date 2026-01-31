@@ -22,4 +22,10 @@ export async function postRecipe(recipeData: typeof RecipeModel.prototype) {
   return recipe;
 }
 
+export async function fetchRecipiesByTags(tagParams: Array<string> | null) {
+  const connection = await connectDB();
+  /*const tags = tagParams ? tagParams.split(",").map(t => t.trim().toLowerCase()) : [];*/
+  const filter = tagParams && tagParams.length ? { tags: { $all: tagParams } } : {};
+  return await RecipeModel.find(filter);
+}
 export default connectDB;
