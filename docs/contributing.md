@@ -4,16 +4,14 @@ Here are all of the steps you should follow whenever contributing to this repo!
 
 ## Making Changes
 
-1. Before you start making changes, always make sure you're on the develop branch, then `git pull` and `npm i` to make sure your code is up to date
-2. Create a branch `git checkout -b <issue-#/name-of-issue>`
+1. Before you start making changes, always make sure you're on the main branch, then `git pull` and `npm i` to make sure your code is up to date
+2. Create a branch `git checkout -b <name-of-branch>`
 3. Make changes to the code
 4. `npm run lint` to ensure code standards. (running `npm run lint:fix` will fix most of the styling errors)
 
 ## Commiting Changes
 
 When interacting with Git/GitHub, feel free to use the command line, VSCode extension, or Github desktop. These steps assume you have already made a branch using `git checkout -b <branch-name>` and you have made all neccessary code changes for the provided task.
-
-Please use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
 1. View diffs of each file you changed using the VSCode Github extension (3rd icon on far left bar of VSCode) or GitHub Desktop
 2. `git add .` (to stage all files) or `git add <file-name>` (to stage specific file)
