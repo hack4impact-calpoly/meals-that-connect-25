@@ -1,62 +1,49 @@
-import { getRecipeById } from "@/database/db";
+import Image from "next/image";
 
-type Recipe = {
+export type RecipeCardProps = {
+  imageUrl?: string;
   name: string;
-  serving: number;
-  tags: string[];
-  ingredients: {
-    name: string;
-    quantity: string;
-  }[];
-  instructions: string;
-  comments: string;
-  lastVerified: Date;
-  verifiedBy: string;
+  calories?: number;
+  servingSize?: string;
+  tags?: string[];
 };
-//{ recipe }: { recipe: Recipe }
-export default async function RecipeCard({ id }: { id: string }) {
-  let recipe: Recipe;
-  try {
-    recipe = await getRecipeById(id);
-    if (!recipe) {
-      return <div className="border w-fit">Recipe not found.</div>;
-    }
-  } catch (error) {
-    console.log(error);
-    return <div className="border w-fit">Error loading recipe.</div>;
-  }
+const TAG_STYLES: Record<string, string> = {
+  Combo: "bg-combo-500 text-combo-900",
+  Sides: "bg-sides-500 text-sides-900",
+  Fruit: "bg-fruit-500 text-fruit-900",
+  Entree: "bg-entree-900 text-entree-500",
+  Entrée: "bg-entree-900 text-entree-500",
+  fallback: "bg-gray-100 text-gray-700",
+};
+
+export default function RecipeCard({ imageUrl, name, calories, servingSize, tags = [] }: RecipeCardProps) {
+  const caloriesText = calories != null ? `${calories} cal` : null;
+
+  const servingText = servingSize != null ? `${servingSize}` : null;
+
+  const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
+
+  const primaryTag = tags[0];
+  const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
 
   return (
-    <div className="border w-fit p-3">
-      <h1 className="text-xl p-2 font-bold">{recipe.name}</h1>
-      <p>
-        <b>Tags:</b> {recipe.tags.join(", ")}
-      </p>
-      <p>
-        <b>Servings:</b> {recipe.serving}
-      </p>
-      <h2>
-        <b>Ingredients:</b>
-      </h2>
-      <ul>
-        {recipe.ingredients.map((ingredient, index) => (
-          <li key={index}>
-            {ingredient.quantity} {ingredient.name}
-          </li>
-        ))}
-      </ul>
-      <p>
-        <b>Instructions:</b> {recipe.instructions}
-      </p>
-      <p>
-        <b>Comments:</b> {recipe.comments}
-      </p>
-      <p>
-        <b>Last Verified Date:</b> {recipe.lastVerified.toLocaleDateString()}
-      </p>
-      <p>
-        <b>Verified By:</b> {recipe.verifiedBy}
-      </p>
+    <div className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md">
+      <div className="shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
+        {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
+          {name}
+        </h3>
+        {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
+      </div>
+
+      {primaryTag ? (
+        <span className={`shrink-0 rounded-md px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}>
+          {primaryTag}
+        </span>
+      ) : null}
     </div>
   );
 }
