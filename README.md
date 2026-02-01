@@ -54,7 +54,7 @@ The **Meals That Connect** team consists of \*\*13 Cal Poly students. Over the c
 - [Taiki Jeffers] - Software Developer
 - [Derrick Phan] - Software Developer
 
-- [Austin Wright](https://www.linkedin.com/in/austin-wright-613275122/) = Faculty Advisor
+- [Austin Wright](https://www.linkedin.com/in/austin-wright-613275122/) - Faculty Advisor
 
 ## Getting Started And Contributing
 
