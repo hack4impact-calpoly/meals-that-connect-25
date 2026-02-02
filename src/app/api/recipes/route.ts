@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
     const page = Number(searchParams.get("page") ?? 1);
-    const limit = 2; // number of recipes per page
+    const limit = 10; // number of recipes per page
     const skip = (page - 1) * limit;
 
     const [recipes, totalCount] = await Promise.all([
