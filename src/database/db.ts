@@ -28,9 +28,10 @@ export async function getRecipeById(id: string) {
   return recipe;
 }
 
-export async function fetchRecipiesByTags(tagParams: Array<string> | null) {
+export async function fetchRecipesByTags(tagParams: Array<string> | null) {
   const connection = await connectDB();
-  const filter = tagParams && tagParams.length ? { tags: { $all: tagParams } } : {};
+  const filter =
+    tagParams && tagParams.length ? { tags: { $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")) } } : {};
   return await RecipeModel.find(filter);
 }
 

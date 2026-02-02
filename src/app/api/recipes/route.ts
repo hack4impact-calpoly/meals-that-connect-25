@@ -1,4 +1,4 @@
-import { fetchRecipiesByTags, postRecipe } from "@/database/db";
+import { fetchRecipesByTags, postRecipe } from "@/database/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const tagParams = url.searchParams.getAll("tags").map((t) => t.trim().toLowerCase());
-  const response = await fetchRecipiesByTags(tagParams);
+  const response = await fetchRecipesByTags(tagParams);
   try {
     return NextResponse.json(response, { status: 200 });
   } catch (err) {
