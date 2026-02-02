@@ -27,7 +27,9 @@ export default function Navbar() {
             key={link.href}
             href={link.href}
             className={`font-medium ${
-              pathname === link.href ? "text-radish-900" : "text-pepper hover:text-radish-900"
+              pathname === link.href
+                ? "text-radish-900 underline underline-offset-4"
+                : "text-pepper hover:text-radish-900"
             }`}
           >
             {link.label}
