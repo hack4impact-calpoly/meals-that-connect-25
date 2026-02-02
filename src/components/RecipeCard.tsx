@@ -28,7 +28,7 @@ export default function RecipeCard({ imageUrl, name, calories, servingSize, tags
 
   return (
     <div className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md">
-      <div className="shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
+      <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
       </div>
 
