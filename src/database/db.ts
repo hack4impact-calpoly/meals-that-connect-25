@@ -28,4 +28,10 @@ export async function getRecipeById(id: string) {
   return recipe;
 }
 
+export async function fetchRecipiesByTags(tagParams: Array<string> | null) {
+  const connection = await connectDB();
+  const filter = tagParams && tagParams.length ? { tags: { $all: tagParams } } : {};
+  return await RecipeModel.find(filter);
+}
+
 export default connectDB;
