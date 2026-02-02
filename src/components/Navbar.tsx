@@ -16,20 +16,18 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+    <nav className="flex items-center justify-between border-b border-medium-gray px-6 py-4">
       <Link href="/">
         <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} />
       </Link>
 
-      <div className="flex items-center gap-10">
+      <div className="ml-auto mr-20 flex items-center gap-10">
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
-            className={`border-b-2 pb-1 font-medium ${
-              pathname === link.href
-                ? "border-pink-500 text-pink-500"
-                : "border-transparent text-gray-900 hover:text-pink-500"
+            className={`font-medium ${
+              pathname === link.href ? "text-radish-900" : "text-pepper hover:text-radish-900"
             }`}
           >
             {link.label}
@@ -37,11 +35,11 @@ export default function Navbar() {
         ))}
       </div>
 
-      <div className="flex items-center gap-3 rounded-lg border border-gray-700 px-4 py-2">
-        <div className="h-10 w-10 rounded-full bg-gray-200"></div>
+      <div className="flex items-center gap-3 rounded-lg border border-medium-gray px-4 py-2">
+        <div className="h-10 w-10 rounded-full bg-medium-gray"></div>
         <div className="flex flex-col">
-          <span className="font-medium text-gray-900">Brian</span>
-          <span className="text-sm text-pink-500">Admin</span>
+          <span className="font-medium text-pepper">Brian</span>
+          <span className="text-sm text-radish-900">Admin</span>
         </div>
       </div>
     </nav>
