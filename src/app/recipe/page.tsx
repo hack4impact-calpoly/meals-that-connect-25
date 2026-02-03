@@ -1,5 +1,6 @@
 "use client";
 
+import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import SearchBar from "@/components/Searchbar";
 import AddItemButton from "@/components/AddItem";
@@ -17,6 +18,7 @@ export default function Recipe() {
           <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search a recipe" />
           <AddItemButton />
         </div>
+        <FilterMenu />
       </div>
     </main>
   );

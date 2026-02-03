@@ -1,3 +1,4 @@
+import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import RecipeSummary from "@/components/RecipeSummary";
 
