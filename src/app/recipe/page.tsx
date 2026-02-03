@@ -1,5 +1,6 @@
 "use client";
 
+import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import { useState } from "react";
 
@@ -21,6 +22,7 @@ export default function Recipe() {
           />
           <button className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">Add Recipe</button>
         </div>
+        <FilterMenu />
       </div>
     </main>
   );

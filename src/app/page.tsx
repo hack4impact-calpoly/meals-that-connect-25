@@ -20,7 +20,6 @@ export default function Home() {
       </div>
       <h1>Dashboard</h1>
       <h1 className="text-3xl font-bold underline">Hello world!</h1>
-      <FilterMenu />
       <RecipeSummary id={"recipe_test_001"} />
       <RecipeSummary id={"mango"} />
       <RecipeSummary id={"masdf"} />

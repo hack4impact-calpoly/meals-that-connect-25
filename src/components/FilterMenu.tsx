@@ -1,35 +1,171 @@
 "use client";
 
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import React from "react";
+import React, { useMemo, useState } from "react";
 
-export default function FilterMenu() {
+type FilterOption = {
+  id: string;
+  label: string;
+};
+
+type FilterSection = {
+  id: string;
+  label: string;
+  options: FilterOption[];
+};
+
+type FilterSelections = Record<string, Set<string>>;
+
+type FilterMenuProps = {
+  onFilterChange?: (selections: FilterSelections) => void;
+};
+
+const FILTER_SECTIONS: FilterSection[] = [
+  {
+    id: "allergens",
+    label: "Allergens / Exclusions",
+    options: [
+      { id: "dairy", label: "Dairy-Free" },
+      { id: "gluten", label: "Gluten-Free" },
+      { id: "nuts", label: "Nut-Free" },
+      { id: "soy", label: "Soy-Free" },
+      { id: "shellfish", label: "Shellfish-Free" },
+    ],
+  },
+  {
+    id: "proteins",
+    label: "Proteins",
+    options: [
+      { id: "chicken", label: "Chicken" },
+      { id: "beef", label: "Beef" },
+      { id: "fish", label: "Fish" },
+      { id: "tofu", label: "Tofu" },
+      { id: "beans", label: "Beans" },
+    ],
+  },
+  {
+    id: "vitamins",
+    label: "Vitamins / Minerals",
+    options: [
+      { id: "iron", label: "Iron" },
+      { id: "vitamin-a", label: "Vitamin A" },
+      { id: "vitamin-c", label: "Vitamin C" },
+      { id: "calcium", label: "Calcium" },
+      { id: "potassium", label: "Potassium" },
+    ],
+  },
+  {
+    id: "dietary",
+    label: "Dietary Preferences",
+    options: [
+      { id: "vegetarian", label: "Vegetarian" },
+      { id: "vegan", label: "Vegan" },
+      { id: "halal", label: "Halal" },
+      { id: "kosher", label: "Kosher" },
+      { id: "low-sodium", label: "Low Sodium" },
+    ],
+  },
+  {
+    id: "serving",
+    label: "Serving Sizes",
+    options: [
+      { id: "single", label: "1 Serving" },
+      { id: "small", label: "2-3 Servings" },
+      { id: "family", label: "4-6 Servings" },
+      { id: "party", label: "7+ Servings" },
+    ],
+  },
+];
+
+export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
+  const initialSelections = useMemo<FilterSelections>(() => {
+    return FILTER_SECTIONS.reduce<FilterSelections>((acc, section) => {
+      acc[section.id] = new Set();
+      return acc;
+    }, {});
+  }, []);
+
+  const [selections, setSelections] = useState<FilterSelections>(initialSelections);
+
+  const handleToggleOption = (sectionId: string, optionId: string) => {
+    setSelections((prev) => {
+      const next: FilterSelections = { ...prev };
+      const nextSet = new Set(next[sectionId] ?? []);
+
+      if (nextSet.has(optionId)) {
+        nextSet.delete(optionId);
+      } else {
+        nextSet.add(optionId);
+      }
+
+      next[sectionId] = nextSet;
+      onFilterChange?.(next);
+      return next;
+    });
+  };
+
   return (
-    <div className="p-5 w-60 border">
-      <div className="flex flex-row">
-        <SlidersHorizontal className="mr-3 mb-3" />
-        <p className="font-montserrat text-xl">Filters</p>
+    <div className="w-72 border border-gray-300 bg-white px-6 py-5 font-montserrat">
+      <div className="flex items-center gap-3">
+        <SlidersHorizontal className="h-6 w-6 text-gray-700" />
+        <p className="text-xl text-gray-900 font-semibold">Filters</p>
       </div>
-      <hr className="border-0 border-t border-gray-500" />
-      <FilterMenuOption />
-      <FilterMenuOption />
-      <FilterMenuOption />
+      <hr className="mt-4 border-0 border-t border-gray-300" />
+      {FILTER_SECTIONS.map((section) => (
+        <FilterMenuOption
+          key={section.id}
+          label={section.label}
+          options={section.options}
+          selections={selections[section.id]}
+          onToggle={(optionId) => handleToggleOption(section.id, optionId)}
+        />
+      ))}
     </div>
   );
 }
 
-function FilterMenuOption() {
+function FilterMenuOption({
+  label,
+  options,
+  selections,
+  onToggle,
+}: {
+  label: string;
+  options: FilterOption[];
+  selections?: Set<string>;
+  onToggle: (optionId: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div>
-      <div className="flex flex-row justify-between py-3">
-        <p className="">Another Options</p>
-        <ChevronDown />
-      </div>
-      <hr className="border-0 border-t border-gray-500" />
+      <button
+        type="button"
+        className="flex w-full items-center justify-between py-4 text-left text-base font-semibold text-gray-900 text-sm"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen((prev) => !prev)}
+      >
+        <span>{label}</span>
+        <ChevronDown className={`h-5 w-5 text-gray-600 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      {isOpen ? (
+        <div className="pb-4 text-sm text-gray-700">
+          <div className="space-y-3">
+            {options.map((option) => (
+              <label key={option.id} className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-gray-900"
+                  checked={selections?.has(option.id) ?? false}
+                  onChange={() => onToggle(option.id)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      <hr className="border-0 border-t border-gray-300" />
     </div>
   );
-}
-
-function onClick() {
-  console.log("Clicked");
 }
