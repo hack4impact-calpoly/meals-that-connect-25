@@ -22,4 +22,10 @@ export async function postRecipe(recipeData: typeof RecipeModel.prototype) {
   return recipe;
 }
 
+export async function getRecipeById(id: string) {
+  const connection = await connectDB();
+  const recipe = await RecipeModel.findById(id).exec();
+  return recipe;
+}
+
 export default connectDB;
