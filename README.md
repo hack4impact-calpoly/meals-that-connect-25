@@ -4,10 +4,12 @@ A web-based recipe and menu management platform built for Meals That Connect, a 
 
 ## Table of Contents
 
-- [Overview](#overview)
-  - [Purpose](#purpose)
-  - [Team](#team)
-- [Getting Started And Contributing](#getting-started-and-contributing)
+- [Meals That Connect](#meals-that-connect)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+    - [Purpose](#purpose)
+    - [Team](#team)
+  - [Getting Started And Contributing](#getting-started-and-contributing)
 
 ## Overview
 
@@ -51,6 +53,8 @@ The **Meals That Connect** team consists of \*\*13 Cal Poly students. Over the c
 - [Xavier Royer] - Software Developer
 - [Taiki Jeffers] - Software Developer
 - [Derrick Phan] - Software Developer
+
+- [Austin Wright](https://www.linkedin.com/in/austin-wright-613275122/) - Faculty Advisor
 
 ## Getting Started And Contributing
 
