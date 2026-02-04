@@ -1,1 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
+
+@theme {
+  /* fonts */
+  --font-montserrat: "Montserrat", sans-serif;
+
+  /* colors from the pallet*/
+  /* some of these clash with default tailwind*/
+  --color-radish-900: #d8489a;
+  --color-radish-500: #efb6d7;
+  --color-radish-100: #f7daeb;
+
+  --color-lime-*: initial; /* remove default lime */
+  --color-lime: #c2d64a;
+
+  --color-cucumber: #20a359;
+
+  --color-pepper: #48494b;
+
+  --color-jicama: #f8ece0;
+
+  --color-light-gray: #f5f5f5;
+  --color-medium-gray: #dbdbdb;
+  --color-dark-gray: #969696;
+
+  /* misc, used for tags, pulled from the figma */
+  --color-combo-900: var(--color-radish-900);
+  --color-combo-500: var(--color-jicama);
+
+  --color-sides-900: var(--color-cucumber);
+  --color-sides-500: --alpha(var(--color-lime) / 40%);
+
+  --color-fruit-900: #ea7105;
+  --color-fruit-500: #fdecbc;
+
+  --color-entree-900: var(--color-cucumber);
+  --color-entree-500: #e7efb7;
+}
