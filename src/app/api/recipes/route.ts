@@ -1,7 +1,6 @@
 import { fetchRecipesByTags, postRecipe } from "@/database/db";
 import connectDB from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
-
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
