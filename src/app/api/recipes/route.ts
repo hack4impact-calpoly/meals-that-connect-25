@@ -1,4 +1,5 @@
-import connectDB, { postRecipe } from "@/database/db";
+import { fetchRecipesByTags, postRecipe } from "@/database/db";
+import connectDB from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -12,10 +13,9 @@ export async function GET(req: NextRequest) {
     const limit = 10; // number of recipes per page
     const skip = (page - 1) * limit;
 
-    const [recipes, totalCount] = await Promise.all([
-      Recipe.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit),
-      Recipe.countDocuments(),
-    ]);
+    const tagParams = searchParams.getAll("tags").map((t) => t.trim().toLowerCase());
+
+    const [recipes, totalCount] = await Promise.all([fetchRecipesByTags(tagParams), Recipe.countDocuments()]);
 
     if (Math.ceil(totalCount / limit) < page) {
       return NextResponse.json({ error: "No recipes to display" }, { status: 404 });
