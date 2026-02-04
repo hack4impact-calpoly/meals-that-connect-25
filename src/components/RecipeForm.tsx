@@ -22,6 +22,7 @@ export default function RecipeForm() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     const formData = new FormData(e.currentTarget);
 
     const recipe = {
@@ -53,7 +54,7 @@ export default function RecipeForm() {
     }
 
     alert("Recipe created successfully");
-    e.currentTarget.reset();
+    form.reset();
     setIngredients([{ name: "", quantity: "" }]);
   }
 
