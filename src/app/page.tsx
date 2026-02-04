@@ -1,5 +1,6 @@
+import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
-import RecipeCard from "@/components/RecipeCard";
+import RecipeSummary from "@/components/RecipeSummary";
 
 export default function Home() {
   const today = new Date();
@@ -19,9 +20,9 @@ export default function Home() {
       </div>
       <h1>Dashboard</h1>
       <h1 className="text-3xl font-bold underline">Hello world!</h1>
-      <RecipeCard id={"recipe_test_001"} />
-      <RecipeCard id={"mango"} />
-      <RecipeCard id={"masdf"} />
+      <RecipeSummary id={"recipe_test_001"} />
+      <RecipeSummary id={"mango"} />
+      <RecipeSummary id={"masdf"} />
     </main>
   );
 }
