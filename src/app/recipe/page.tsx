@@ -20,12 +20,7 @@ export default function Recipe() {
           <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search a recipe" />
           <AddItemButton />
         </div>
-        <ComboCard
-          name="Chicken Tikka Masala"
-          imageUrl="/masala.jpg"
-          tags={["Brown Rice", "Scandinavian Vegetable Blend", "Carrot Salad", "Mango Cup"]}
-          serving={10}
-        />
+
         <FilterMenu />
       </div>
     </main>
