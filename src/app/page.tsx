@@ -24,7 +24,6 @@ export default function Home() {
       <RecipeSummary id={"recipe_test_001"} />
       <RecipeSummary id={"mango"} />
       <RecipeSummary id={"masdf"} />
-      <ComboCard />
     </main>
   );
 }
