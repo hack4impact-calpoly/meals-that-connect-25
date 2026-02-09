@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { start } from "repl";
 
 let mongo: MongoMemoryServer | null = null;
 
