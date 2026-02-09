@@ -1,6 +1,7 @@
 import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import RecipeSummary from "@/components/RecipeSummary";
+import ComboCard from "@/components/ComboCard";
 
 export default function Home() {
   const today = new Date();
