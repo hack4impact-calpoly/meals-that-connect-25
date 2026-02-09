@@ -1,6 +1,7 @@
 import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import RecipeSummary from "@/components/RecipeSummary";
+import DashboardCalendar from "@/components/DashboardCalendar";
 
 export default function Home() {
   const today = new Date();
@@ -17,6 +18,11 @@ export default function Home() {
       <div className="p-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="mt-2 text-lg text-gray-600">{formattedDate}</p>
+      </div>
+      <div className="px-6">
+        <div className="max-w-lg">
+          <DashboardCalendar />
+        </div>
       </div>
       <h1>Dashboard</h1>
       <h1 className="text-3xl font-bold underline">Hello world!</h1>
