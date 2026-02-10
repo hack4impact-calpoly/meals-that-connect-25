@@ -11,8 +11,7 @@ type Params = {
 export async function GET(req: NextRequest, { params }: Params) {
   const { id } = params;
   const searchParams = req.nextUrl.searchParams;
-  //const name = searchParams.get("name");
-  const name = searchParams.get("name")?.trim(); // trim whitespace
+  const name = searchParams.get("name")?.trim();
 
   if (name) {
     try {
@@ -31,40 +30,6 @@ export async function GET(req: NextRequest, { params }: Params) {
     // ?name= exists but empty
     return NextResponse.json({ error: "Search query cannot be empty" }, { status: 400 });
   }
-
-  // // search by name
-  // if (name) {
-  //   try {
-  //     const recipes = await searchRecipesByName(name);
-
-  //     if (recipes.length === 0) {
-  //       return NextResponse.json({ error: "No recipes found matching that name" }, { status: 404 });
-  //     }
-
-  //     return NextResponse.json(recipes, { status: 200 });
-  //   } catch (err) {
-  //     console.error("Error searching recipes:", err);
-  //     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  //   }
-  // }
-
-  // // Otherwise, search by ID
-  // if (!id) {
-  //   return NextResponse.json({ error: "Recipe ID or name query parameter is required" }, { status: 400 });
-  // }
-
-  // try {
-  //   const getRecipe = await getRecipeById(id);
-
-  //   if (!getRecipe) {
-  //     return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
-  //   }
-
-  //   return NextResponse.json(getRecipe, { status: 200 });
-  // } catch (err) {
-  //   console.error("Error fetching recipe:", err);
-  //   return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  // }
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
