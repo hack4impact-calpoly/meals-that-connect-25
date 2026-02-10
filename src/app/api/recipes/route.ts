@@ -38,11 +38,14 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const recipeData = await req.json();
-  const response = await postRecipe(recipeData);
   try {
+    const recipeData = await req.json();
+    const response = await postRecipe(recipeData);
     return NextResponse.json(response, { status: 201 });
-  } catch (err) {
+  } catch (err: any) {
+    if (err?.name === "ValidationError") {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     console.error("Error creating recipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
