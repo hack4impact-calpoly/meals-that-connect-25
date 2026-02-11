@@ -1,6 +1,7 @@
 import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
 import RecipeSummary from "@/components/RecipeSummary";
+import WeeklyMenu from "@/components/WeeklyMenu";
 import ComboCard from "@/components/ComboCard";
 import CalendarRecipeItem from "@/components/CalendarRecipeItem";
 
@@ -22,6 +23,7 @@ export default function Home() {
       </div>
       <h1>Dashboard</h1>
       <h1 className="text-3xl font-bold underline">Hello world!</h1>
+      <WeeklyMenu dateToday={today} />
       <RecipeSummary id={"recipe_test_001"} />
       <RecipeSummary id={"mango"} />
       <RecipeSummary id={"masdf"} />
