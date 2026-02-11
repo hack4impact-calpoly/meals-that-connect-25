@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import RecipeModel from "./RecipeSchema";
-const url: string = process.env.MONGO_URI as string;
 let connection: typeof mongoose;
 
 /**
@@ -10,6 +9,7 @@ let connection: typeof mongoose;
  */
 const connectDB = async () => {
   if (!connection) {
+    const url = process.env.MONGO_URI as string;
     connection = await mongoose.connect(url);
     return connection;
   }
