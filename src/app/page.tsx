@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import RecipeSummary from "@/components/RecipeSummary";
 import WeeklyMenu from "@/components/WeeklyMenu";
 import ComboCard from "@/components/ComboCard";
+import CalendarRecipeItem from "@/components/CalendarRecipeItem";
 
 export default function Home() {
   const today = new Date();
@@ -26,6 +27,9 @@ export default function Home() {
       <RecipeSummary id={"recipe_test_001"} />
       <RecipeSummary id={"mango"} />
       <RecipeSummary id={"masdf"} />
+      <div className="w-100">
+        <CalendarRecipeItem name="Spaghetti Bolognese" calories={850} servingSize="1 plate" tags={["Entree"]} />
+      </div>
     </main>
   );
 }
