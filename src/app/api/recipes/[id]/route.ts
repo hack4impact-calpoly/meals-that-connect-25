@@ -1,31 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB, { getRecipeById } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
+import connectDB, { getRecipeById, searchRecipesByName } from "@/database/db";
 
 type Params = {
   params: {
     id: string;
   };
 };
-
 export async function GET(req: NextRequest, { params }: Params) {
   const { id } = params;
+  const searchParams = req.nextUrl.searchParams;
+  const name = searchParams.get("name")?.trim();
 
-  if (!id) {
-    return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
-  }
+  if (name) {
+    try {
+      const recipes = await searchRecipesByName(name);
 
-  try {
-    const getRecipe = await getRecipeById(id);
+      if (recipes.length === 0) {
+        return NextResponse.json({ error: "No recipes found matching that name" }, { status: 404 });
+      }
 
-    if (!getRecipe) {
-      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+      return NextResponse.json(recipes, { status: 200 });
+    } catch (err) {
+      console.error("Error searching recipes:", err);
+      return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
-
-    return NextResponse.json(getRecipe, { status: 200 });
-  } catch (err) {
-    console.error("Error fetching recipe:", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  } else if (searchParams.has("name")) {
+    // ?name= exists but empty
+    return NextResponse.json({ error: "Search query cannot be empty" }, { status: 400 });
   }
 }
 

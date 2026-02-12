@@ -36,5 +36,14 @@ export async function fetchRecipesByTags(tagParams: Array<string> | null, page: 
     .skip((page - 1) * limit)
     .limit(limit);
 }
+export async function searchRecipesByName(name: string) {
+  if (!name?.trim()) return []; // avoid empty regex
+
+  await connectDB();
+  const recipes = await RecipeModel.find({
+    name: { $regex: name.trim(), $options: "i" },
+  }).exec();
+  return recipes;
+}
 
 export default connectDB;
