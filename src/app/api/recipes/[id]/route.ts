@@ -29,6 +29,21 @@ export async function GET(req: NextRequest, { params }: Params) {
     // ?name= exists but empty
     return NextResponse.json({ error: "Search query cannot be empty" }, { status: 400 });
   }
+
+  // If no name query param → fetch by id
+  try {
+    await connectDB();
+    const recipe = await getRecipeById(id);
+
+    if (!recipe) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(recipe, { status: 200 });
+  } catch (err) {
+    console.error("Error fetching recipe:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
