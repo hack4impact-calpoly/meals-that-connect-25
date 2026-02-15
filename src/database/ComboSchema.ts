@@ -6,8 +6,8 @@ const ComboSchema = new Schema(
     _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
     serving: { type: Number, required: true },
-    sides: { type: [Ingredient], required: false },
-    fruits: { type: [Ingredient], required: false },
+    sides: { type: [Ingredient.schema], required: false },
+    fruits: { type: [Ingredient.schema], required: false },
     filters: { type: [String], required: false },
     notes: { type: String, required: false },
     allergens: { type: String, required: false },
@@ -19,4 +19,4 @@ const ComboSchema = new Schema(
   },
 );
 
-export default mongoose.models.ComboSchema || mongoose.model("Combo", ComboSchema);
+export default mongoose.models.Combo || mongoose.model("Combo", ComboSchema);
