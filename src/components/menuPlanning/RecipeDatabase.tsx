@@ -27,7 +27,7 @@ export default function RecipeDatabase({ recipes }: RecipeDatabaseProps) {
         </span>
       </div>
       <div className="my-2">placeholder for buttons</div>
-      <div>
+      <div className="flex flex-col gap-4">
         {recipes.map((recipe) => (
           <DraggableRecipeCard
             key={recipe.id}

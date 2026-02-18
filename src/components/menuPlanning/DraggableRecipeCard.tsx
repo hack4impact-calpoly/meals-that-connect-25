@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { GripVertical } from "lucide-react";
 
 interface DraggableRecipeCardProps {
   imageUrl?: string;
@@ -35,23 +36,25 @@ export default function DraggableRecipeCard({
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md">
-      <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
+    <div className="flex items-center gap-3 rounded-xl border-2 border-gray-300 bg-white p-4 transition hover:shadow-md">
+      <div className="relative shrink-0 h-12 w-12 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
+        <h3 className="truncate text-md font-bold font-montserrat" title={name}>
           {name}
         </h3>
         {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
       </div>
 
       {primaryTag ? (
-        <span className={`shrink-0 rounded-md px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}>
+        <span className={`shrink-0 rounded-md px-2 py-1.5 text-xs font-medium font-montserrat ${tagStyle}`}>
           {primaryTag}
         </span>
       ) : null}
+
+      <GripVertical size={20} strokeWidth={1.7} className="cursor-move text-gray-500" />
     </div>
   );
 }
