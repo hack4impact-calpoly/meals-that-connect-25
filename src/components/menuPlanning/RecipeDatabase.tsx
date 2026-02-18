@@ -12,7 +12,7 @@ export default function RecipeDatabase({ recipes }: RecipeDatabaseProps) {
   const [value, setValue] = useState("");
 
   return (
-    <div className="p-6 h-screen overflow-y-scroll">
+    <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
       <div className="text-xl font-semibold mb-6">Recipe Database</div>
       <div className="flex flex-row items-center gap-4">
         <input

@@ -33,7 +33,7 @@ export default function MenuPlanning() {
         <div className="flex flex-1 justify-center items-center bg-gray-100">
           <WeekView dateToday={today} />
         </div>
-        <div className="w-[413px] h-full">
+        <div className="w-[413px]">
           <RecipeDatabase recipes={recipes} />
         </div>
       </div>
