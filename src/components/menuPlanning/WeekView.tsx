@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 
 interface WeekViewProps {
   dateToday: Date;
@@ -40,7 +40,20 @@ export default function WeekView({ dateToday }: WeekViewProps) {
           </button>
         </div>
 
-        <div>placeholder for buttons</div>
+        <div className="flex flex-row">
+          <div className="flex bg-white rounded-md w-fit">
+            <button className="cursor-pointer px-3 py-1 rounded-md font-semibold text-black transition-colors duration-200">
+              Month
+            </button>
+            <button className="cursor-pointer px-3 py-1 rounded-md font-semibold bg-radish-900 text-white">Week</button>
+            <button className="cursor-pointer px-3 py-1 rounded-md font-semibold text-black transition-colors duration-200">
+              Day
+            </button>
+          </div>
+          <span className="bg-radish-900 rounded-md p-2 ml-2">
+            <ArrowDownToLine className="cursor-pointer" color="white" size={20} strokeWidth={2.5} />
+          </span>
+        </div>
       </div>
 
       <div className="relative my-4 flex justify-between gap-3 flex-1">
