@@ -1,28 +1,11 @@
-"use client";
-
-import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
-import SearchBar from "@/components/Searchbar";
-import AddItemButton from "@/components/AddItem";
-import ComboCard from "@/components/ComboCard";
-import { useEffect, useState } from "react";
+import RecipesClientPage from "@/components/RecipeClient"; // <-- update path/name to your client page component
 
-export default function Recipe() {
-  const [searchQuery, setSearchQuery] = useState("");
-
+export default function RecipesPage() {
   return (
-    <main>
+    <div className="min-h-screen w-full bg-[#f7f7f7]">
       <Navbar />
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Recipe</h1>
-
-        <div className="mt-4 flex items-center gap-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder="Search a recipe" />
-          <AddItemButton />
-        </div>
-
-        <FilterMenu />
-      </div>
-    </main>
+      <RecipesClientPage />
+    </div>
   );
 }
