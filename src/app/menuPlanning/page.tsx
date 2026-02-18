@@ -31,6 +31,7 @@ export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
+  const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -52,12 +53,16 @@ export default function MenuPlanning() {
       <Navbar />
       <div className="flex flex-row grow">
         <div className="flex flex-1 justify-center items-center bg-gray-100">
-          <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mt-4 flex-none">
-              <div>
+          <div className="flex flex-col h-full w-210">
+            <div className="flex justify-between items-center mt-4">
+              <div className="flex items-center justify-center gap-2">
                 <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset - 1)}>
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
+                <span className="font-bold text-xl">
+                  {calendarView === "Week" &&
+                    `${today.toLocaleDateString(undefined, { month: "short" })} ${weekDates[0].getDate()} - ${weekDates[4].getDate()}`}
+                </span>
                 <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset + 1)}>
                   <ChevronRight size={20} strokeWidth={2.5} />
                 </button>
@@ -65,13 +70,22 @@ export default function MenuPlanning() {
 
               <div className="flex flex-row">
                 <div className="flex bg-white rounded-md w-fit">
-                  <button className="cursor-pointer px-3 py-1 rounded-md font-semibold text-black transition-colors duration-200">
+                  <button
+                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold text-black ${calendarView === "Month" ? "bg-radish-900 text-white" : ""}`}
+                    onClick={() => setCalendarView("Month")}
+                  >
                     Month
                   </button>
-                  <button className="cursor-pointer px-3 py-1 rounded-md font-semibold bg-radish-900 text-white">
+                  <button
+                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold ${calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"}`}
+                    onClick={() => setCalendarView("Week")}
+                  >
                     Week
                   </button>
-                  <button className="cursor-pointer px-3 py-1 rounded-md font-semibold text-black transition-colors duration-200">
+                  <button
+                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold text-black ${calendarView === "Day" ? "bg-radish-900 text-white" : ""}`}
+                    onClick={() => setCalendarView("Day")}
+                  >
                     Day
                   </button>
                 </div>
@@ -80,7 +94,9 @@ export default function MenuPlanning() {
                 </span>
               </div>
             </div>
-            <WeekView dateToday={today} weekDates={weekDates} />
+            {calendarView === "Month" && <div>Month view coming soon!</div>}
+            {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
+            {calendarView === "Day" && <div>Day view coming soon!</div>}
           </div>
         </div>
         <div className="w-[413px]">
