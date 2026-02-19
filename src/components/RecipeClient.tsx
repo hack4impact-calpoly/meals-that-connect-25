@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import CategoryToggle, { type CategoryOption } from "@/components/CategoryToggle";
 import SearchBarClient from "@/components/SearchbarClient";
 import AddItemButton from "@/components/AddItem";
 import RecipeCard from "@/components/RecipeCard";
@@ -17,6 +16,7 @@ type Recipe = {
 };
 
 type FilterSelections = Record<string, Set<string>>;
+type CategoryValue = "entree" | "side" | "fruit" | "combo";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -25,6 +25,16 @@ const EMPTY_FILTERS: FilterSelections = {
   dietary: new Set(),
   serving: new Set(),
 };
+
+const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
+  { value: "combo", label: "Combo" },
+  { value: "entree", label: "Entree" },
+  { value: "fruit", label: "Fruit" },
+  { value: "side", label: "Side" },
+];
+const categoryButtonBaseClass =
+  "inline-flex items-center rounded-full border border-radish-900 bg-white px-3 py-1 text-sm font-medium text-radish-900 transition-colors hover:bg-radish-900 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-radish-900";
+const categoryButtonSelectedClass = "!bg-radish-900 !text-white";
 
 /*update page results on changes to search bar or filter*/
 function useDebouncedValue<T>(value: T, delayMs: number) {
@@ -38,11 +48,8 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
-function buildTags({ category, search, filters }: { category: string; search: string; filters: FilterSelections }) {
+function buildTags({ search, filters }: { search: string; filters: FilterSelections }) {
   const out: string[] = [];
-
-  // add category as tag
-  if (category !== "all") out.push(category.toLowerCase());
 
   // add all filter selections to tags
   for (const set of Object.values(filters)) {
@@ -59,6 +66,24 @@ function buildTags({ category, search, filters }: { category: string; search: st
   return Array.from(new Set(out));
 }
 
+function normalizeTag(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function hasCategoryTag(tags: string[] = [], category: CategoryValue) {
+  const normalizedTags = tags.map((tag) => normalizeTag(tag));
+  return normalizedTags.some((tag) => {
+    if (category === "combo") return tag.includes("combo");
+    if (category === "entree") return tag.includes("entree");
+    if (category === "side") return tag.includes("side");
+    return tag.includes("fruit");
+  });
+}
+
 function normalizeRecipe(raw: any): Recipe {
   return {
     id: raw?.id ?? raw?._id ?? crypto.randomUUID(),
@@ -71,7 +96,7 @@ function normalizeRecipe(raw: any): Recipe {
 }
 
 export default function RecipesClient() {
-  const [category, setCategory] = React.useState("all");
+  const [selectedCategories, setSelectedCategories] = React.useState<Set<CategoryValue>>(new Set());
   const [search, setSearch] = React.useState("");
 
   const [filters, setFilters] = React.useState<FilterSelections>(EMPTY_FILTERS);
@@ -82,20 +107,29 @@ export default function RecipesClient() {
 
   const debouncedSearch = useDebouncedValue(search, 250);
 
-  const categoryOptions: CategoryOption[] = [
-    { value: "all", label: "All" },
-    { value: "combos", label: "Combos" },
-    { value: "entrees", label: "Entrées" },
-    { value: "sides", label: "Sides" },
-    { value: "fruit", label: "Fruit" },
-  ];
+  const toggleCategory = React.useCallback((category: CategoryValue) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+
+      if (category === "combo") {
+        if (next.has("combo")) return new Set();
+        return new Set(["combo"]);
+      }
+
+      if (next.has("combo")) next.delete("combo");
+
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+
+      return next;
+    });
+  }, []);
 
   // Build query params
   const queryString = React.useMemo(() => {
     const params = new URLSearchParams();
 
     const tags = buildTags({
-      category,
       search: debouncedSearch,
       filters,
     });
@@ -103,7 +137,14 @@ export default function RecipesClient() {
     for (const tag of tags) params.append("tags", tag);
 
     return params.toString();
-  }, [category, debouncedSearch, filters]);
+  }, [debouncedSearch, filters]);
+
+  const visibleRecipes = React.useMemo(() => {
+    if (selectedCategories.size === 0) return recipes;
+    return recipes.filter((recipe) =>
+      Array.from(selectedCategories).some((category) => hasCategoryTag(recipe.tags, category)),
+    );
+  }, [recipes, selectedCategories]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -150,7 +191,22 @@ export default function RecipesClient() {
           <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
 
           <div className="mt-3">
-            <CategoryToggle options={categoryOptions} value={category} onChange={setCategory} />
+            <div className="flex flex-wrap gap-2">
+              {categoryOptions.map((option) => {
+                const selected = selectedCategories.has(option.value);
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => toggleCategory(option.value)}
+                    className={[categoryButtonBaseClass, selected ? categoryButtonSelectedClass : ""].join(" ")}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 
@@ -176,11 +232,11 @@ export default function RecipesClient() {
             <div className="text-sm text-black/60">Loading…</div>
           ) : error ? (
             <div className="text-sm text-red-600">{error}</div>
-          ) : recipes.length === 0 ? (
+          ) : visibleRecipes.length === 0 ? (
             <div className="text-sm text-black/60">No recipes found.</div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {recipes.map((r) => (
+              {visibleRecipes.map((r) => (
                 <RecipeCard
                   key={r.id}
                   name={r.name}
