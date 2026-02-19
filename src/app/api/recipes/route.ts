@@ -1,4 +1,4 @@
-import { fetchRecipesByTags, postRecipe } from "@/database/db";
+import { fetchRecipesByTags, postRecipe, searchRecipesByName } from "@/database/db";
 import connectDB from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
@@ -7,14 +7,33 @@ export async function GET(req: NextRequest) {
   try {
     await connectDB();
 
-    const { searchParams } = new URL(req.url);
+    const searchParams = req.nextUrl.searchParams;
+    const name = searchParams.get("name")?.trim();
+
+    if (name) {
+      try {
+        const recipes = await searchRecipesByName(name);
+
+        if (recipes.length === 0) {
+          return NextResponse.json({ error: "No recipes found matching that name" }, { status: 404 });
+        }
+
+        return NextResponse.json(recipes, { status: 200 });
+      } catch (err) {
+        console.error("Error searching recipes:", err);
+        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+      }
+    } else if (searchParams.has("name")) {
+      return NextResponse.json({ error: "Search query cannot be empty" }, { status: 400 });
+    }
 
     const page = Number(searchParams.get("page") ?? 1);
     const limit = 10; // number of recipes per page
-    const skip = (page - 1) * limit;
 
-    const tagParams = searchParams.getAll("tags").map((t) => t.trim().toLowerCase());
-
+    const tagParams = searchParams
+      .getAll("tags")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
     const [recipes, totalCount] = await Promise.all([fetchRecipesByTags(tagParams), Recipe.countDocuments()]);
 
     if (Math.ceil(totalCount / limit) < page) {
