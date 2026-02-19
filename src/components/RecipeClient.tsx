@@ -112,8 +112,8 @@ export default function RecipesClient() {
       const next = new Set(prev);
 
       if (category === "combo") {
-        if (next.has("combo")) return new Set();
-        return new Set(["combo"]);
+        if (next.has("combo")) return new Set<CategoryValue>();
+        return new Set<CategoryValue>(["combo"]);
       }
 
       if (next.has("combo")) next.delete("combo");
