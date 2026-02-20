@@ -6,6 +6,7 @@ export type RecipeCardProps = {
   calories?: number;
   servingSize?: string;
   tags?: string[];
+  isDraft?: boolean;
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
@@ -16,7 +17,14 @@ const TAG_STYLES: Record<string, string> = {
   fallback: "bg-gray-100 text-gray-700",
 };
 
-export default function RecipeCard({ imageUrl, name, calories, servingSize, tags = [] }: RecipeCardProps) {
+export default function RecipeCard({
+  imageUrl,
+  name,
+  calories,
+  servingSize,
+  tags = [],
+  isDraft = false,
+}: RecipeCardProps) {
   const caloriesText = calories != null ? `${calories} cal` : null;
 
   const servingText = servingSize != null ? `${servingSize}` : null;
@@ -27,7 +35,9 @@ export default function RecipeCard({ imageUrl, name, calories, servingSize, tags
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
 
   return (
-    <div className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md">
+    <div
+      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md ${isDraft ? "border-dashed" : ""}`}
+    >
       <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
       </div>

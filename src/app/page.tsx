@@ -1,29 +1,62 @@
-import FilterMenu from "@/components/FilterMenu";
 import Navbar from "@/components/Navbar";
-import RecipeSummary from "@/components/RecipeSummary";
+import DashboardCalendar from "@/components/DashboardCalendar";
+import WeeklyMenu from "@/components/WeeklyMenu";
 import ComboCard from "@/components/ComboCard";
+import DashboardDate from "@/components/DashboardDate";
+import { FileText, PlusCircle } from "lucide-react";
 
 export default function Home() {
   const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
+  const dayDateString = today.toLocaleDateString("en-US", {
     weekday: "long",
-    year: "numeric",
     month: "long",
     day: "numeric",
   });
 
   return (
-    <main>
+    <main className="min-h-screen bg-light-gray font-montserrat">
       <Navbar />
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="mt-2 text-lg text-gray-600">{formattedDate}</p>
+      <div className="px-8 py-6">
+        {/* Today's Meal (left), Calendar + date label (right) */}
+        <div className="flex items-start gap-16">
+          <div>
+            <h2 className="mb-4 text-2xl font-bold text-black">Today&apos;s Meal</h2>
+            <div className="flex items-start gap-12">
+              <DashboardDate />
+              <ComboCard name="Italian Noodle Casserole" tags={["Mango Cup"]} serving={12} isDraft={false} />
+            </div>
+          </div>
+
+          <div className="flex flex-1 items-start gap-16">
+            <div className="flex-1">
+              <DashboardCalendar />
+            </div>
+            <p className="whitespace-nowrap pt-2 font-bold text-black">{dayDateString}</p>
+          </div>
+        </div>
+
+        {/* his Week's Menu (left), Recipe Shortcuts (right) */}
+        <div className="mt-8 flex items-start gap-16">
+          <div>
+            <h2 className="mb-4 text-2xl font-bold text-black">This Week&apos;s Menu</h2>
+            <WeeklyMenu dateToday={today} />
+          </div>
+
+          <div>
+            <h2 className="mb-4 text-2xl font-bold text-black">Recipe Shortcuts</h2>
+            <div className="flex flex-col gap-3 w-72">
+              <button className="flex w-full items-center justify-between rounded-md border border-cucumber bg-white px-4 py-2 text-sm font-medium text-cucumber hover:bg-cucumber/10">
+                Add Item
+                <PlusCircle className="h-5 w-5" />
+              </button>
+              <button className="flex w-full items-center justify-between rounded-md border border-cucumber bg-white px-4 py-2 text-sm font-medium text-cucumber hover:bg-cucumber/10">
+                View Drafts
+                <FileText className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <h1>Dashboard</h1>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
-      <RecipeSummary id={"recipe_test_001"} />
-      <RecipeSummary id={"mango"} />
-      <RecipeSummary id={"masdf"} />
     </main>
   );
 }
