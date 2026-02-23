@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import SearchBarClient from "@/components/SearchbarClient";
-import AddItemButton from "@/components/AddItem";
 import RecipeCard from "@/components/RecipeCard";
 import FilterMenu from "@/components/FilterMenu";
 import AddNewRecipeButton from "./AddNewRecipeButton";

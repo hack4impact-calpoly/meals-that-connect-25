@@ -3,23 +3,18 @@
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
-import CreateRecipePopUp from "./CreateRecipePopUp";
+import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 
-type RecipeType = {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-};
-
-const RECIPE_TYPES: RecipeType[] = [
+/* Dropdown options for creating a new recipe. Add/remove entries here to change
+   what appears in the menu. */
+const RECIPE_TYPES: CreateRecipeType[] = [
   { id: "combo", label: "Add Combo", icon: Utensils },
   { id: "entree", label: "Add Entrée", icon: Soup },
   { id: "side", label: "Add Side", icon: Carrot },
   { id: "fruit", label: "Add Fruit", icon: Apple },
 ];
 
-function RecipeMenuItem({ type, onSelect }: { type: RecipeType; onSelect: (type: RecipeType) => void }) {
+function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {
   const Icon = type.icon;
 
   return (
@@ -37,7 +32,11 @@ function RecipeMenuItem({ type, onSelect }: { type: RecipeType; onSelect: (type:
 }
 
 export default function AddNewRecipeButton() {
-  const [activeType, setActiveType] = useState<RecipeType | null>(null);
+  /* When a user picks a menu option we store the selected type here.
+    - Null => popup is closed. 
+    - Non-null => CreateRecipePopUp is open.
+    The type is passed to CreateRecipePopUp so behavior can be customized based on the selected recipe type. */
+  const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
 
   return (
     <>
