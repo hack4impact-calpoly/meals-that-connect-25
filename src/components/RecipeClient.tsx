@@ -5,6 +5,7 @@ import SearchBarClient from "@/components/SearchbarClient";
 import AddItemButton from "@/components/AddItem";
 import RecipeCard from "@/components/RecipeCard";
 import FilterMenu from "@/components/FilterMenu";
+import AddNewRecipeButton from "./AddNewRecipeButton";
 
 type Recipe = {
   id: string;
@@ -213,7 +214,7 @@ export default function RecipesClient() {
         {/* Right: buttons */}
         <div className="col-span-12 lg:col-span-4">
           <div className="flex items-center justify-start gap-3 lg:justify-end">
-            <AddItemButton />
+            <AddNewRecipeButton />
             <button className="h-11 rounded-md border border-green-600 bg-white px-4 text-sm font-medium text-green-700">
               View Drafts
             </button>
