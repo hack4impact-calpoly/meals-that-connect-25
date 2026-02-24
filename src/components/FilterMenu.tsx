@@ -2,6 +2,7 @@
 
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import FilterTag from "./FilterTag";
 
 type FilterOption = {
   id: string;
@@ -104,6 +105,20 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
     });
   };
 
+  const selectedTags = useMemo(() => {
+    return FILTER_SECTIONS.flatMap((section) => {
+      const sectionSelections = selections[section.id];
+      return section.options
+        .filter((option) => sectionSelections?.has(option.id))
+        .map((option) => ({
+          key: `${section.id}-${option.id}`,
+          sectionId: section.id,
+          optionId: option.id,
+          label: option.label,
+        }));
+    });
+  }, [selections]);
+
   return (
     <div className="w-72 border border-gray-300 bg-white px-6 py-5 font-montserrat">
       <div className="flex items-center gap-3">
@@ -120,6 +135,17 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
           onToggle={(optionId) => handleToggleOption(section.id, optionId)}
         />
       ))}
+      {selectedTags.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selectedTags.map((tag) => (
+            <FilterTag
+              key={tag.key}
+              label={tag.label}
+              onRemove={() => handleToggleOption(tag.sectionId, tag.optionId)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
