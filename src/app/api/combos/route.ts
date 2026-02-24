@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
 
-export async function GET(req?: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const name = req?.nextUrl?.searchParams.get("name")?.trim();
+    const name = req.nextUrl.searchParams.get("name")?.trim();
     const combos = name ? await Combo.find({ name: { $regex: name, $options: "i" } }) : await Combo.find();
     return NextResponse.json(combos, { status: 200 });
   } catch (err) {
