@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const combos = await Combo.find();
+    const name = req.nextUrl.searchParams.get("name")?.trim();
+    const combos = name ? await Combo.find({ name: { $regex: name, $options: "i" } }) : await Combo.find();
     return NextResponse.json(combos, { status: 200 });
   } catch (err) {
     console.error("Error fetching combos:", err);
