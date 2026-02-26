@@ -48,20 +48,14 @@ function useDebouncedValue<T>(value: T, delayMs: number) {
   return debounced;
 }
 
-function buildTags({ search, filters }: { search: string; filters: FilterSelections }) {
+function buildFilterTags(filters: FilterSelections) {
   const out: string[] = [];
 
-  // add all filter selections to tags
   for (const set of Object.values(filters)) {
     for (const v of Array.from(set)) {
       out.push(v.trim().toLowerCase());
     }
   }
-
-  //add search terms as tags
-  const tokens = search.trim().toLowerCase().split(/\s+/).filter(Boolean);
-
-  out.push(...tokens);
 
   return Array.from(new Set(out));
 }
@@ -95,6 +89,16 @@ function normalizeRecipe(raw: any): Recipe {
   };
 }
 
+function normalizeCombo(raw: any): Recipe {
+  return {
+    id: raw?.id ?? raw?._id ?? crypto.randomUUID(),
+    name: raw?.name ?? "Untitled",
+    imageUrl: raw?.imageUrl,
+    servingSize: raw?.serving != null ? `Serves ${raw.serving}` : undefined,
+    tags: ["Combo"],
+  };
+}
+
 export default function RecipesClient() {
   const [selectedCategories, setSelectedCategories] = React.useState<Set<CategoryValue>>(new Set());
   const [search, setSearch] = React.useState("");
@@ -102,6 +106,7 @@ export default function RecipesClient() {
   const [filters, setFilters] = React.useState<FilterSelections>(EMPTY_FILTERS);
 
   const [recipes, setRecipes] = React.useState<Recipe[]>([]);
+  const [combos, setCombos] = React.useState<Recipe[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -125,26 +130,33 @@ export default function RecipesClient() {
     });
   }, []);
 
-  // Build query params
+  // Build query params — use ?name= for search text, ?tags= only for filter selections
   const queryString = React.useMemo(() => {
     const params = new URLSearchParams();
+    const trimmedSearch = debouncedSearch.trim();
 
-    const tags = buildTags({
-      search: debouncedSearch,
-      filters,
-    });
-
-    for (const tag of tags) params.append("tags", tag);
+    if (trimmedSearch) {
+      params.set("name", trimmedSearch);
+    } else {
+      const filterTags = buildFilterTags(filters);
+      for (const tag of filterTags) params.append("tags", tag);
+    }
 
     return params.toString();
   }, [debouncedSearch, filters]);
 
-  const visibleRecipes = React.useMemo(() => {
-    if (selectedCategories.size === 0) return recipes;
-    return recipes.filter((recipe) =>
-      Array.from(selectedCategories).some((category) => hasCategoryTag(recipe.tags, category)),
-    );
-  }, [recipes, selectedCategories]);
+  const visibleItems = React.useMemo(() => {
+    if (selectedCategories.has("combo")) {
+      const comboTaggedRecipes = recipes.filter((recipe) => hasCategoryTag(recipe.tags, "combo"));
+      return [...comboTaggedRecipes, ...combos];
+    }
+    if (selectedCategories.size > 0) {
+      return recipes.filter((recipe) =>
+        Array.from(selectedCategories).some((category) => hasCategoryTag(recipe.tags, category)),
+      );
+    }
+    return [...recipes, ...combos];
+  }, [recipes, combos, selectedCategories]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -168,7 +180,8 @@ export default function RecipesClient() {
 
         const json = await res.json();
 
-        const list = Array.isArray(json?.data) ? json.data : [];
+        // name search returns Recipe[] directly; tag search returns { data: Recipe[] }
+        const list = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
         setRecipes(list.map(normalizeRecipe));
       } catch (e: any) {
         if (e?.name === "AbortError") return;
@@ -181,6 +194,30 @@ export default function RecipesClient() {
     load();
     return () => controller.abort();
   }, [queryString]);
+
+  React.useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadCombos() {
+      try {
+        const trimmedSearch = debouncedSearch.trim();
+        const url = trimmedSearch ? `/api/combos?name=${encodeURIComponent(trimmedSearch)}` : "/api/combos";
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) {
+          setCombos([]);
+          return;
+        }
+        const json = await res.json();
+        const list = Array.isArray(json) ? json : [];
+        setCombos(list.map(normalizeCombo));
+      } catch (e: any) {
+        if (e?.name === "AbortError") return;
+      }
+    }
+
+    loadCombos();
+    return () => controller.abort();
+  }, [debouncedSearch]);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
@@ -232,11 +269,11 @@ export default function RecipesClient() {
             <div className="text-sm text-black/60">Loading…</div>
           ) : error ? (
             <div className="text-sm text-red-600">{error}</div>
-          ) : visibleRecipes.length === 0 ? (
+          ) : visibleItems.length === 0 ? (
             <div className="text-sm text-black/60">No recipes found.</div>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {visibleRecipes.map((r) => (
+              {visibleItems.map((r) => (
                 <RecipeCard
                   key={r.id}
                   name={r.name}

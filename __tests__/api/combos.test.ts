@@ -19,7 +19,7 @@ describe("/api/combos", () => {
     it("returns all combos", async () => {
       await seedCombos(5);
 
-      const res = await GET();
+      const res = await GET(makeRequest("GET"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -27,7 +27,7 @@ describe("/api/combos", () => {
     });
 
     it("returns empty array when no combos exist", async () => {
-      const res = await GET();
+      const res = await GET(makeRequest("GET"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
