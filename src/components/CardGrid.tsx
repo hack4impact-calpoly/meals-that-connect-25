@@ -12,9 +12,19 @@ type Props = {
   isComboMode: boolean;
   items: Recipe[] | Combo[];
   draftMode: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string, name: string) => void;
 };
 
-export default function CardGrid({ loading, error, isComboMode, items, draftMode }: Props) {
+export default function CardGrid({
+  loading,
+  error,
+  isComboMode,
+  items,
+  draftMode,
+  selectedIds,
+  onToggleSelect,
+}: Props) {
   if (loading) return <div className="text-sm text-black/60">Loading…</div>;
   if (error) return <div className="text-sm text-red-600">{error}</div>;
   if (items.length === 0) return <div className="text-sm text-black/60">No results found.</div>;
@@ -34,6 +44,8 @@ export default function CardGrid({ loading, error, isComboMode, items, draftMode
             tags={[]}
             serving={combo.serving}
             isDraft={combo.isDraft}
+            isSelected={selectedIds?.has(combo._id)}
+            onSelect={() => onToggleSelect?.(combo._id, combo.name)}
           />
         ))}
       </div>

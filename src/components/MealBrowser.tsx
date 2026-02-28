@@ -12,7 +12,10 @@ import { CategoryValue, FilterSelections } from "@/lib/types";
 type Props = {
   draftMode: boolean;
   filters: FilterSelections;
-  children?: React.ReactNode; // top-left slot for an extra button
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string, name: string) => void;
+  topLeftChildren?: React.ReactNode; // top-left slot for an extra button
+  topRightChildren?: React.ReactNode; // for additional buttons after search bar
 };
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
@@ -22,7 +25,14 @@ const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "fruit", label: "Fruits" },
 ];
 
-export default function MealBrowser({ draftMode, filters, children }: Props) {
+export default function MealBrowser({
+  draftMode,
+  filters,
+  topLeftChildren,
+  topRightChildren,
+  selectedIds,
+  onToggleSelect,
+}: Props) {
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
@@ -54,15 +64,24 @@ export default function MealBrowser({ draftMode, filters, children }: Props) {
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="flex gap-5 items-center">
-        {children}
+        {topLeftChildren}
         <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+        {topRightChildren}
         <AddNewRecipeButton />
       </div>
 
       <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
 
       <div className="overflow-auto">
-        <CardGrid loading={loading} error={error} isComboMode={isComboMode} items={items} draftMode={draftMode} />
+        <CardGrid
+          loading={loading}
+          error={error}
+          isComboMode={isComboMode}
+          items={items}
+          draftMode={draftMode}
+          selectedIds={selectedIds}
+          onToggleSelect={onToggleSelect}
+        />
       </div>
     </div>
   );

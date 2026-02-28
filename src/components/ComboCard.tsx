@@ -29,10 +29,10 @@ export default function ComboCard({
     >
       <div className="relative h-28 w-full bg-medium-gray">
         {imageUrl ? <Image src={imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" /> : null}
-        {isDraft && (
+        {isDraft && onSelect && (
           <input
             type="checkbox"
-            checked={isSelected}
+            checked={!!isSelected}
             onChange={onSelect}
             className="absolute top-4 right-4 z-20 h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer"
           />
