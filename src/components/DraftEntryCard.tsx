@@ -16,7 +16,7 @@ export default function DraftEntryCard({ variant }: Props) {
   /*
     TODO: find a way to factor out the layout from ComboCard and RecipeCard
     to avoid code duplication.
-    Maybe add a prop to the actual components that will add the proper overlay?
+    Maybe use the actual RecipeCard and ComboCard, but add some props for a "View Drafts" variant
   */
 
   // Combo-style
