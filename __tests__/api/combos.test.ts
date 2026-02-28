@@ -16,14 +16,17 @@ function makeRequest(method: string, body?: any, url = "http://localhost/api/com
 
 describe("/api/combos", () => {
   describe("GET", () => {
-    it("returns all combos", async () => {
+    it("returns paginated combos", async () => {
       await seedCombos(5);
 
       const res = await GET(makeRequest("GET"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body).toHaveLength(5);
+      expect(body.data).toHaveLength(5);
+      expect(body.page).toBe(1);
+      expect(body.totalPages).toBe(1);
+      expect(body.totalCount).toBe(5);
     });
 
     it("returns empty array when no combos exist", async () => {
@@ -31,7 +34,38 @@ describe("/api/combos", () => {
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body).toEqual([]);
+      expect(body.data).toEqual([]);
+      expect(body.totalCount).toBe(0);
+    });
+
+    it("filters by isDraft=true", async () => {
+      await seedCombos(3, { isDraft: true });
+      await seedCombos(2, { isDraft: false });
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?isDraft=true"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data).toHaveLength(3);
+
+      for (const combo of body.data) {
+        expect(combo.isDraft).toBe(true);
+      }
+    });
+
+    it("filters by isDraft=false", async () => {
+      await seedCombos(3, { isDraft: true });
+      await seedCombos(2, { isDraft: false });
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?isDraft=false"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data).toHaveLength(2);
+
+      for (const combo of body.data) {
+        expect(combo.isDraft).toBe(false);
+      }
     });
   });
 
@@ -49,7 +83,7 @@ describe("/api/combos", () => {
     it("returns 400 when required fields are missing", async () => {
       const invalidCombo = {
         name: "Invalid Combo",
-        // missing _id, serving
+        // missing required fields
       };
 
       const res = await POST(makeRequest("POST", invalidCombo));

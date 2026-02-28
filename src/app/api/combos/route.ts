@@ -5,9 +5,42 @@ import Combo from "@/database/ComboSchema";
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const name = req.nextUrl.searchParams.get("name")?.trim();
-    const combos = name ? await Combo.find({ name: { $regex: name, $options: "i" } }) : await Combo.find();
-    return NextResponse.json(combos, { status: 200 });
+
+    const searchParams = req.nextUrl.searchParams;
+
+    const name = searchParams.get("name")?.trim();
+    const page = Number(searchParams.get("page") ?? 1);
+    const limit = Number(searchParams.get("limit") ?? 10);
+    const isDraftParam = searchParams.get("isDraft");
+
+    const filter: any = {};
+
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
+    }
+
+    if (isDraftParam === "true") {
+      filter.isDraft = true;
+    } else if (isDraftParam === "false") {
+      filter.isDraft = false;
+    }
+
+    const totalCount = await Combo.countDocuments(filter);
+
+    const combos = await Combo.find(filter)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return NextResponse.json(
+      {
+        data: combos,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+      },
+      { status: 200 },
+    );
   } catch (err) {
     console.error("Error fetching combos:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

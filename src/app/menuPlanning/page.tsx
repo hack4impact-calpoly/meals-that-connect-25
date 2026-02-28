@@ -99,7 +99,7 @@ export default function MenuPlanning() {
             {calendarView === "Day" && <div>Day view coming soon!</div>}
           </div>
         </div>
-        <div className="w-[413px]">
+        <div className="w-103.25">
           <RecipeDatabase recipes={recipes} />
         </div>
       </div>

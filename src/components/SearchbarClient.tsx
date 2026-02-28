@@ -17,14 +17,20 @@ export default function SearchBarClient({ placeholder = "Search a recipe", onSea
   }
 
   return (
-    <div className="relative w-full">
-      <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-radish-900" />
+    <div
+      className="
+        w-full h-11 rounded-md border border-medium-gray bg-white
+        flex items-center gap-2 px-3
+        focus-within:border-radish-900
+      "
+    >
+      <Search className="h-5 w-5 text-radish-900 shrink-0" />
       <input
         type="text"
         placeholder={placeholder}
         value={value}
         onChange={(e) => handleChange(e.target.value)}
-        className="h-11 w-full rounded-md border border-medium-gray bg-white pl-10 pr-4 text-sm focus:border-radish-900 focus:outline-none"
+        className="w-full text-sm bg-transparent outline-none"
       />
     </div>
   );
