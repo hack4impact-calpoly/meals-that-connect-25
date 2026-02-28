@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
-import Navbar from "@/components/Navbar";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
@@ -67,40 +65,45 @@ export default function RecipeClient({ draftMode }: Props) {
   const handleBack = () => router.push("/recipe");
 
   return (
-    <div className="min-h-screen bg-light-gray">
-      <Navbar />
+    <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
+      <div className="flex flex-1 flex-col gap-4">
+        <div className="flex gap-5 items-center">
+          {draftMode && (
+            // TODO: Style this button properly
+            <button
+              onClick={handleBack}
+              className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 transition"
+            >
+              ← Back
+            </button>
+          )}
 
-      <main className="flex px-5 pt-5 gap-6">
-        <div className="flex flex-1 flex-col gap-4">
-          <div className="flex gap-5 items-center">
-            {draftMode && (
-              // TODO: Style this button properly
-              <button
-                onClick={handleBack}
-                className="rounded-md border border-gray-300 px-3 py-1 text-sm hover:bg-gray-100 transition"
-              >
-                ← Back
-              </button>
-            )}
+          <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
 
-            <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
-
-            <AddNewRecipeButton />
-          </div>
-
-          <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
-
-          {/* TODO: add selection checkbox to the draft variant of RecipeCard */}
-          <CardGrid loading={loading} error={error} isComboMode={isComboMode} items={items} draftMode={draftMode} />
+          <AddNewRecipeButton />
         </div>
 
-        {!draftMode && (
-          <>
-            <div className="hidden md:block w-px bg-dark-gray self-stretch" />
+        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
+
+        {/* TODO: add selection checkbox to the draft variant of RecipeCard */}
+        {/* TODO: figure out how to add a scrollbar gutter (or hope for pagination)
+              I tried pr-4, which works, but it permanently misaligns the grid and search bar */}
+        {/* TODO: Consider setting a max-w and min-w for RecipeCard, allow for more than 2 cols on wide screen
+              Current responsiveness is in a sad state */}
+        <div className="overflow-auto">
+          <CardGrid loading={loading} error={error} isComboMode={isComboMode} items={items} draftMode={draftMode} />
+        </div>
+      </div>
+
+      {!draftMode && (
+        <>
+          <div className="hidden md:block w-px bg-dark-gray self-stretch" />
+          <div className="overflow-auto">
             <FilterMenu onFilterChange={setFilters} />
-          </>
-        )}
-      </main>
-    </div>
+          </div>
+        </>
+      )}
+      {/* TODO: footer with names for multiselection*/}
+    </main>
   );
 }
