@@ -83,11 +83,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       });
       if (!res.ok) throw new Error(`Publish failed (${res.status})`);
       const created = await res.json().catch(() => ({}));
-      setId(created?.id ?? created?.recipe?.id ?? null);
-      onClose();
+      setId(payload._id);
+      /*onClose(); /* comment out to not close automatically when publishing*/
     } finally {
       setBusy(null);
     }
+    setId(payload._id);
   }
 
   async function trash() {
