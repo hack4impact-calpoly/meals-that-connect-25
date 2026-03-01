@@ -1,11 +1,14 @@
-/* this is the file for the sort permissions button */
 "use client";
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { ListFilter } from "lucide-react";
-import CreateFilterPopUp, { CreateFilterType } from "./CreateFilterPermissionPopUp";
 
-const FILTER_TYPES: CreateFilterType[] = [
+export type CreateSortType = {
+  id: string;
+  label: string;
+};
+
+const FILTER_TYPES: CreateSortType[] = [
   { id: "last-updated", label: "Last Updated" },
   { id: "created-date", label: "Created Date" },
   { id: "a-to-z", label: "A to Z" },
@@ -17,8 +20,8 @@ function RecipeMenuItem({
   onSelect,
   isSelected,
 }: {
-  type: CreateFilterType;
-  onSelect: (type: CreateFilterType) => void;
+  type: CreateSortType;
+  onSelect: (type: CreateSortType) => void;
   isSelected?: boolean;
 }) {
   return (
@@ -39,8 +42,13 @@ function RecipeMenuItem({
   );
 }
 
-export default function SortPermissionsButton({ align = "right" }: { align?: "left" | "right" }) {
-  const [activeType, setActiveType] = useState<CreateFilterType | null>(null);
+export default function SortPermissionsButton({
+  align = "right",
+}: {
+  align?: "left" | "right";
+  onSortChange?: (filterId: string) => void;
+}) {
+  const [activeType, setActiveType] = useState<CreateSortType | null>(null);
   const isRight = align === "right";
   return (
     <>
