@@ -69,8 +69,6 @@ export default function CardGrid({
           servingSize={recipe.serving ? `${recipe.serving}` : undefined}
           tags={recipe.tags ?? []}
           isDraft={recipe.isDraft}
-          isSelected={selectedIds?.has(recipe._id)}
-          onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}
         />
       ))}
     </div>

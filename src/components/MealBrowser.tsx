@@ -13,8 +13,6 @@ type Props = {
   draftMode: boolean;
   filters: FilterSelections;
   selectedIds?: Set<string>;
-  selectedCategories: Set<CategoryValue>;
-  toggleCategory: (category: CategoryValue) => void;
   onToggleSelect?: (id: string, name: string) => void;
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
@@ -33,11 +31,10 @@ export default function MealBrowser({
   topLeftChildren,
   topRightChildren,
   selectedIds,
-  selectedCategories,
-  toggleCategory,
   onToggleSelect,
 }: Props) {
   const [search, setSearch] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
   const { items, loading, error, isComboMode, draftCount } = useMealData({
     search,
@@ -45,6 +42,24 @@ export default function MealBrowser({
     selectedCategories,
     draftMode,
   });
+
+  const toggleCategory = (category: CategoryValue) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+
+      if (category === "combo") {
+        if (next.has("combo")) return new Set<CategoryValue>();
+        return new Set<CategoryValue>(["combo"]);
+      }
+
+      if (next.has("combo")) next.delete("combo");
+
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+
+      return next;
+    });
+  };
 
   return (
     <div className="flex flex-1 flex-col gap-4">
