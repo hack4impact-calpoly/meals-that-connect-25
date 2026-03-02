@@ -28,10 +28,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-1 items-start gap-16">
-            <div className="flex-1">
-              <DashboardCalendar />
-            </div>
-            <p className="whitespace-nowrap pt-2 font-bold text-black">{dayDateString}</p>
+            <DashboardCalendar />
           </div>
         </div>
 

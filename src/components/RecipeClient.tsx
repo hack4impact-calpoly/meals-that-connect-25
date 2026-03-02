@@ -221,50 +221,33 @@ export default function RecipesClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-6">
-      {/* Top row: search + actions */}
-      <div className="grid grid-cols-12 items-start gap-6">
-        {/* Left: search + category pills */}
-        <div className="col-span-12 lg:col-span-8">
-          <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
-
-          <div className="mt-3">
-            <div className="flex flex-wrap gap-2">
-              {categoryOptions.map((option) => {
-                const selected = selectedCategories.has(option.value);
-
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => toggleCategory(option.value)}
-                    className={[categoryButtonBaseClass, selected ? categoryButtonSelectedClass : ""].join(" ")}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Right: buttons */}
-        <div className="col-span-12 lg:col-span-4">
-          <div className="flex items-center justify-start gap-3 lg:justify-end">
+      <div className="grid grid-cols-12 gap-6">
+        {/* Cards + search + category pills */}
+        <div className="col-span-12 lg:col-span-8 flex flex-col gap-4">
+          {/* Search + Add Button */}
+          <div className="flex items-center gap-3">
+            <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
             <AddNewRecipeButton />
-            <button className="h-11 rounded-md border border-green-600 bg-white px-4 text-sm font-medium text-green-700">
-              View Drafts
-            </button>
-            <button aria-label="Filters" className="h-11 w-11 rounded-md bg-radish-900 text-white">
-              ≡
-            </button>
           </div>
-        </div>
-      </div>
 
-      {/* Main content: cards + divider + filters */}
-      <div className="mt-6 grid grid-cols-12 gap-6">
-        {/* Cards */}
-        <div className="col-span-12 lg:col-span-8">
+          {/* Category pills */}
+          <div className="flex flex-wrap gap-2">
+            {categoryOptions.map((option) => {
+              const selected = selectedCategories.has(option.value);
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => toggleCategory(option.value)}
+                  className={[categoryButtonBaseClass, selected ? categoryButtonSelectedClass : ""].join(" ")}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Recipe cards */}
           {loading ? (
             <div className="text-sm text-black/60">Loading…</div>
           ) : error ? (
@@ -288,14 +271,13 @@ export default function RecipesClient() {
         </div>
 
         {/* Divider */}
-        <div className="relative hidden lg:col-span-1 lg:block">
+        <div className="relative hidden lg:block lg:col-span-1">
           <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-black/10" />
         </div>
 
         {/* Filters */}
-        <aside className="col-span-12 lg:col-span-3">
-          <h2 className="text-sm font-semibold">Filters</h2>
-          <div className="mt-3">
+        <aside className="col-span-12 lg:col-span-3 flex flex-col">
+          <div className="mt-3 flex-1">
             <FilterMenu onFilterChange={setFilters} />
           </div>
         </aside>
