@@ -12,6 +12,7 @@ type Props = {
   isComboMode: boolean;
   items: Recipe[] | Combo[];
   draftMode: boolean;
+  draftCount: number;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
 };
@@ -22,6 +23,7 @@ export default function CardGrid({
   isComboMode,
   items,
   draftMode,
+  draftCount,
   selectedIds,
   onToggleSelect,
 }: Props) {
@@ -34,7 +36,7 @@ export default function CardGrid({
   if (isComboMode) {
     return (
       <div className="flex flex-wrap gap-6">
-        {!draftMode && <DraftEntryCard variant="combo" />}
+        {!draftMode && <DraftEntryCard variant="combo" numDrafts={draftCount} />}
 
         {(items as Combo[]).map((combo) => (
           <ComboCard
@@ -56,7 +58,7 @@ export default function CardGrid({
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-      {!draftMode && <DraftEntryCard variant="recipe" />}
+      {!draftMode && <DraftEntryCard variant="recipe" numDrafts={draftCount} />}
 
       {(items as Recipe[]).map((recipe) => (
         <RecipeCard

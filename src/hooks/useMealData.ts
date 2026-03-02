@@ -14,6 +14,7 @@ type Return = {
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
+  draftCount: number;
 };
 
 export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
@@ -22,6 +23,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
   const [combos, setCombos] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftCount, setDraftCount] = useState(0);
 
   const isComboMode = selectedCategories.has("combo");
 
@@ -72,6 +74,19 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         } else {
           setRecipes(data);
         }
+
+        // Drafts count fetch
+        const draftParams = new URLSearchParams();
+        draftParams.append("isDraft", "true");
+        const draftUrl = `${base}?${draftParams.toString()}`;
+        const draftRes = await fetch(draftUrl, { signal: controller.signal });
+
+        if (!draftRes.ok) {
+          throw new Error(`Request failed: ${draftRes.status}`);
+        }
+
+        const { data: draftData } = await draftRes.json();
+        setDraftCount(Array.isArray(draftData) ? draftData.length : 0);
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Something went wrong");
@@ -104,5 +119,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
     loading,
     error,
     isComboMode,
+    draftCount,
   };
 }

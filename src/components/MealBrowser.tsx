@@ -36,7 +36,7 @@ export default function MealBrowser({
   const [search, setSearch] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
-  const { items, loading, error, isComboMode } = useMealData({
+  const { items, loading, error, isComboMode, draftCount } = useMealData({
     search,
     filters,
     selectedCategories,
@@ -79,6 +79,7 @@ export default function MealBrowser({
           isComboMode={isComboMode}
           items={items}
           draftMode={draftMode}
+          draftCount={draftCount}
           selectedIds={selectedIds}
           onToggleSelect={onToggleSelect}
         />
