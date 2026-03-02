@@ -1,5 +1,6 @@
 import Navbar from "@/components/Navbar";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
+import SortPermissionsButton from "@/components/SortPermissionsButton";
 
 export default function Permissions() {
   const users = [
@@ -29,8 +30,9 @@ export default function Permissions() {
   return (
     <main>
       <Navbar />
-      <h1>Permissions</h1>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
+      <div className="flex justify-end p-5">
+        <SortPermissionsButton align="right" />
+      </div>
       <div className="p-5">
         <PermissionsDisplay users={users} editing={true} />
       </div>
