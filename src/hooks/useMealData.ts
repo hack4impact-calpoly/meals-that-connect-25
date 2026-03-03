@@ -76,17 +76,21 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         }
 
         // Drafts count fetch
-        const draftParams = new URLSearchParams();
-        draftParams.append("isDraft", "true");
-        const draftUrl = `${base}?${draftParams.toString()}`;
-        const draftRes = await fetch(draftUrl, { signal: controller.signal });
+        if (!draftMode) {
+          const draftParams = new URLSearchParams();
+          draftParams.append("isDraft", "true");
+          const draftUrl = `${base}?${draftParams.toString()}`;
+          const draftRes = await fetch(draftUrl, { signal: controller.signal });
 
-        if (!draftRes.ok) {
-          throw new Error(`Request failed: ${draftRes.status}`);
+          if (!draftRes.ok) {
+            throw new Error(`Request failed: ${draftRes.status}`);
+          }
+
+          const { data: draftData } = await draftRes.json();
+          setDraftCount(Array.isArray(draftData) ? draftData.length : 0);
+        } else {
+          setDraftCount(data.length);
         }
-
-        const { data: draftData } = await draftRes.json();
-        setDraftCount(Array.isArray(draftData) ? draftData.length : 0);
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
         setError(err instanceof Error ? err.message : "Something went wrong");
