@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
-import { FilterSelections } from "@/lib/types";
+import { CategoryValue, FilterSelections } from "@/lib/types";
 import { useState } from "react";
 import { ArrowLeft, Trash2, CircleX, CircleCheck } from "lucide-react";
 
 // TODO: same for recipes
-import { publishCombos, deleteCombos } from "@/app/actions/draftActions";
+import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -24,6 +24,7 @@ export default function DraftsPage() {
   // figma doesn't have styles for selectable RecipeCard
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
   const toggleSelect = (id: string, name: string) => {
     setSelectedIds((prev) => {
@@ -53,12 +54,34 @@ export default function DraftsPage() {
     TODO: consider adding min-w and max-w to RecipeCard, allow for responsive grid. Combos are already responsive.
   */
 
+  const handleDelete = async () => {
+    if (selectedCategories.has("combo")) {
+      await deleteCombos(Array.from(selectedIds));
+    } else {
+      await deleteRecipes(Array.from(selectedIds));
+    }
+    setSelectedIds(new Set());
+    setSelectedNames({});
+  };
+
+  const handlePublish = async () => {
+    if (selectedCategories.has("combo")) {
+      await publishCombos(Array.from(selectedIds));
+    } else {
+      await publishRecipes(Array.from(selectedIds));
+    }
+    setSelectedIds(new Set());
+    setSelectedNames({});
+  };
+
   return (
     <main className="flex flex-1 flex-col pt-5 gap-6 overflow-hidden">
       <div className="flex-1 px-5">
         <MealBrowser
           draftMode={true}
           filters={EMPTY_FILTERS}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
           topLeftChildren={
@@ -93,22 +116,14 @@ export default function DraftsPage() {
           <div className="flex gap-5">
             <button
               className="border border-radish-900 h-8 w-8 rounded-4xl mt-1.5 cursor-pointer"
-              onClick={async () => {
-                await deleteCombos(Array.from(selectedIds));
-                setSelectedIds(new Set());
-                setSelectedNames({});
-              }}
+              onClick={handleDelete}
             >
               <Trash2 className="ml-1.5" size={18} color="#d8489a" />
             </button>
 
             <button
               className="flex border bg-radish-900 text-white font-semibold rounded-lg px-4 py-2 cursor-pointer"
-              onClick={async () => {
-                await publishCombos(Array.from(selectedIds));
-                setSelectedIds(new Set());
-                setSelectedNames({});
-              }}
+              onClick={handlePublish}
             >
               Publish <CircleCheck className="ml-1 " size={25} color="#d8489a" fill="white" />
             </button>

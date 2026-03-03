@@ -12,6 +12,8 @@ import { CategoryValue, FilterSelections } from "@/lib/types";
 type Props = {
   draftMode: boolean;
   filters: FilterSelections;
+  selectedCategories: Set<CategoryValue>;
+  setSelectedCategories: React.Dispatch<React.SetStateAction<Set<CategoryValue>>>;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
@@ -28,13 +30,14 @@ const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
 export default function MealBrowser({
   draftMode,
   filters,
+  selectedCategories,
+  setSelectedCategories,
   topLeftChildren,
   topRightChildren,
   selectedIds,
   onToggleSelect,
 }: Props) {
   const [search, setSearch] = useState("");
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
   const { items, loading, error, isComboMode, draftCount } = useMealData({
     search,
