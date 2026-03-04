@@ -7,10 +7,12 @@ export type RecipeCardProps = {
   servingSize?: string;
   tags?: string[];
   isDraft?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
-  Sides: "bg-sides-500 text-sides-900",
+  Side: "bg-sides-500 text-sides-900",
   Fruit: "bg-fruit-500 text-fruit-900",
   Entree: "bg-entree-900 text-entree-500",
   Entrée: "bg-entree-900 text-entree-500",
@@ -24,6 +26,8 @@ export default function RecipeCard({
   servingSize,
   tags = [],
   isDraft = false,
+  isSelected,
+  onSelect,
 }: RecipeCardProps) {
   const caloriesText = calories != null ? `${calories} cal` : null;
 
@@ -36,7 +40,7 @@ export default function RecipeCard({
 
   return (
     <div
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md ${isDraft ? "border-dashed" : ""}`}
+      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
     >
       <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
@@ -54,6 +58,15 @@ export default function RecipeCard({
           {primaryTag}
         </span>
       ) : null}
+
+      {isDraft && onSelect && (
+        <input
+          type="checkbox"
+          checked={!!isSelected}
+          onChange={onSelect}
+          className="h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer"
+        />
+      )}
     </div>
   );
 }

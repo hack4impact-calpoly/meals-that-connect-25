@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import RecipeModel from "./RecipeSchema";
+import ComboModel from "./ComboSchema";
 let connection: typeof mongoose;
 
 /**
@@ -43,6 +44,50 @@ export async function searchRecipesByName(name: string) {
     name: { $regex: name.trim(), $options: "i" },
   }).exec();
   return recipes;
+}
+
+export async function bulkDeleteRecipes(ids: string[]) {
+  await connectDB();
+
+  if (!ids.length) return { deletedCount: 0 };
+
+  const result = await RecipeModel.deleteMany({
+    _id: { $in: ids },
+  });
+
+  return result;
+}
+
+export async function bulkDeleteCombos(ids: string[]) {
+  await connectDB();
+
+  if (!ids.length) return { deletedCount: 0 };
+
+  const result = await ComboModel.deleteMany({
+    _id: { $in: ids },
+  });
+
+  return { deletedCount: result.deletedCount };
+}
+
+export async function bulkPublishRecipes(ids: string[]) {
+  await connectDB();
+
+  if (!ids.length) return { modifiedCount: 0 };
+
+  const result = await RecipeModel.updateMany({ _id: { $in: ids } }, { $set: { isDraft: false } });
+
+  return { modifiedCount: result.modifiedCount };
+}
+
+export async function bulkPublishCombos(ids: string[]) {
+  await connectDB();
+
+  if (!ids.length) return { modifiedCount: 0 };
+
+  const result = await ComboModel.updateMany({ _id: { $in: ids } }, { $set: { isDraft: false } });
+
+  return { modifiedCount: result.modifiedCount };
 }
 
 export default connectDB;

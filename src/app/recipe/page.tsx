@@ -1,11 +1,50 @@
-import Navbar from "@/components/Navbar";
-import RecipesClientPage from "@/components/RecipeClient"; // <-- update path/name to your client page component
+"use client";
 
-export default function RecipesPage() {
+import MealBrowser from "@/components/MealBrowser";
+import FilterMenu from "@/components/FilterMenu";
+import { CategoryValue, FilterSelections } from "@/lib/types";
+import { useState } from "react";
+import { useMealData } from "@/hooks/useMealData";
+
+const EMPTY_FILTERS: FilterSelections = {
+  allergens: new Set(),
+  proteins: new Set(),
+  vitamins: new Set(),
+  dietary: new Set(),
+  serving: new Set(),
+};
+
+export default function RecipePage() {
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [search, setSearch] = useState("");
+
+  const { items, loading, error, isComboMode, draftCount } = useMealData({
+    search,
+    filters,
+    selectedCategories,
+    draftMode: false,
+  });
+
   return (
-    <div className="min-h-screen w-full bg-[#f7f7f7]">
-      <Navbar />
-      <RecipesClientPage />
-    </div>
+    <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
+      <MealBrowser
+        setSearch={setSearch}
+        items={items}
+        loading={loading}
+        error={error}
+        isComboMode={isComboMode}
+        draftCount={draftCount}
+        draftMode={false}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+      />
+
+      <div className="hidden md:block w-px bg-dark-gray self-stretch" />
+
+      <div className="overflow-auto">
+        <FilterMenu onFilterChange={setFilters} />
+      </div>
+    </main>
   );
 }
