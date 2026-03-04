@@ -4,7 +4,6 @@ import Recipe from "@/database/RecipeSchema";
 import { seedRecipes, makeRecipe } from "../helpers/recipes";
 import { NextRequest } from "next/server";
 
-// MongoDB in-memory lifecycle for this file
 withMongo();
 
 function makeRequest(method: string, body?: any, url = "http://localhost/api/recipes") {
@@ -30,14 +29,15 @@ describe("/api/recipes", () => {
       expect(body.totalCount).toBe(15);
     });
 
-    it("returns 404 when page exceeds total pages", async () => {
+    it("returns empty array when page exceeds total pages", async () => {
       await seedRecipes(5);
 
       const res = await GET(new NextRequest("http://localhost/api/recipes?page=2"));
       const body = await res.json();
 
-      expect(res.status).toBe(404);
-      expect(body.error).toBeDefined();
+      expect(res.status).toBe(200);
+      expect(body.data).toHaveLength(0);
+      expect(body.totalCount).toBe(5);
     });
 
     it("filters recipes by tags", async () => {
@@ -52,6 +52,36 @@ describe("/api/recipes", () => {
 
       for (const recipe of body.data) {
         expect(recipe.tags).toContain("Soup");
+      }
+    });
+
+    it("filters by isDraft=true", async () => {
+      await seedRecipes(3, { isDraft: true });
+      await seedRecipes(2, { isDraft: false });
+
+      const res = await GET(new NextRequest("http://localhost/api/recipes?isDraft=true"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data).toHaveLength(3);
+
+      for (const recipe of body.data) {
+        expect(recipe.isDraft).toBe(true);
+      }
+    });
+
+    it("filters by isDraft=false", async () => {
+      await seedRecipes(3, { isDraft: true });
+      await seedRecipes(2, { isDraft: false });
+
+      const res = await GET(new NextRequest("http://localhost/api/recipes?isDraft=false"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.data).toHaveLength(2);
+
+      for (const recipe of body.data) {
+        expect(recipe.isDraft).toBe(false);
       }
     });
   });
@@ -70,7 +100,7 @@ describe("/api/recipes", () => {
     it("returns 400 when required fields are missing", async () => {
       const invalidRecipe = {
         name: "Invalid Recipe",
-        // missing _id, serving, ingredients
+        // missing required fields
       };
 
       const res = await POST(makeRequest("POST", invalidRecipe));
