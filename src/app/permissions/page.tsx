@@ -1,4 +1,3 @@
-import Navbar from "@/components/Navbar";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
 
@@ -29,7 +28,6 @@ export default function Permissions() {
 
   return (
     <main>
-      <Navbar />
       <div className="flex justify-end p-5">
         <SortPermissionsButton align="right" />
       </div>

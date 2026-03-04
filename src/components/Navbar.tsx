@@ -16,7 +16,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="flex items-center justify-between border-b border-medium-gray px-6 py-4">
+    <nav className="flex items-center justify-between border-b bg-white border-medium-gray px-6 py-4">
       <Link href="/">
         <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} />
       </Link>

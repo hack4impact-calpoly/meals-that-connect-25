@@ -1,5 +1,4 @@
-import { fetchRecipesByTags, postRecipe, searchRecipesByName } from "@/database/db";
-import connectDB from "@/database/db";
+import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -8,37 +7,61 @@ export async function GET(req: NextRequest) {
     await connectDB();
 
     const searchParams = req.nextUrl.searchParams;
+
     const name = searchParams.get("name")?.trim();
-
-    if (name) {
-      try {
-        const recipes = await searchRecipesByName(name);
-
-        if (recipes.length === 0) {
-          return NextResponse.json({ error: "No recipes found matching that name" }, { status: 404 });
-        }
-
-        return NextResponse.json(recipes, { status: 200 });
-      } catch (err) {
-        console.error("Error searching recipes:", err);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-      }
-    } else if (searchParams.has("name")) {
-      return NextResponse.json({ error: "Search query cannot be empty" }, { status: 400 });
-    }
-
     const page = Number(searchParams.get("page") ?? 1);
-    const limit = 10; // number of recipes per page
+    const limit = Number(searchParams.get("limit") ?? 10);
+    const isDraftParam = searchParams.get("isDraft");
 
     const tagParams = searchParams
       .getAll("tags")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
-    const [recipes, totalCount] = await Promise.all([fetchRecipesByTags(tagParams), Recipe.countDocuments()]);
+    const categoryParams = searchParams
+      .getAll("categories")
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean);
 
-    if (Math.ceil(totalCount / limit) < page) {
-      return NextResponse.json({ error: "No recipes to display" }, { status: 404 });
+    const filter: any = {};
+
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
     }
+
+    if (tagParams.length > 0 && categoryParams.length > 0) {
+      filter.$and = [
+        {
+          tags: {
+            $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+          },
+        },
+        {
+          $or: categoryParams.map((category) => ({
+            tags: { $elemMatch: { $regex: category, $options: "i" } },
+          })),
+        },
+      ];
+    } else if (tagParams.length > 0) {
+      filter.tags = {
+        $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+      };
+    } else if (categoryParams.length > 0) {
+      filter.$or = categoryParams.map((category) => ({
+        tags: { $elemMatch: { $regex: category, $options: "i" } },
+      }));
+    }
+
+    if (isDraftParam === "true") {
+      filter.isDraft = true;
+    } else if (isDraftParam === "false") {
+      filter.isDraft = false;
+    }
+
+    const totalCount = await Recipe.countDocuments(filter);
+
+    const recipes = await Recipe.find(filter)
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     return NextResponse.json(
       {
