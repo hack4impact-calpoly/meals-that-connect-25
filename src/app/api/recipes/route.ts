@@ -1,5 +1,4 @@
-import { fetchRecipesByTags, postRecipe, searchRecipesByName } from "@/database/db";
-import connectDB from "@/database/db";
+import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -18,6 +17,10 @@ export async function GET(req: NextRequest) {
       .getAll("tags")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+    const categoryParams = searchParams
+      .getAll("categories")
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean);
 
     const filter: any = {};
 
@@ -25,10 +28,27 @@ export async function GET(req: NextRequest) {
       filter.name = { $regex: name, $options: "i" };
     }
 
-    if (tagParams.length > 0) {
+    if (tagParams.length > 0 && categoryParams.length > 0) {
+      filter.$and = [
+        {
+          tags: {
+            $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+          },
+        },
+        {
+          $or: categoryParams.map((category) => ({
+            tags: { $elemMatch: { $regex: category, $options: "i" } },
+          })),
+        },
+      ];
+    } else if (tagParams.length > 0) {
       filter.tags = {
         $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
       };
+    } else if (categoryParams.length > 0) {
+      filter.$or = categoryParams.map((category) => ({
+        tags: { $elemMatch: { $regex: category, $options: "i" } },
+      }));
     }
 
     if (isDraftParam === "true") {
