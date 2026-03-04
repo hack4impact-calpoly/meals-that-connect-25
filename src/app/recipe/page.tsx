@@ -19,7 +19,7 @@ export default function RecipePage() {
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
   const [search, setSearch] = useState("");
 
-  const { items, loading, error, isComboMode, draftCount } = useMealData({
+  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
     search,
     filters,
     selectedCategories,
@@ -35,6 +35,9 @@ export default function RecipePage() {
         error={error}
         isComboMode={isComboMode}
         draftCount={draftCount}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
         draftMode={false}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}

@@ -4,7 +4,8 @@ import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
-import { CategoryValue, Combo, FilterSelections, Recipe } from "@/lib/types";
+import PaginationDisplay from "@/components/PaginationDisplay";
+import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 type Props = {
   setSearch: (s: string) => void;
@@ -13,6 +14,9 @@ type Props = {
   error: string | null;
   isComboMode: boolean;
   draftCount: number;
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
 
   draftMode: boolean;
   selectedCategories: Set<CategoryValue>;
@@ -39,6 +43,9 @@ export default function MealBrowser({
   error,
   isComboMode,
   draftCount,
+  currentPage,
+  totalPages,
+  setCurrentPage,
   draftMode,
   selectedCategories,
   setSelectedCategories,
@@ -74,7 +81,15 @@ export default function MealBrowser({
         <AddNewRecipeButton />
       </div>
 
-      <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
+        <PaginationDisplay
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+          disabled={loading}
+        />
+      </div>
 
       <div className="pb-5 overflow-auto">
         <CardGrid

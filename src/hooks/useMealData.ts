@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { buildFilterTags, hasCategoryTag } from "@/lib/helpers";
+import { useEffect, useState } from "react";
+import { buildFilterTags } from "@/lib/helpers";
 import { CategoryValue, Combo, FilterSelections, Recipe } from "@/lib/types";
 
 type Params = {
@@ -15,8 +15,13 @@ type Return = {
   error: string | null;
   isComboMode: boolean;
   draftCount: number;
+  currentPage: number;
+  totalPages: number;
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   refresh: () => void;
 };
+
+const PAGE_SIZE = 10;
 
 export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -25,6 +30,8 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftCount, setDraftCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const refresh = () => setRefreshKey((k) => k + 1);
@@ -37,6 +44,10 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
     const t = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(t);
   }, [search]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode]);
 
   /* ---------------- Fetch ---------------- */
 
@@ -63,15 +74,28 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
           tagParams.forEach((t) => params.append("tags", t));
         }
 
+        if (!isComboMode) {
+          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "combo");
+          categoryParams.forEach((category) => params.append("categories", category));
+        }
+
         const url = `${base}?${params.toString()}`;
 
-        const res = await fetch(url, { signal: controller.signal });
+        const paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
+        const res = await fetch(paginatedUrl, { signal: controller.signal });
 
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`);
         }
 
-        const { data, totalCount } = await res.json();
+        const { data, totalCount, totalPages: serverTotalPages } = await res.json();
+        const safeTotalPages = Math.max(1, Number(serverTotalPages) || 0);
+        setTotalPages(safeTotalPages);
+
+        if (currentPage > safeTotalPages) {
+          setCurrentPage(safeTotalPages);
+          return;
+        }
 
         if (isComboMode) {
           setCombos(data);
@@ -105,22 +129,9 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
     load();
     return () => controller.abort();
-  }, [debouncedSearch, filters, isComboMode, draftMode, refreshKey]);
+  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, refreshKey]);
 
-  /* ---------------- Local Category Filtering ---------------- */
-
-  const activeCategories = useMemo(
-    () => Array.from(selectedCategories).filter((c) => c !== "combo"),
-    [selectedCategories],
-  );
-
-  const visibleRecipes = useMemo(() => {
-    if (activeCategories.length === 0) return recipes;
-
-    return recipes.filter((recipe) => activeCategories.some((cat) => hasCategoryTag(recipe.tags, cat)));
-  }, [recipes, activeCategories]);
-
-  const items = isComboMode ? combos : visibleRecipes;
+  const items = isComboMode ? combos : recipes;
 
   return {
     items,
@@ -128,6 +139,9 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
     error,
     isComboMode,
     draftCount,
+    currentPage,
+    totalPages,
+    setCurrentPage,
     refresh,
   };
 }
