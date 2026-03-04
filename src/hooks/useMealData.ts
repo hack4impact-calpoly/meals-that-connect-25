@@ -15,6 +15,7 @@ type Return = {
   error: string | null;
   isComboMode: boolean;
   draftCount: number;
+  refresh: () => void;
 };
 
 export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
@@ -24,6 +25,9 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftCount, setDraftCount] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const refresh = () => setRefreshKey((k) => k + 1);
 
   const isComboMode = selectedCategories.has("combo");
 
@@ -67,7 +71,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
           throw new Error(`Request failed: ${res.status}`);
         }
 
-        const { data } = await res.json();
+        const { data, totalCount } = await res.json();
 
         if (isComboMode) {
           setCombos(data);
@@ -76,20 +80,20 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         }
 
         // Drafts count fetch
-        if (!draftMode) {
+        if (draftMode) {
+          setDraftCount(totalCount);
+        } else {
           const draftParams = new URLSearchParams();
           draftParams.append("isDraft", "true");
-          const draftUrl = `${base}?${draftParams.toString()}`;
+          const draftUrl = `${base}?${draftParams.toString()}&limit=1`;
           const draftRes = await fetch(draftUrl, { signal: controller.signal });
 
           if (!draftRes.ok) {
             throw new Error(`Request failed: ${draftRes.status}`);
           }
 
-          const { data: draftData } = await draftRes.json();
-          setDraftCount(Array.isArray(draftData) ? draftData.length : 0);
-        } else {
-          setDraftCount(data.length);
+          const { totalCount: draftTotal } = await draftRes.json();
+          setDraftCount(draftTotal);
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
@@ -101,7 +105,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
     load();
     return () => controller.abort();
-  }, [debouncedSearch, filters, isComboMode, draftMode]);
+  }, [debouncedSearch, filters, isComboMode, draftMode, refreshKey]);
 
   /* ---------------- Local Category Filtering ---------------- */
 
@@ -124,5 +128,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
     error,
     isComboMode,
     draftCount,
+    refresh,
   };
 }

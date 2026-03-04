@@ -4,6 +4,7 @@ import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import { CategoryValue, FilterSelections } from "@/lib/types";
 import { useState } from "react";
+import { useMealData } from "@/hooks/useMealData";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -16,12 +17,25 @@ const EMPTY_FILTERS: FilterSelections = {
 export default function RecipePage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [search, setSearch] = useState("");
+
+  const { items, loading, error, isComboMode, draftCount } = useMealData({
+    search,
+    filters,
+    selectedCategories,
+    draftMode: false,
+  });
 
   return (
     <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
       <MealBrowser
+        setSearch={setSearch}
+        items={items}
+        loading={loading}
+        error={error}
+        isComboMode={isComboMode}
+        draftCount={draftCount}
         draftMode={false}
-        filters={filters}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
       />

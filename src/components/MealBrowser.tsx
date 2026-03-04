@@ -1,21 +1,26 @@
 "use client";
 
-import { useState } from "react";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
-
-import { useMealData } from "@/hooks/useMealData";
-import { CategoryValue, FilterSelections } from "@/lib/types";
+import { CategoryValue, Combo, FilterSelections, Recipe } from "@/lib/types";
 
 type Props = {
+  setSearch: (s: string) => void;
+  items: Recipe[] | Combo[];
+  loading: boolean;
+  error: string | null;
+  isComboMode: boolean;
+  draftCount: number;
+
   draftMode: boolean;
-  filters: FilterSelections;
   selectedCategories: Set<CategoryValue>;
   setSelectedCategories: React.Dispatch<React.SetStateAction<Set<CategoryValue>>>;
+
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
+
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
 };
@@ -28,8 +33,13 @@ const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
 ];
 
 export default function MealBrowser({
+  setSearch,
+  items,
+  loading,
+  error,
+  isComboMode,
+  draftCount,
   draftMode,
-  filters,
   selectedCategories,
   setSelectedCategories,
   topLeftChildren,
@@ -37,15 +47,6 @@ export default function MealBrowser({
   selectedIds,
   onToggleSelect,
 }: Props) {
-  const [search, setSearch] = useState("");
-
-  const { items, loading, error, isComboMode, draftCount } = useMealData({
-    search,
-    filters,
-    selectedCategories,
-    draftMode,
-  });
-
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
       const next = new Set(prev);
@@ -75,7 +76,7 @@ export default function MealBrowser({
 
       <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
 
-      <div className="overflow-auto">
+      <div className="pb-5 overflow-auto">
         <CardGrid
           loading={loading}
           error={error}

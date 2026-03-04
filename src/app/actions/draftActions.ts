@@ -9,8 +9,6 @@ export async function publishCombos(ids: string[]) {
   }
 
   await bulkPublishCombos(ids);
-
-  revalidatePath("/drafts");
 }
 
 export async function deleteCombos(ids: string[]) {
@@ -19,8 +17,6 @@ export async function deleteCombos(ids: string[]) {
   }
 
   await bulkDeleteCombos(ids);
-
-  revalidatePath("/drafts");
 }
 
 export async function publishRecipes(ids: string[]) {
@@ -29,8 +25,6 @@ export async function publishRecipes(ids: string[]) {
   }
 
   await bulkPublishRecipes(ids);
-
-  revalidatePath("/drafts");
 }
 
 export async function deleteRecipes(ids: string[]) {
@@ -39,6 +33,4 @@ export async function deleteRecipes(ids: string[]) {
   }
 
   await bulkDeleteRecipes(ids);
-
-  revalidatePath("/drafts");
 }
