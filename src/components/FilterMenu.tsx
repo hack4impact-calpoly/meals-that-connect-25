@@ -26,11 +26,11 @@ const FILTER_SECTIONS: FilterSection[] = [
     id: "allergens",
     label: "Allergens / Exclusions",
     options: [
-      { id: "dairy", label: "Dairy-Free" },
-      { id: "gluten", label: "Gluten-Free" },
-      { id: "nuts", label: "Nut-Free" },
-      { id: "soy", label: "Soy-Free" },
-      { id: "shellfish", label: "Shellfish-Free" },
+      { id: "dairy-free", label: "Dairy-Free" },
+      { id: "gluten-free", label: "Gluten-Free" },
+      { id: "nut-free", label: "Nut-Free" },
+      { id: "soy-free", label: "Soy-Free" },
+      { id: "shellfish-free", label: "Shellfish-Free" },
     ],
   },
   {
@@ -70,10 +70,10 @@ const FILTER_SECTIONS: FilterSection[] = [
     id: "serving",
     label: "Serving Sizes",
     options: [
-      { id: "single", label: "1 Serving" },
-      { id: "small", label: "2-3 Servings" },
-      { id: "family", label: "4-6 Servings" },
-      { id: "party", label: "7+ Servings" },
+      { id: "single-serving", label: "1 Serving" },
+      { id: "small-serving", label: "2-3 Servings" },
+      { id: "family-serving", label: "4-6 Servings" },
+      { id: "party-serving", label: "7+ Servings" },
     ],
   },
 ];
