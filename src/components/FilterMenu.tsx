@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import FilterTag from "./FilterTag";
 
 type FilterOption = {
@@ -88,6 +88,10 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
 
   const [selections, setSelections] = useState<FilterSelections>(initialSelections);
 
+  useEffect(() => {
+    onFilterChange?.(selections);
+  }, [onFilterChange, selections]);
+
   const handleToggleOption = (sectionId: string, optionId: string) => {
     setSelections((prev) => {
       const next: FilterSelections = { ...prev };
@@ -100,7 +104,6 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
       }
 
       next[sectionId] = nextSet;
-      onFilterChange?.(next);
       return next;
     });
   };
