@@ -1,52 +1,23 @@
-import DashboardCalendar from "@/components/DashboardCalendar";
 import WeeklyMenu from "@/components/WeeklyMenu";
-import ComboCard from "@/components/ComboCard";
-import DashboardDate from "@/components/DashboardDate";
-import { FileText, PlusCircle } from "lucide-react";
+import SummaryCard from "@/components/SummaryCard";
 
 export default function Home() {
   const today = new Date();
-  const dayDateString = today.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
 
   return (
-    <main className="font-montserrat px-8 py-6">
-      {/* Today's Meal (left), Calendar + date label (right) */}
-      <div className="flex items-start gap-16">
-        <div>
-          <h2 className="mb-4 text-2xl font-bold text-black">Today&apos;s Meal</h2>
-          <div className="flex items-start gap-12">
-            <DashboardDate />
-            <ComboCard name="Italian Noodle Casserole" tags={["Mango Cup"]} serving={12} isDraft={false} />
+    <main className="overflow-auto font-montserrat">
+      <div className="px-8 py-6">
+        <div className="grid grid-cols-[3fr_2fr] gap-6 items-stretch">
+          {/* Left – Greeting + Weekly Calendar */}
+          <div className="flex flex-col gap-6">
+            <h1 className="text-4xl font-bold text-black">Hi, Brian!</h1>
+            <WeeklyMenu dateToday={today} />
           </div>
-        </div>
 
-        <div className="flex flex-1 items-start gap-16">
-          <DashboardCalendar />
-        </div>
-      </div>
-
-      {/* his Week's Menu (left), Recipe Shortcuts (right) */}
-      <div className="mt-8 flex items-start gap-16">
-        <div>
-          <h2 className="mb-4 text-2xl font-bold text-black">This Week&apos;s Menu</h2>
-          <WeeklyMenu dateToday={today} />
-        </div>
-
-        <div>
-          <h2 className="mb-4 text-2xl font-bold text-black">Recipe Shortcuts</h2>
-          <div className="flex flex-col gap-3 w-72">
-            <button className="flex w-full items-center justify-between rounded-md border border-cucumber bg-white px-4 py-2 text-sm font-medium text-cucumber hover:bg-cucumber/10">
-              Add Item
-              <PlusCircle className="h-5 w-5" />
-            </button>
-            <button className="flex w-full items-center justify-between rounded-md border border-cucumber bg-white px-4 py-2 text-sm font-medium text-cucumber hover:bg-cucumber/10">
-              View Drafts
-              <FileText className="h-5 w-5" />
-            </button>
+          {/* Right – Summary Cards */}
+          <div className="flex flex-col gap-4">
+            <SummaryCard title="Meals Planned Summary" value={15} total={30} labelSuffix="Meals Planned" />
+            <SummaryCard title="Nutrition Summary" value={15} total={15} labelSuffix="Meals Met Nutrition Quota" />
           </div>
         </div>
       </div>
