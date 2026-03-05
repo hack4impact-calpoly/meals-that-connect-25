@@ -69,7 +69,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
         if (trimmed) {
           params.append("name", trimmed);
-        } else if (!isComboMode) {
+        } else {
           const tagParams = buildFilterTags(filters);
           tagParams.forEach((t) => params.append("tags", t));
         }
@@ -87,7 +87,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`);
         }
-
         const { data, totalCount, totalPages: serverTotalPages } = await res.json();
         const safeTotalPages = Math.max(1, Number(serverTotalPages) || 0);
         setTotalPages(safeTotalPages);

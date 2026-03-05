@@ -12,11 +12,21 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const tagParams = searchParams
+      .getAll("tags")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
 
     const filter: any = {};
 
     if (name) {
       filter.name = { $regex: name, $options: "i" };
+    }
+
+    if (tagParams.length > 0) {
+      filter.filters = {
+        $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+      };
     }
 
     if (isDraftParam === "true") {
