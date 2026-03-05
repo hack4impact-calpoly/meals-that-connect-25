@@ -5,7 +5,7 @@ export default function Home() {
   const today = new Date();
 
   return (
-    <main className="min-h-screen font-montserrat">
+    <main className="overflow-auto font-montserrat">
       <div className="px-8 py-6">
         <div className="grid grid-cols-[3fr_2fr] gap-6 items-stretch">
           {/* Left – Greeting + Weekly Calendar */}
