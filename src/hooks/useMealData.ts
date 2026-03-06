@@ -71,7 +71,13 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
           params.append("name", trimmed);
         } else {
           const tagParams = buildFilterTags(filters);
-          tagParams.forEach((t) => params.append("tags", t));
+          tagParams.forEach((t) => {
+            if (t.includes("serving")) {
+              params.append("servings", t);
+            } else {
+              params.append("tags", t);
+            }
+          });
         }
 
         if (!isComboMode) {
