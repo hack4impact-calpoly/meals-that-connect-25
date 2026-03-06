@@ -1,7 +1,8 @@
 "use client";
 
 import { ChevronDown, SlidersHorizontal } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import FilterTag from "./FilterTag";
 
 type FilterOption = {
   id: string;
@@ -25,11 +26,11 @@ const FILTER_SECTIONS: FilterSection[] = [
     id: "allergens",
     label: "Allergens / Exclusions",
     options: [
-      { id: "dairy", label: "Dairy-Free" },
-      { id: "gluten", label: "Gluten-Free" },
-      { id: "nuts", label: "Nut-Free" },
-      { id: "soy", label: "Soy-Free" },
-      { id: "shellfish", label: "Shellfish-Free" },
+      { id: "dairy-free", label: "Dairy-Free" },
+      { id: "gluten-free", label: "Gluten-Free" },
+      { id: "nut-free", label: "Nut-Free" },
+      { id: "soy-free", label: "Soy-Free" },
+      { id: "shellfish-free", label: "Shellfish-Free" },
     ],
   },
   {
@@ -69,10 +70,10 @@ const FILTER_SECTIONS: FilterSection[] = [
     id: "serving",
     label: "Serving Sizes",
     options: [
-      { id: "single", label: "1 Serving" },
-      { id: "small", label: "2-3 Servings" },
-      { id: "family", label: "4-6 Servings" },
-      { id: "party", label: "7+ Servings" },
+      { id: "single-serving", label: "1 Serving" },
+      { id: "small-serving", label: "2-3 Servings" },
+      { id: "family-serving", label: "4-6 Servings" },
+      { id: "party-serving", label: "7+ Servings" },
     ],
   },
 ];
@@ -87,6 +88,10 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
 
   const [selections, setSelections] = useState<FilterSelections>(initialSelections);
 
+  useEffect(() => {
+    onFilterChange?.(selections);
+  }, [onFilterChange, selections]);
+
   const handleToggleOption = (sectionId: string, optionId: string) => {
     setSelections((prev) => {
       const next: FilterSelections = { ...prev };
@@ -99,10 +104,23 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
       }
 
       next[sectionId] = nextSet;
-      onFilterChange?.(next);
       return next;
     });
   };
+
+  const selectedTags = useMemo(() => {
+    return FILTER_SECTIONS.flatMap((section) => {
+      const sectionSelections = selections[section.id];
+      return section.options
+        .filter((option) => sectionSelections?.has(option.id))
+        .map((option) => ({
+          key: `${section.id}-${option.id}`,
+          sectionId: section.id,
+          optionId: option.id,
+          label: option.label,
+        }));
+    });
+  }, [selections]);
 
   return (
     <div className="w-72 border border-gray-300 bg-white px-6 py-5 font-montserrat">
@@ -120,6 +138,17 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
           onToggle={(optionId) => handleToggleOption(section.id, optionId)}
         />
       ))}
+      {selectedTags.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selectedTags.map((tag) => (
+            <FilterTag
+              key={tag.key}
+              label={tag.label}
+              onRemove={() => handleToggleOption(tag.sectionId, tag.optionId)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

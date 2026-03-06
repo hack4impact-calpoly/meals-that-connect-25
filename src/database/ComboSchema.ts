@@ -10,7 +10,7 @@ const ComboSchema = new Schema(
     fruits: { type: [Ingredient.schema], required: false },
     filters: { type: [String], required: false },
     notes: { type: String, required: false },
-    allergens: { type: String, required: false },
+    allergens: { type: [String], required: false },
     instructions: { type: String, required: false },
     nutritional_info: { type: [Number], required: false },
     imageUrl: { type: String, required: false },

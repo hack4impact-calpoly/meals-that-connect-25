@@ -19,7 +19,7 @@ export function makeCombo(overrides = {}) {
     fruits: [makeIngredient({ name: "Apple", quantity: "1" })],
     filters: ["Vegetarian"],
     notes: "Test combo fixture",
-    allergens: "None",
+    allergens: [],
     instructions: "Serve together.",
     nutritional_info: [200, 5, 30],
     ...overrides,
