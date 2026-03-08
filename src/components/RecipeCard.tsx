@@ -9,6 +9,7 @@ export type RecipeCardProps = {
   isDraft?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  onOpen?: () => void;
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
@@ -28,6 +29,7 @@ export default function RecipeCard({
   isDraft = false,
   isSelected,
   onSelect,
+  onOpen,
 }: RecipeCardProps) {
   const caloriesText = calories != null ? `${calories} cal` : null;
 
@@ -40,7 +42,8 @@ export default function RecipeCard({
 
   return (
     <div
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
+      onClick={onOpen}
+      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
     >
       <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
@@ -63,7 +66,11 @@ export default function RecipeCard({
         <input
           type="checkbox"
           checked={!!isSelected}
-          onChange={onSelect}
+          onChange={(e) => {
+            e.stopPropagation();
+            onSelect?.();
+          }}
+          onClick={(e) => e.stopPropagation()} // to prevent checkbox from triggering popUp component
           className="h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer"
         />
       )}

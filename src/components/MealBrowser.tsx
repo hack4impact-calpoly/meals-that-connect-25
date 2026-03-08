@@ -24,6 +24,7 @@ type Props = {
 
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
+  onOpenItem?: (item: Recipe | Combo) => void;
 
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
@@ -53,6 +54,7 @@ export default function MealBrowser({
   topRightChildren,
   selectedIds,
   onToggleSelect,
+  onOpenItem,
 }: Props) {
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
@@ -101,6 +103,7 @@ export default function MealBrowser({
           draftCount={draftCount}
           selectedIds={selectedIds}
           onToggleSelect={onToggleSelect}
+          onOpenItem={onOpenItem}
         />
       </div>
     </div>

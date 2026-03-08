@@ -2,9 +2,11 @@
 
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
+import ViewRecipePopUp from "@/components/ViewRecipePopUp";
 import { CategoryValue, FilterSelections } from "@/lib/types";
 import { useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
+import { Recipe, Combo } from "@/lib/types";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -18,6 +20,13 @@ export default function RecipePage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
   const [search, setSearch] = useState("");
+  const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleOpenItem = (item: Recipe | Combo) => {
+    setSelectedItem(item);
+    setIsOpen(true);
+  };
 
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
     search,
@@ -41,6 +50,7 @@ export default function RecipePage() {
         draftMode={false}
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
+        onOpenItem={handleOpenItem}
       />
 
       <div className="hidden md:block w-px bg-dark-gray self-stretch" />
@@ -48,6 +58,8 @@ export default function RecipePage() {
       <div className="overflow-auto">
         <FilterMenu onFilterChange={setFilters} />
       </div>
+
+      <ViewRecipePopUp open={isOpen} onClose={setIsOpen} item={selectedItem} isComboMode={isComboMode} />
     </main>
   );
 }
