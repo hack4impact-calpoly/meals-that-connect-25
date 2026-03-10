@@ -1,26 +1,52 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
+import MealBrowser from "@/components/MealBrowser";
+import FilterMenu from "@/components/FilterMenu";
+import { CategoryValue, FilterSelections } from "@/lib/types";
 import { useState } from "react";
+import { useMealData } from "@/hooks/useMealData";
 
-export default function Recipe() {
-  const [searchQuery, setSearchQuery] = useState("");
+const EMPTY_FILTERS: FilterSelections = {
+  allergens: new Set(),
+  proteins: new Set(),
+  vitamins: new Set(),
+  dietary: new Set(),
+  serving: new Set(),
+};
+
+export default function RecipePage() {
+  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [search, setSearch] = useState("");
+
+  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
+    search,
+    filters,
+    selectedCategories,
+    draftMode: false,
+  });
 
   return (
-    <main>
-      <Navbar />
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Recipe</h1>
-        <div className="mt-4 flex items-center gap-4">
-          <input
-            type="text"
-            placeholder="Search Recipes..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-64 rounded-lg border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
-          />
-          <button className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600">Add Recipe</button>
-        </div>
+    <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
+      <MealBrowser
+        setSearch={setSearch}
+        items={items}
+        loading={loading}
+        error={error}
+        isComboMode={isComboMode}
+        draftCount={draftCount}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        setCurrentPage={setCurrentPage}
+        draftMode={false}
+        selectedCategories={selectedCategories}
+        setSelectedCategories={setSelectedCategories}
+      />
+
+      <div className="hidden md:block w-px bg-dark-gray self-stretch" />
+
+      <div className="overflow-auto">
+        <FilterMenu onFilterChange={setFilters} />
       </div>
     </main>
   );

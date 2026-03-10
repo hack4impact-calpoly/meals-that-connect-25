@@ -1,6 +1,6 @@
-import connectDB, { postRecipe } from "@/database/db";
-import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
+import connectDB from "@/database/db";
+import Combo from "@/database/ComboSchema";
 
 type ServingRange = {
   min: number;
@@ -24,14 +24,9 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
-
     const tagParams = searchParams
       .getAll("tags")
       .map((t) => t.trim().toLowerCase())
-      .filter(Boolean);
-    const categoryParams = searchParams
-      .getAll("categories")
-      .map((c) => c.trim().toLowerCase())
       .filter(Boolean);
     const servingParams = searchParams
       .getAll("servings")
@@ -44,22 +39,10 @@ export async function GET(req: NextRequest) {
       filter.name = { $regex: name, $options: "i" };
     }
 
-    const andClauses: any[] = [];
-
     if (tagParams.length > 0) {
-      andClauses.push({
-        tags: {
-          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-        },
-      });
-    }
-
-    if (categoryParams.length > 0) {
-      andClauses.push({
-        $or: categoryParams.map((category) => ({
-          tags: { $elemMatch: { $regex: category, $options: "i" } },
-        })),
-      });
+      filter.filters = {
+        $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+      };
     }
 
     const servingRanges = servingParams
@@ -67,17 +50,9 @@ export async function GET(req: NextRequest) {
       .filter((range): range is ServingRange => Boolean(range));
 
     if (servingRanges.length > 0) {
-      andClauses.push({
-        $or: servingRanges.map((range) =>
-          range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
-        ),
-      });
-    }
-
-    if (andClauses.length > 1) {
-      filter.$and = andClauses;
-    } else if (andClauses.length === 1) {
-      Object.assign(filter, andClauses[0]);
+      filter.$or = servingRanges.map((range) =>
+        range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
+      );
     }
 
     if (isDraftParam === "true") {
@@ -86,15 +61,15 @@ export async function GET(req: NextRequest) {
       filter.isDraft = false;
     }
 
-    const totalCount = await Recipe.countDocuments(filter);
+    const totalCount = await Combo.countDocuments(filter);
 
-    const recipes = await Recipe.find(filter)
+    const combos = await Combo.find(filter)
       .skip((page - 1) * limit)
       .limit(limit);
 
     return NextResponse.json(
       {
-        data: recipes,
+        data: combos,
         page,
         limit,
         totalPages: Math.ceil(totalCount / limit),
@@ -103,21 +78,25 @@ export async function GET(req: NextRequest) {
       { status: 200 },
     );
   } catch (err) {
-    console.error("Error fetching recipes:", err);
+    console.error("Error fetching combos:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const recipeData = await req.json();
-    const response = await postRecipe(recipeData);
-    return NextResponse.json(response, { status: 201 });
+    const comboData = await req.json();
+    await connectDB();
+
+    const combo = new Combo(comboData);
+    await combo.save();
+
+    return NextResponse.json(combo, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
-      return NextResponse.json({ error: err.message }, { status: 400 });
+      return NextResponse.json({ error: "invalid data" }, { status: 400 });
     }
-    console.error("Error creating recipe:", err);
+    console.error("Error creating combo:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -1,27 +1,26 @@
-import Navbar from "@/components/Navbar";
-import RecipeCard from "@/components/RecipeCard";
+import WeeklyMenu from "@/components/WeeklyMenu";
+import SummaryCard from "@/components/SummaryCard";
 
 export default function Home() {
   const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
 
   return (
-    <main>
-      <Navbar />
-      <div className="p-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <p className="mt-2 text-lg text-gray-600">{formattedDate}</p>
+    <main className="overflow-auto font-montserrat">
+      <div className="px-8 py-6">
+        <div className="grid grid-cols-[3fr_2fr] gap-6 items-stretch">
+          {/* Left – Greeting + Weekly Calendar */}
+          <div className="flex flex-col gap-6">
+            <h1 className="text-4xl font-bold text-black">Hi, Brian!</h1>
+            <WeeklyMenu dateToday={today} />
+          </div>
+
+          {/* Right – Summary Cards */}
+          <div className="flex flex-col gap-4">
+            <SummaryCard title="Meals Planned Summary" value={15} total={30} labelSuffix="Meals Planned" />
+            <SummaryCard title="Nutrition Summary" value={15} total={15} labelSuffix="Meals Met Nutrition Quota" />
+          </div>
+        </div>
       </div>
-      <h1>Dashboard</h1>
-      <h1 className="text-3xl font-bold underline">Hello world!</h1>
-      <RecipeCard id={"recipe_test_001"} />
-      <RecipeCard id={"mango"} />
-      <RecipeCard id={"masdf"} />
     </main>
   );
 }
