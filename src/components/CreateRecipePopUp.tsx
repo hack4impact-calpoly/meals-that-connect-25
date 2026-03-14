@@ -5,6 +5,7 @@ import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { Apple, Carrot, CircleAlert, Tag, type LucideIcon } from "lucide-react";
 import type { Recipe } from "@/lib/types";
 import RecipeSubField from "./RecipeSubField";
+import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
 type Props = { open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
@@ -51,8 +52,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   const [fruitOptions, setFruitOptions] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
-  const filterOptions = ["Chicken", "No Tree Nut", "No Soy", "No Pork"];
-  const allergenOptions = ["Milk/Dairy", "Gluten", "Shellfish", "Egg"];
+  const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
+    section.options.map((option) => option.label),
+  );
+  const allergenOptions = FILTER_SECTIONS.filter((section) => section.id == "allergens").flatMap((section) =>
+    section.options.map((option) => option.label),
+  );
 
   const [title, setTitle] = useState("");
   const [id, setId] = useState<string | null>(null);
