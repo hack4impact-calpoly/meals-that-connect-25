@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import type { LucideIcon } from "lucide-react";
+import { Apple, Carrot, CircleAlert, Tag, type LucideIcon } from "lucide-react";
+import type { Recipe } from "@/lib/types";
+import RecipeSubField from "./RecipeSubField";
+import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
 type Props = { open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
@@ -41,6 +44,20 @@ function NutritionalInfo({
 
 export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) {
   const Icon = recipeType?.icon;
+  const [selectedSides, setSelectedSides] = useState<string[]>([]);
+  const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+  const [sideOptions, setSideOptions] = useState<string[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<string[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
+    section.options.map((option) => option.label),
+  );
+  const allergenOptions = FILTER_SECTIONS.filter((section) => section.id == "allergens").flatMap((section) =>
+    section.options.map((option) => option.label),
+  );
 
   const [title, setTitle] = useState("");
   const [id, setId] = useState<string | null>(null);
@@ -57,9 +74,69 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   useEffect(() => {
     if (!open) return;
     setTitle("");
+    setSelectedSides([]);
+    setSelectedFruit([]);
+    setSelectedFilters([]);
+    setSelectedAllergens([]);
     setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
     setId(null);
     setBusy(null);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const controller = new AbortController();
+
+    async function loadRecipeOptions() {
+      setLoadingOptions(true);
+
+      try {
+        const buildUrl = (category: "side" | "fruit") => {
+          const params = new URLSearchParams({
+            categories: category,
+            isDraft: "false",
+            page: "1",
+            limit: "200",
+          });
+
+          return `/api/recipes?${params.toString()}`;
+        };
+
+        const [sideRes, fruitRes] = await Promise.all([
+          fetch(buildUrl("side"), { signal: controller.signal }),
+          fetch(buildUrl("fruit"), { signal: controller.signal }),
+        ]);
+
+        if (!sideRes.ok || !fruitRes.ok) {
+          throw new Error("Failed to load recipe options");
+        }
+
+        const [sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }] = await Promise.all([
+          sideRes.json(),
+          fruitRes.json(),
+        ]);
+
+        const toOptionNames = (recipes: Recipe[] = []) =>
+          Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
+            a.localeCompare(b),
+          );
+
+        setSideOptions(toOptionNames(sideJson.data));
+        setFruitOptions(toOptionNames(fruitJson.data));
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Failed to load side/fruit recipe options", error);
+        setSideOptions([]);
+        setFruitOptions([]);
+      } finally {
+        setLoadingOptions(false);
+      }
+    }
+
+    loadRecipeOptions();
+
+    return () => controller.abort();
   }, [open]);
 
   const payload = {
@@ -135,6 +212,48 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
                 className="w-full rounded-md border border-pepper/20 px-3 py-2 font-montserrat text-pepper outline-none focus:border-pepper/50"
               />
             </label>
+          </div>
+
+          {/* Tag Settings Field */}
+          <div className="mt-6">
+            <div className="mt-3 grid gap-4">
+              <RecipeSubField
+                label="Sides"
+                icon={Carrot}
+                options={sideOptions}
+                selectedValues={selectedSides}
+                onChange={setSelectedSides}
+                placeholder={loadingOptions ? "Loading sides..." : "Search sides"}
+                variant="sides"
+              />
+              <RecipeSubField
+                label="Fruit"
+                icon={Apple}
+                options={fruitOptions}
+                selectedValues={selectedFruit}
+                onChange={setSelectedFruit}
+                placeholder={loadingOptions ? "Loading fruit..." : "Search fruit"}
+                variant="fruit"
+              />
+              <RecipeSubField
+                label="Filters"
+                icon={Tag}
+                options={filterOptions}
+                selectedValues={selectedFilters}
+                onChange={setSelectedFilters}
+                placeholder="Search filters"
+                variant="filters"
+              />
+              <RecipeSubField
+                label="Allergens"
+                icon={CircleAlert}
+                options={allergenOptions}
+                selectedValues={selectedAllergens}
+                onChange={setSelectedAllergens}
+                placeholder="Search allergens"
+                variant="allergens"
+              />
+            </div>
           </div>
 
           {/* Nutritional Info */}

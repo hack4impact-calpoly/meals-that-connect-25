@@ -21,7 +21,7 @@ type FilterMenuProps = {
   onFilterChange?: (selections: FilterSelections) => void;
 };
 
-const FILTER_SECTIONS: FilterSection[] = [
+export const FILTER_SECTIONS: FilterSection[] = [
   {
     id: "allergens",
     label: "Allergens / Exclusions",
