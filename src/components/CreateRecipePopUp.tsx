@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { Apple, Carrot, CircleAlert, Tag, type LucideIcon } from "lucide-react";
+import ImageUploader from "@/components/ImageUploader";
 import type { Recipe } from "@/lib/types";
 import RecipeSubField from "./RecipeSubField";
 import { FILTER_SECTIONS } from "./FilterMenu";
@@ -60,6 +61,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   );
 
   const [title, setTitle] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [id, setId] = useState<string | null>(null);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
   const [nutrition, setNutrition] = useState({
@@ -139,18 +141,20 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     return () => controller.abort();
   }, [open]);
 
-  const payload = {
-    _id: crypto.randomUUID(),
-    name: title.trim(),
-    isDraft: true,
-    tags: [],
-    imageUrl: null,
-    instructions: "",
-    comments: "",
-  };
-
   async function publish() {
     if (!title.trim()) return;
+
+    const payload = {
+      _id: crypto.randomUUID(),
+      name: title.trim(),
+      isDraft: true,
+      tags: [],
+      imageUrl: null,
+      instructions: "",
+      comments: "",
+      ...(imageUrl ? { imageUrl } : {}),
+    };
+
     setBusy("publish");
     try {
       const res = await fetch("/api/recipes", {
@@ -191,7 +195,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <DialogPanel
           transition
-          className="w-full max-w-3xl rounded-lg bg-white p-6 data-closed:scale-95 data-closed:opacity-0 data-enter:duration-200 data-leave:duration-150"
+          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 data-closed:scale-95 data-closed:opacity-0 data-enter:duration-200 data-leave:duration-150"
         >
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -199,6 +203,13 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             <h2 className="text-xl font-montserrat font-semibold text-pepper">
               Create {recipeType?.label ?? "Recipe"}
             </h2>
+          </div>
+
+          {/* Image Upload */}
+          <div className="mt-6">
+            <div className="mt-2">
+              <ImageUploader onUpload={(url) => setImageUrl(url)} />
+            </div>
           </div>
 
           {/* Title */}
