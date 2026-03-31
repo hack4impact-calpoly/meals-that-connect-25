@@ -18,7 +18,7 @@ export default function Navbar() {
   return (
     <nav className="flex items-center justify-between border-b bg-white border-medium-gray px-6 py-4">
       <Link href="/">
-        <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} />
+        <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} priority />
       </Link>
 
       <div className="ml-auto mr-20 flex items-center gap-10">

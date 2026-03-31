@@ -74,8 +74,14 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
             {/* image */}
             <div className="relative h-28 w-full bg-medium-gray rounded-lg">
               {"imageUrl" in item && item.imageUrl && (
-                <div className="mb-4">
-                  <Image src={item.imageUrl} alt="" className="w-full max-h-64 object-cover rounded" />
+                <div className="relative w-full h-64 mb-4">
+                  <Image
+                    src={item.imageUrl}
+                    alt=""
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="w-full max-h-64 object-cover rounded"
+                  />
                 </div>
               )}
               {/* <span
