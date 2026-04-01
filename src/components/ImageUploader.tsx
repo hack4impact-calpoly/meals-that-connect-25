@@ -74,7 +74,7 @@ export default function ImageUploader({ onUpload }: Props) {
       {!preview && (
         <div
           onClick={() => inputRef.current?.click()}
-          className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-pepper/30 bg-white px-6 py-6 text-center transition hover:border-pepper/60"
+          className="flex cursor-pointer flex-col items-center justify-center gap-3 px-6 py-6 text-center transition"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-pepper/40 text-pepper">
             <Plus size={20} />

@@ -2,10 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { Apple, Carrot, CircleAlert, Tag, type LucideIcon } from "lucide-react";
+import { AlignLeft, Apple, Carrot, CircleAlert, Minus, Plus, Save, Tag, Trash2, type LucideIcon } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 import type { Recipe } from "@/lib/types";
-import RecipeSubField from "./RecipeSubField";
 import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
@@ -43,8 +42,39 @@ function NutritionalInfo({
   );
 }
 
+function FieldRow({
+  icon: Icon,
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-4 rounded-2xl border border-pepper/20 bg-slate-50 px-4 py-3">
+      <div className="flex items-center gap-3 text-sm font-semibold text-pepper">
+        <Icon className="h-5 w-5 text-pepper" strokeWidth={2.2} />
+        <span>{label}</span>
+      </div>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="min-w-0 flex-1 rounded-xl border border-pepper/20 bg-white px-3 py-2 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
+      />
+    </label>
+  );
+}
+
 export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) {
   const Icon = recipeType?.icon;
+  const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
+  const isCombo = recipeType?.id === "combo";
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -64,6 +94,10 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   const [imageUrl, setImageUrl] = useState<string>("");
   const [id, setId] = useState<string | null>(null);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
+  const [notes, setNotes] = useState("");
+  const [servings, setServings] = useState("1");
+  const [ingredientsText, setIngredientsText] = useState("");
+  const [instructionsText, setInstructionsText] = useState("");
   const [nutrition, setNutrition] = useState({
     calories: "",
     protein: "",
@@ -80,6 +114,10 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     setSelectedFruit([]);
     setSelectedFilters([]);
     setSelectedAllergens([]);
+    setNotes("");
+    setServings("1");
+    setIngredientsText("");
+    setInstructionsText("");
     setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
     setId(null);
     setBusy(null);
@@ -141,17 +179,30 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     return () => controller.abort();
   }, [open]);
 
-  async function publish() {
-    if (!title.trim()) return;
+  async function saveRecipe(isDraft: boolean) {
+    if (!isDraft && !title.trim()) return;
+
+    const ingredientLines = ingredientsText
+      .split(/[\r\n,]+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    const tags = [recipeType?.id, ...selectedFilters, ...selectedSides, ...selectedFruit, ...selectedAllergens]
+      .filter((tag): tag is string => Boolean(tag))
+      .map((tag) => tag.trim().toLowerCase());
 
     const payload = {
       _id: crypto.randomUUID(),
-      name: title.trim(),
-      isDraft: true,
-      tags: [],
-      imageUrl: null,
-      instructions: "",
-      comments: "",
+      name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+      isDraft,
+      tags: Array.from(new Set(tags)),
+      serving: Number(servings) || 1,
+      ingredients:
+        ingredientLines.length > 0
+          ? ingredientLines.map((name) => ({ name, quantity: "1" }))
+          : [{ name: "Ingredient", quantity: "1" }],
+      instructions: instructionsText,
+      comments: notes,
       ...(imageUrl ? { imageUrl } : {}),
     };
 
@@ -162,14 +213,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error(`Publish failed (${res.status})`);
-      const created = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(`Save failed (${res.status})`);
+      await res.json().catch(() => ({}));
       setId(payload._id);
-      /*onClose(); /* comment out to not close automatically when publishing*/
     } finally {
       setBusy(null);
     }
-    setId(payload._id);
   }
 
   async function trash() {
@@ -198,16 +247,51 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 data-closed:scale-95 data-closed:opacity-0 data-enter:duration-200 data-leave:duration-150"
         >
           {/* Header */}
-          <div className="flex items-center gap-3">
-            {Icon && <Icon size={28} />}
-            <h2 className="text-xl font-montserrat font-semibold text-pepper">
-              Create {recipeType?.label ?? "Recipe"}
-            </h2>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={trash}
+                disabled={!id || busy !== null}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                title={id ? "Delete recipe" : "Delete available after publish"}
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+              <div>
+                <p className="text-sm font-montserrat font-semibold uppercase tracking-[0.2em] text-pepper/60">
+                  Create Recipe
+                </p>
+                <h2 className="text-2xl font-montserrat font-semibold text-pepper">
+                  New {recipeType?.label ?? "Recipe"}
+                </h2>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => saveRecipe(true)}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-2 rounded-full border border-radish-200 bg-white px-4 py-2 text-sm font-semibold text-radish-900 transition hover:bg-radish-100 disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                Save as Draft
+              </button>
+              <button
+                type="button"
+                onClick={() => saveRecipe(false)}
+                disabled={busy !== null || !title.trim()}
+                className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
+              >
+                {busy === "publish" ? "Saving…" : "Publish"}
+              </button>
+            </div>
           </div>
 
           {/* Image Upload */}
-          <div className="mt-6">
-            <div className="mt-2">
+          <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+            <div className="mx-auto max-w-xs text-center">
               <ImageUploader onUpload={(url) => setImageUrl(url)} />
             </div>
           </div>
@@ -225,44 +309,92 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             </label>
           </div>
 
-          {/* Tag Settings Field */}
-          <div className="mt-6">
-            <div className="mt-3 grid gap-4">
-              <RecipeSubField
-                label="Sides"
-                icon={Carrot}
-                options={sideOptions}
-                selectedValues={selectedSides}
-                onChange={setSelectedSides}
-                placeholder={loadingOptions ? "Loading sides..." : "Search sides"}
-                variant="sides"
-              />
-              <RecipeSubField
-                label="Fruit"
-                icon={Apple}
-                options={fruitOptions}
-                selectedValues={selectedFruit}
-                onChange={setSelectedFruit}
-                placeholder={loadingOptions ? "Loading fruit..." : "Search fruit"}
-                variant="fruit"
-              />
-              <RecipeSubField
-                label="Filters"
+          <div className="mt-6 rounded-[32px] border border-pepper/20 bg-white p-5">
+            <div className="mb-4">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-pepper/50">New {createLabel}</p>
+            </div>
+            <div className="space-y-3">
+              {isCombo && (
+                <>
+                  <FieldRow
+                    icon={Carrot}
+                    label="Sides"
+                    value={selectedSides.join(", ")}
+                    placeholder={loadingOptions ? "Loading sides..." : "Enter sides"}
+                    onChange={(value) => setSelectedSides(value.trim() ? [value] : [])}
+                  />
+                  <FieldRow
+                    icon={Apple}
+                    label="Fruit"
+                    value={selectedFruit.join(", ")}
+                    placeholder={loadingOptions ? "Loading fruit..." : "Enter fruit"}
+                    onChange={(value) => setSelectedFruit(value.trim() ? [value] : [])}
+                  />
+                </>
+              )}
+              <FieldRow
                 icon={Tag}
-                options={filterOptions}
-                selectedValues={selectedFilters}
-                onChange={setSelectedFilters}
-                placeholder="Search filters"
-                variant="filters"
+                label="Filters"
+                value={selectedFilters.join(", ")}
+                placeholder="Enter filters"
+                onChange={(value) => setSelectedFilters(value.trim() ? [value] : [])}
               />
-              <RecipeSubField
-                label="Allergens"
+              <FieldRow
                 icon={CircleAlert}
-                options={allergenOptions}
-                selectedValues={selectedAllergens}
-                onChange={setSelectedAllergens}
-                placeholder="Search allergens"
-                variant="allergens"
+                label="Allergens"
+                value={selectedAllergens.join(", ")}
+                placeholder="Enter allergens"
+                onChange={(value) => setSelectedAllergens(value.trim() ? [value] : [])}
+              />
+              <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
+            </div>
+          </div>
+
+          <div className="my-6 h-px bg-pepper/10" />
+
+          <div className="space-y-6">
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-pepper">Servings</div>
+              <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
+                <button
+                  type="button"
+                  onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="min-w-[24px] text-center text-xl font-semibold text-pepper">{servings || "1"}</span>
+                <button
+                  type="button"
+                  onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="h-px bg-pepper/10" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-pepper">Ingredients</div>
+              <textarea
+                value={ingredientsText}
+                onChange={(e) => setIngredientsText(e.target.value)}
+                placeholder="List ingredients here"
+                rows={3}
+                className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
+              />
+              <div className="h-px bg-pepper/10" />
+            </div>
+
+            <div className="space-y-3">
+              <div className="text-sm font-semibold text-pepper">Instructions</div>
+              <textarea
+                value={instructionsText}
+                onChange={(e) => setInstructionsText(e.target.value)}
+                placeholder="List instructions here"
+                rows={3}
+                className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
               />
             </div>
           </div>
@@ -312,39 +444,15 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           </div>
 
           {/* Footer */}
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-6 flex justify-end">
             <button
               type="button"
-              onClick={trash}
-              disabled={!id || busy !== null}
-              className={[
-                "rounded-md border px-3 py-2 font-montserrat font-semibold",
-                id && !busy ? "border-red-600 text-red-700 hover:bg-red-50" : "border-pepper/20 text-pepper/30",
-              ].join(" ")}
-              title={id ? "Delete recipe" : "Delete available after publish"}
+              onClick={onClose}
+              disabled={busy !== null}
+              className="rounded-full border border-pepper/20 px-5 py-3 font-montserrat font-semibold text-pepper hover:bg-pepper/5 disabled:opacity-50"
             >
-              {busy === "delete" ? "Deleting…" : "🗑️"}
+              Close
             </button>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={busy !== null}
-                className="rounded-md border border-pepper/20 px-4 py-2 font-montserrat font-semibold text-pepper hover:bg-pepper/5 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={publish}
-                disabled={!title.trim() || busy !== null}
-                className="rounded-md bg-pepper px-4 py-2 font-montserrat font-semibold text-white hover:opacity-95 disabled:opacity-50"
-              >
-                {busy === "publish" ? "Publishing…" : "Publish"}
-              </button>
-            </div>
           </div>
         </DialogPanel>
       </div>
