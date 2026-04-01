@@ -10,6 +10,7 @@ type ComboCardProps = {
   isDraft: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
+  onOpen?: () => void;
 };
 
 export default function ComboCard({
@@ -20,12 +21,14 @@ export default function ComboCard({
   isDraft = true,
   isSelected,
   onSelect,
+  onOpen,
 }: ComboCardProps) {
   const servingText = serving != null ? `${serving}` : null;
 
   return (
     <div
-      className={`relative w-72 h-86.5 overflow-hidden rounded-[14px] ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
+      onClick={onOpen} // TODO: cursor pointer only if onOpen is provided?
+      className={`relative w-72 h-86.5 overflow-hidden rounded-[14px] cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
     >
       <div className="relative h-28 w-full bg-medium-gray">
         {imageUrl ? <Image src={imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" /> : null}
@@ -33,7 +36,11 @@ export default function ComboCard({
           <input
             type="checkbox"
             checked={!!isSelected}
-            onChange={onSelect}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelect?.();
+            }}
+            onClick={(e) => e.stopPropagation()} // stop modal from opening on checkbox click
             className="absolute top-4 right-4 z-20 h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer"
           />
         )}

@@ -15,6 +15,7 @@ type Props = {
   draftCount: number;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
+  onOpenItem?: (item: Recipe | Combo) => void;
 };
 
 export default function CardGrid({
@@ -26,6 +27,7 @@ export default function CardGrid({
   draftCount,
   selectedIds,
   onToggleSelect,
+  onOpenItem,
 }: Props) {
   if (loading) return <div className="text-sm text-black/60">Loading…</div>;
   if (error) return <div className="text-sm text-red-600">{error}</div>;
@@ -48,6 +50,7 @@ export default function CardGrid({
             isDraft={combo.isDraft}
             isSelected={selectedIds?.has(combo._id)}
             onSelect={() => onToggleSelect?.(combo._id, combo.name)}
+            onOpen={() => onOpenItem?.(combo)}
           />
         ))}
       </div>
@@ -71,6 +74,7 @@ export default function CardGrid({
           isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}
+          onOpen={() => onOpenItem?.(recipe)}
         />
       ))}
     </div>
