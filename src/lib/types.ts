@@ -1,11 +1,19 @@
+export type Ingredient = {
+  name: string;
+  quantity: string;
+};
+
 export type Recipe = {
   _id: string;
   name: string;
   serving?: number;
   tags?: string[];
-  ingredients?: unknown[];
+  ingredients?: Ingredient[];
   instructions?: string;
+  comments?: string;
   imageUrl?: string;
+  lastVerified?: string | Date;
+  verifiedBy?: string;
   isDraft: boolean;
 };
 
@@ -13,8 +21,13 @@ export type Combo = {
   _id: string;
   name: string;
   serving: number;
-  sides?: unknown[];
-  fruits?: unknown[];
+  sides?: Ingredient[];
+  fruits?: Ingredient[];
+  filters?: string[];
+  notes?: string;
+  allergens?: string[];
+  instructions?: string;
+  nutritional_info?: number[];
   imageUrl?: string;
   isDraft: boolean;
 };
