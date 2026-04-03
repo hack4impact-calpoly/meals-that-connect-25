@@ -72,16 +72,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
             </div>
 
             {/* image */}
-            <div className="relative h-28 w-full bg-medium-gray rounded-lg">
+            <div className="relative h-50 w-full bg-medium-gray rounded-lg overflow-hidden">
               {"imageUrl" in item && item.imageUrl && (
                 <div className="relative w-full h-64 mb-4">
-                  <Image
-                    src={item.imageUrl}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="w-full max-h-64 object-cover rounded"
-                  />
+                  <Image src={item.imageUrl} alt="" fill className="object-cover" />
                 </div>
               )}
               {/* <span
@@ -90,7 +84,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
             </div>
 
             {/* title */}
-            <div className="text-2xl font-bold mb-4">{item.name}</div>
+            <div className="text-2xl font-bold mb-4 mt-5">{item.name}</div>
 
             {/* sides (combo) */}
             {"sides" in item && item.sides && (
