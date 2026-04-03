@@ -36,7 +36,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const isComboMode = selectedCategories.has("combo");
+  const isComboMode = selectedCategories.has("Combo");
 
   /* ---------------- Debounce ---------------- */
 
@@ -81,7 +81,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         }
 
         if (!isComboMode) {
-          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "combo");
+          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
           categoryParams.forEach((category) => params.append("categories", category));
         }
 

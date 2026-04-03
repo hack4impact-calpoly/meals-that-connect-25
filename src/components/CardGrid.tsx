@@ -38,7 +38,7 @@ export default function CardGrid({
   if (isComboMode) {
     return (
       <div className="flex flex-wrap gap-6">
-        {!draftMode && <DraftEntryCard variant="combo" numDrafts={draftCount} />}
+        {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
 
         {(items as Combo[]).map((combo) => (
           <ComboCard

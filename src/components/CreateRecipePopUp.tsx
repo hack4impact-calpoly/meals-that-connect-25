@@ -163,7 +163,7 @@ function DropdownField({
 export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) {
   const Icon = recipeType?.icon;
   const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
-  const isCombo = recipeType?.id === "combo";
+  const isCombo = recipeType?.id === "Combo";
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
@@ -278,7 +278,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
 
     const tags = [recipeType?.id, ...selectedFilters, ...selectedSides, ...selectedFruit, ...selectedAllergens]
       .filter((tag): tag is string => Boolean(tag))
-      .map((tag) => tag.trim().toLowerCase());
+      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase()); //tag.trim().toLowerCase());
 
     const payload = {
       _id: crypto.randomUUID(),

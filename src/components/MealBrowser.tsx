@@ -31,10 +31,10 @@ type Props = {
 };
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "combo", label: "Combos" },
-  { value: "entree", label: "Entrées" },
-  { value: "side", label: "Sides" },
-  { value: "fruit", label: "Fruits" },
+  { value: "Combo", label: "Combos" },
+  { value: "Entree", label: "Entrées" },
+  { value: "Side", label: "Sides" },
+  { value: "Fruit", label: "Fruits" },
 ];
 
 export default function MealBrowser({
@@ -60,12 +60,12 @@ export default function MealBrowser({
     setSelectedCategories((prev) => {
       const next = new Set(prev);
 
-      if (category === "combo") {
-        if (next.has("combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["combo"]);
+      if (category === "Combo") {
+        if (next.has("Combo")) return new Set<CategoryValue>();
+        return new Set<CategoryValue>(["Combo"]);
       }
 
-      if (next.has("combo")) next.delete("combo");
+      if (next.has("Combo")) next.delete("Combo");
 
       if (next.has(category)) next.delete(category);
       else next.add(category);

@@ -12,7 +12,7 @@ export function buildFilterTags(filters: FilterSelections) {
   return Array.from(new Set(out));
 }
 
-export function normalizeTag(value: string) {
+/*export function normalizeTag(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -29,4 +29,4 @@ export function hasCategoryTag(tags: string[] = [], category: CategoryValue) {
     if (category === "side") return tag.includes("side");
     return tag.includes("fruit");
   });
-}
+}*/

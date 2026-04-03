@@ -32,5 +32,5 @@ export type Combo = {
   isDraft: boolean;
 };
 
-export type CategoryValue = "entree" | "side" | "fruit" | "combo";
+export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;

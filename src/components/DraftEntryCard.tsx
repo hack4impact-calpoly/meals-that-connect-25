@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { StickyNote } from "lucide-react";
 
 type Props = {
-  variant: "recipe" | "combo";
+  variant: "recipe" | "Combo";
   numDrafts: number;
 };
 
@@ -22,7 +22,7 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
   */
 
   // Combo-style
-  if (variant === "combo") {
+  if (variant === "Combo") {
     return (
       <div
         onClick={handleClick}

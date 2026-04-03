@@ -69,7 +69,7 @@ export default function DraftsPage() {
   */
 
   const handleDelete = async () => {
-    if (selectedCategories.has("combo")) {
+    if (selectedCategories.has("Combo")) {
       await deleteCombos(Array.from(selectedIds));
     } else {
       await deleteRecipes(Array.from(selectedIds));
@@ -80,7 +80,7 @@ export default function DraftsPage() {
   };
 
   const handlePublish = async () => {
-    if (selectedCategories.has("combo")) {
+    if (selectedCategories.has("Combo")) {
       await publishCombos(Array.from(selectedIds));
     } else {
       await publishRecipes(Array.from(selectedIds));

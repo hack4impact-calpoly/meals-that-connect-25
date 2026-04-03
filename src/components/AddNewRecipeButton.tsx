@@ -8,10 +8,10 @@ import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 /* Dropdown options for creating a new recipe. Add/remove entries here to change
    what appears in the menu. */
 const RECIPE_TYPES: CreateRecipeType[] = [
-  { id: "combo", label: "Add Combo", icon: Utensils },
-  { id: "entree", label: "Add Entrée", icon: Soup },
-  { id: "side", label: "Add Side", icon: Carrot },
-  { id: "fruit", label: "Add Fruit", icon: Apple },
+  { id: "Combo", label: "Add Combo", icon: Utensils },
+  { id: "Entree", label: "Add Entrée", icon: Soup },
+  { id: "Side", label: "Add Side", icon: Carrot },
+  { id: "Fruit", label: "Add Fruit", icon: Apple },
 ];
 
 function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {
