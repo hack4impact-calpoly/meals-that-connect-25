@@ -12,7 +12,6 @@ const ComboSchema = new Schema(
     notes: { type: String, required: false },
     allergens: { type: [String], required: false },
     instructions: { type: String, required: false },
-    nutritional_info: { type: [Number], required: false },
     imageUrl: { type: String, required: false },
     isDraft: { type: Boolean, required: true, default: true },
   },

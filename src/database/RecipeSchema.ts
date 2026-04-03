@@ -28,6 +28,7 @@ const RecipeSchema = new Schema(
     lastVerified: { type: Date, required: false },
     verifiedBy: { type: String, required: false },
     isDraft: { type: Boolean, required: true, default: true },
+    nutritional_info: { type: [Number], required: false },
   },
   {
     timestamps: true,

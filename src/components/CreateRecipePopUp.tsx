@@ -166,8 +166,10 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   const isCombo = recipeType?.id === "Combo";
   const [selectedSides, setSelectedSides] = useState<string[]>([]);
   const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
+  const [selectedEntree, setSelectedEntree] = useState<string[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
+  const [entreeOptions, setEntreeOptions] = useState<string[]>([]);
   const [sideOptions, setSideOptions] = useState<string[]>([]);
   const [fruitOptions, setFruitOptions] = useState<string[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
@@ -201,6 +203,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     setTitle("");
     setSelectedSides([]);
     setSelectedFruit([]);
+    setSelectedEntree([]);
     setSelectedFilters([]);
     setSelectedAllergens([]);
     setNotes("");
@@ -221,7 +224,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       setLoadingOptions(true);
 
       try {
-        const buildUrl = (category: "side" | "fruit") => {
+        const buildUrl = (category: "entree" | "side" | "fruit") => {
           const params = new URLSearchParams({
             categories: category,
             isDraft: "false",
@@ -232,30 +235,31 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           return `/api/recipes?${params.toString()}`;
         };
 
-        const [sideRes, fruitRes] = await Promise.all([
+        const [entreeRes, sideRes, fruitRes] = await Promise.all([
+          fetch(buildUrl("entree"), { signal: controller.signal }),
           fetch(buildUrl("side"), { signal: controller.signal }),
           fetch(buildUrl("fruit"), { signal: controller.signal }),
         ]);
 
-        if (!sideRes.ok || !fruitRes.ok) {
+        if (!entreeRes.ok || !sideRes.ok || !fruitRes.ok) {
           throw new Error("Failed to load recipe options");
         }
 
-        const [sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }] = await Promise.all([
-          sideRes.json(),
-          fruitRes.json(),
-        ]);
+        const [entreeJson, sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }, { data?: Recipe[] }] =
+          await Promise.all([entreeRes.json(), sideRes.json(), fruitRes.json()]);
 
         const toOptionNames = (recipes: Recipe[] = []) =>
           Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
             a.localeCompare(b),
           );
 
+        setEntreeOptions(toOptionNames(entreeJson.data));
         setSideOptions(toOptionNames(sideJson.data));
         setFruitOptions(toOptionNames(fruitJson.data));
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
         console.error("Failed to load side/fruit recipe options", error);
+        setEntreeOptions([]);
         setSideOptions([]);
         setFruitOptions([]);
       } finally {
@@ -276,36 +280,59 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       .map((line) => line.trim())
       .filter(Boolean);
 
-    const tags = [recipeType?.id, ...selectedFilters, ...selectedSides, ...selectedFruit, ...selectedAllergens]
+    const tags = [
+      recipeType?.id,
+      ...selectedFilters,
+      ...selectedEntree,
+      ...selectedSides,
+      ...selectedFruit,
+      ...selectedAllergens,
+    ]
       .filter((tag): tag is string => Boolean(tag))
       .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
 
-    const payload = {
-      _id: crypto.randomUUID(),
-      name: title.trim() || (isDraft ? "Untitled Draft" : ""),
-      isDraft,
-      tags: Array.from(new Set(tags)),
-      serving: Number(servings) || 1,
-      ingredients:
-        ingredientLines.length > 0
-          ? ingredientLines.map((name) => ({ name, quantity: "1" }))
-          : [{ name: "Ingredient", quantity: "1" }],
-      instructions: instructionsText,
-      comments: notes,
-      ...(imageUrl ? { imageUrl } : {}),
-    };
+    let payload;
 
     setBusy("publish");
     try {
       let res;
       // check if it's recipe or combo
       if (isCombo) {
+        payload = {
+          _id: crypto.randomUUID(),
+          name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+          serving: Number(servings) || 1,
+          entree: selectedEntree.length > 0 ? { name: selectedEntree[0], quantity: "1" } : null,
+          sides: selectedSides.map((name) => ({ name, quantity: "1" })),
+          fruits: selectedFruit.map((name) => ({ name, quantity: "1" })),
+          filters: Array.from(new Set(tags)),
+          notes: notes,
+          allergens: selectedAllergens,
+          instructions: instructionsText,
+          isDraft,
+          ...(imageUrl ? { imageUrl } : {}),
+        };
         res = await fetch("/api/combos", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
+        payload = {
+          _id: crypto.randomUUID(),
+          name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+          serving: Number(servings) || 1,
+          tags: Array.from(new Set(tags)),
+          ingredients:
+            ingredientLines.length > 0
+              ? ingredientLines.map((name) => ({ name, quantity: "1" }))
+              : [{ name: "Ingredient", quantity: "1" }],
+          instructions: instructionsText,
+          comments: notes,
+          isDraft,
+          nutritional_info: nutrition,
+          ...(imageUrl ? { imageUrl } : {}),
+        };
         res = await fetch("/api/recipes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -363,14 +390,14 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               >
                 <Trash2 className="h-5 w-5" />
               </button>
-              <div>
+              {/*<div>
                 <p className="text-sm font-montserrat font-semibold uppercase tracking-[0.2em] text-pepper/60">
                   Create Recipe
                 </p>
                 <h2 className="text-2xl font-montserrat font-semibold text-pepper">
                   New {recipeType?.label ?? "Recipe"}
                 </h2>
-              </div>
+              </div>*/}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -404,7 +431,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           {/* Title */}
           <div className="mt-5">
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-montserrat font-semibold text-pepper">Title</span>
+              <span className="text-sm font-montserrat font-semibold text-pepper">New {createLabel}</span>
               <input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -414,66 +441,82 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             </label>
           </div>
 
-          <div className="mt-6 rounded-[32px] border border-pepper/20 bg-white p-5">
-            <div className="mb-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-pepper/50">New {createLabel}</p>
-            </div>
-            <div className="space-y-3">
-              {isCombo && (
-                <>
-                  <DropdownField
-                    icon={Carrot}
-                    label="Sides"
-                    options={sideOptions}
-                    selectedValues={selectedSides}
-                    onSelect={(value) => {
-                      setSelectedSides(
-                        selectedSides.includes(value)
-                          ? selectedSides.filter((s) => s !== value)
-                          : [...selectedSides, value],
-                      );
-                    }}
-                    placeholder={loadingOptions ? "Loading sides..." : "Select sides"}
-                  />
-                  <DropdownField
-                    icon={Apple}
-                    label="Fruit"
-                    options={fruitOptions}
-                    selectedValues={selectedFruit}
-                    onSelect={(value) => {
-                      setSelectedFruit(
-                        selectedFruit.includes(value)
-                          ? selectedFruit.filter((f) => f !== value)
-                          : [...selectedFruit, value],
-                      );
-                    }}
-                    placeholder={loadingOptions ? "Loading fruit..." : "Select fruit"}
-                  />
-                </>
-              )}
-              <FieldRow
-                icon={Tag}
-                label="Filters"
-                value={selectedFilters.join(", ")}
-                placeholder="Enter filters"
-                onChange={(value) => setSelectedFilters(value.trim() ? [value] : [])}
-              />
-              <DropdownField
-                icon={CircleAlert}
-                label="Allergens"
-                options={allergenOptions}
-                selectedValues={selectedAllergens}
-                onSelect={(value) => {
-                  setSelectedAllergens(
-                    selectedAllergens.includes(value)
-                      ? selectedAllergens.filter((a) => a !== value)
-                      : [...selectedAllergens, value],
-                  );
-                }}
-                placeholder="Select allergens"
-              />
-              <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
-            </div>
+          <div className="space-y-3 mt-5">
+            {isCombo && (
+              <>
+                <DropdownField
+                  icon={Carrot}
+                  label="Entree"
+                  options={entreeOptions}
+                  selectedValues={selectedEntree}
+                  onSelect={(value) => {
+                    setSelectedEntree(
+                      selectedEntree.includes(value)
+                        ? selectedEntree.filter((s) => s !== value)
+                        : [...selectedEntree, value],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
+                />
+                <DropdownField
+                  icon={Carrot}
+                  label="Sides"
+                  options={sideOptions}
+                  selectedValues={selectedSides}
+                  onSelect={(value) => {
+                    setSelectedSides(
+                      selectedSides.includes(value)
+                        ? selectedSides.filter((s) => s !== value)
+                        : [...selectedSides, value],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading sides..." : "Select Side(s)"}
+                />
+                <DropdownField
+                  icon={Apple}
+                  label="Fruit"
+                  options={fruitOptions}
+                  selectedValues={selectedFruit}
+                  onSelect={(value) => {
+                    setSelectedFruit(
+                      selectedFruit.includes(value)
+                        ? selectedFruit.filter((f) => f !== value)
+                        : [...selectedFruit, value],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
+                />
+              </>
+            )}
+            <DropdownField
+              icon={Tag}
+              label="Filters"
+              options={filterOptions}
+              selectedValues={selectedFilters}
+              onSelect={(value) => {
+                setSelectedFilters(
+                  selectedFilters.includes(value)
+                    ? selectedFilters.filter((a) => a !== value)
+                    : [...selectedFilters, value],
+                );
+              }}
+              placeholder="Select Filter(s)"
+            />
+            <DropdownField
+              icon={CircleAlert}
+              label="Allergens"
+              options={allergenOptions}
+              selectedValues={selectedAllergens}
+              onSelect={(value) => {
+                setSelectedAllergens(
+                  selectedAllergens.includes(value)
+                    ? selectedAllergens.filter((a) => a !== value)
+                    : [...selectedAllergens, value],
+                );
+              }}
+              placeholder="Select Allergen(s)"
+            />
+            <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
           </div>
 
           <div className="my-6 h-px bg-pepper/10" />
@@ -501,17 +544,19 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               <div className="h-px bg-pepper/10" />
             </div>
 
-            <div className="space-y-3">
-              <div className="text-sm font-semibold text-pepper">Ingredients</div>
-              <textarea
-                value={ingredientsText}
-                onChange={(e) => setIngredientsText(e.target.value)}
-                placeholder="List ingredients here"
-                rows={3}
-                className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
-              />
-              <div className="h-px bg-pepper/10" />
-            </div>
+            {!isCombo && (
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-pepper">Ingredients</div>
+                <textarea
+                  value={ingredientsText}
+                  onChange={(e) => setIngredientsText(e.target.value)}
+                  placeholder="List ingredients here"
+                  rows={3}
+                  className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
+                />
+                <div className="h-px bg-pepper/10" />
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="text-sm font-semibold text-pepper">Instructions</div>
@@ -526,51 +571,53 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           </div>
 
           {/* Nutritional Info */}
-          <div className="mt-6">
-            <h3 className="text-base font-montserrat font-semibold text-pepper">Nutritional Information</h3>
+          {!isCombo && (
+            <div className="mt-6">
+              <h3 className="text-base font-montserrat font-semibold text-pepper">Nutritional Information</h3>
 
-            <div className="mt-3 flex flex-wrap gap-3">
-              <NutritionalInfo
-                label="Calories"
-                unit="kcal"
-                value={nutrition.calories}
-                onChange={(v) => setNutrition((n) => ({ ...n, calories: v }))}
-              />
-              <NutritionalInfo
-                label="Protein"
-                unit="g"
-                value={nutrition.protein}
-                onChange={(v) => setNutrition((n) => ({ ...n, protein: v }))}
-              />
-              <NutritionalInfo
-                label="Fat"
-                unit="g"
-                value={nutrition.fat}
-                onChange={(v) => setNutrition((n) => ({ ...n, fat: v }))}
-              />
-              <NutritionalInfo
-                label="Carb"
-                unit="g"
-                value={nutrition.carbs}
-                onChange={(v) => setNutrition((n) => ({ ...n, carbs: v }))}
-              />
-              <NutritionalInfo
-                label="Fiber"
-                unit="g"
-                value={nutrition.fiber}
-                onChange={(v) => setNutrition((n) => ({ ...n, fiber: v }))}
-              />
-              <NutritionalInfo
-                label="Sodium"
-                unit="mg"
-                value={nutrition.sodium}
-                onChange={(v) => setNutrition((n) => ({ ...n, sodium: v }))}
-              />
+              <div className="mt-3 flex flex-wrap gap-3">
+                <NutritionalInfo
+                  label="Calories"
+                  unit="kcal"
+                  value={nutrition.calories}
+                  onChange={(v) => setNutrition((n) => ({ ...n, calories: v }))}
+                />
+                <NutritionalInfo
+                  label="Protein"
+                  unit="g"
+                  value={nutrition.protein}
+                  onChange={(v) => setNutrition((n) => ({ ...n, protein: v }))}
+                />
+                <NutritionalInfo
+                  label="Fat"
+                  unit="g"
+                  value={nutrition.fat}
+                  onChange={(v) => setNutrition((n) => ({ ...n, fat: v }))}
+                />
+                <NutritionalInfo
+                  label="Carb"
+                  unit="g"
+                  value={nutrition.carbs}
+                  onChange={(v) => setNutrition((n) => ({ ...n, carbs: v }))}
+                />
+                <NutritionalInfo
+                  label="Fiber"
+                  unit="g"
+                  value={nutrition.fiber}
+                  onChange={(v) => setNutrition((n) => ({ ...n, fiber: v }))}
+                />
+                <NutritionalInfo
+                  label="Sodium"
+                  unit="mg"
+                  value={nutrition.sodium}
+                  onChange={(v) => setNutrition((n) => ({ ...n, sodium: v }))}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Footer */}
-          <div className="mt-6 flex justify-end">
+          {/*<div className="mt-6 flex justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -579,7 +626,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             >
               Close
             </button>
-          </div>
+          </div>*/}
         </DialogPanel>
       </div>
     </Dialog>
