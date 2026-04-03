@@ -278,7 +278,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
 
     const tags = [recipeType?.id, ...selectedFilters, ...selectedSides, ...selectedFruit, ...selectedAllergens]
       .filter((tag): tag is string => Boolean(tag))
-      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase()); //tag.trim().toLowerCase());
+      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
 
     const payload = {
       _id: crypto.randomUUID(),
@@ -297,11 +297,22 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
 
     setBusy("publish");
     try {
-      const res = await fetch("/api/recipes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      let res;
+      // check if it's recipe or combo
+      if (isCombo) {
+        res = await fetch("/api/combos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch("/api/recipes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
       if (!res.ok) throw new Error(`Save failed (${res.status})`);
       await res.json().catch(() => ({}));
       setId(payload._id);
@@ -315,7 +326,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     if (!window.confirm("Delete this recipe?")) return;
     setBusy("delete");
     try {
-      const res = await fetch(`/api/recipes/${encodeURIComponent(id)}`, { method: "DELETE" });
+      let res;
+      if (isCombo) {
+        res = await fetch(`/api/combos/${encodeURIComponent(id)}`, { method: "DELETE" });
+      } else {
+        res = await fetch(`/api/recipes/${encodeURIComponent(id)}`, { method: "DELETE" });
+      }
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
       onClose();
     } finally {
