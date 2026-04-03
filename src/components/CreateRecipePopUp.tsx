@@ -2,7 +2,19 @@
 
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { AlignLeft, Apple, Carrot, CircleAlert, Minus, Plus, Save, Tag, Trash2, type LucideIcon } from "lucide-react";
+import {
+  AlignLeft,
+  Apple,
+  Carrot,
+  ChevronDown,
+  CircleAlert,
+  Minus,
+  Plus,
+  Save,
+  Tag,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 import type { Recipe } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
@@ -68,6 +80,83 @@ function FieldRow({
         className="min-w-0 flex-1 rounded-xl border border-pepper/20 bg-white px-3 py-2 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
       />
     </label>
+  );
+}
+
+function DropdownField({
+  icon: Icon,
+  label,
+  options,
+  selectedValues,
+  onSelect,
+  placeholder,
+}: {
+  icon: LucideIcon;
+  label: string;
+  options: string[];
+  selectedValues: string[];
+  onSelect: (value: string) => void;
+  placeholder: string;
+}) {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between gap-4 rounded-2xl border border-pepper/20 bg-slate-50 px-4 py-3"
+      >
+        <div className="flex items-center gap-3">
+          <Icon className="h-5 w-5 text-pepper" strokeWidth={2.2} />
+          <span className="text-sm font-semibold text-pepper">{label}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-pepper/60">
+            {selectedValues.length > 0 ? selectedValues.join(", ") : placeholder}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-pepper transition-transform ${isOpen ? "rotate-180" : ""}`}
+            strokeWidth={2}
+          />
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-pepper/20 bg-white shadow-lg z-10">
+          <div className="p-2">
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-pepper/60">{placeholder}</div>
+            ) : (
+              options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => {
+                    onSelect(option);
+                    setIsOpen(false);
+                  }}
+                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-montserrat text-left transition ${
+                    selectedValues.includes(option)
+                      ? "bg-pepper/10 text-pepper font-semibold"
+                      : "text-pepper/70 hover:bg-pepper/5"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedValues.includes(option)}
+                    onChange={() => {}}
+                    className="h-4 w-4"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  {option}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -316,19 +405,33 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             <div className="space-y-3">
               {isCombo && (
                 <>
-                  <FieldRow
+                  <DropdownField
                     icon={Carrot}
                     label="Sides"
-                    value={selectedSides.join(", ")}
-                    placeholder={loadingOptions ? "Loading sides..." : "Enter sides"}
-                    onChange={(value) => setSelectedSides(value.trim() ? [value] : [])}
+                    options={sideOptions}
+                    selectedValues={selectedSides}
+                    onSelect={(value) => {
+                      setSelectedSides(
+                        selectedSides.includes(value)
+                          ? selectedSides.filter((s) => s !== value)
+                          : [...selectedSides, value],
+                      );
+                    }}
+                    placeholder={loadingOptions ? "Loading sides..." : "Select sides"}
                   />
-                  <FieldRow
+                  <DropdownField
                     icon={Apple}
                     label="Fruit"
-                    value={selectedFruit.join(", ")}
-                    placeholder={loadingOptions ? "Loading fruit..." : "Enter fruit"}
-                    onChange={(value) => setSelectedFruit(value.trim() ? [value] : [])}
+                    options={fruitOptions}
+                    selectedValues={selectedFruit}
+                    onSelect={(value) => {
+                      setSelectedFruit(
+                        selectedFruit.includes(value)
+                          ? selectedFruit.filter((f) => f !== value)
+                          : [...selectedFruit, value],
+                      );
+                    }}
+                    placeholder={loadingOptions ? "Loading fruit..." : "Select fruit"}
                   />
                 </>
               )}
@@ -339,12 +442,19 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
                 placeholder="Enter filters"
                 onChange={(value) => setSelectedFilters(value.trim() ? [value] : [])}
               />
-              <FieldRow
+              <DropdownField
                 icon={CircleAlert}
                 label="Allergens"
-                value={selectedAllergens.join(", ")}
-                placeholder="Enter allergens"
-                onChange={(value) => setSelectedAllergens(value.trim() ? [value] : [])}
+                options={allergenOptions}
+                selectedValues={selectedAllergens}
+                onSelect={(value) => {
+                  setSelectedAllergens(
+                    selectedAllergens.includes(value)
+                      ? selectedAllergens.filter((a) => a !== value)
+                      : [...selectedAllergens, value],
+                  );
+                }}
+                placeholder="Select allergens"
               />
               <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
             </div>
