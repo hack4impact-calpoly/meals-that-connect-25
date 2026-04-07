@@ -4,7 +4,7 @@ export type RecipeCardProps = {
   imageUrl?: string;
   name: string;
   calories?: number;
-  servingSize?: string;
+  servingSize: string;
   tags?: string[];
   isDraft?: boolean;
   isSelected?: boolean;
