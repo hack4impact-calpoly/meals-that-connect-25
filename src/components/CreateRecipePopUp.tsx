@@ -13,6 +13,7 @@ import {
   Save,
   Tag,
   Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
@@ -21,6 +22,12 @@ import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
 type Props = { open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
+
+type InputPair = {
+  name: string;
+  quantity: number | "";
+  units: string;
+};
 
 function NutritionalInfo({
   label,
@@ -198,9 +205,47 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     sodium: "",
   });
 
+  const [ingredientInputs, setIngredientInputs] = useState<InputPair[]>([{ name: "", quantity: "", units: "" }]);
+
+  // handle ingredient name change
+  const handleIngredientChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+    updated[index].name = value;
+    setIngredientInputs(updated);
+  };
+
+  // handle quantity change
+  const handleQuantityChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+
+    // convert to number
+    updated[index].quantity = value === "" ? "" : Number(value);
+
+    setIngredientInputs(updated);
+  };
+
+  // handle units change
+  const handleUnitsChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+    updated[index].units = value;
+    setIngredientInputs(updated);
+  };
+
+  // adding new row
+  const addRow = () => {
+    setIngredientInputs([...ingredientInputs, { name: "", quantity: "", units: "" }]);
+  };
+
+  // removing row
+  const removeRow = (index: number) => {
+    const updated = ingredientInputs.filter((_, i) => i !== index);
+    setIngredientInputs(updated);
+  };
+
   useEffect(() => {
     if (!open) return;
     setTitle("");
+    setIngredientInputs([{ name: "", quantity: "", units: "" }]);
     setSelectedSides([]);
     setSelectedFruit([]);
     setSelectedEntree([]);
@@ -324,15 +369,32 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           serving: Number(servings) || 1,
           tags: Array.from(new Set(tags)),
           ingredients:
-            ingredientLines.length > 0
-              ? ingredientLines.map((name) => ({ name, quantity: "1" }))
-              : [{ name: "Ingredient", quantity: "1" }],
+            ingredientInputs.length > 0
+              ? ingredientInputs
+                  .filter(
+                    (ingredient) =>
+                      ingredient.name.trim() !== "" || ingredient.quantity !== "" || ingredient.units.trim() !== "",
+                  )
+                  .map((ingredient) => ({
+                    name: ingredient.name,
+                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : undefined,
+                    units: ingredient.units,
+                  }))
+              : undefined,
           instructions: instructionsText,
           comments: notes,
           isDraft,
-          nutritional_info: nutrition,
+          nutritional_info: {
+            calories: Number(nutrition.calories) || 0,
+            protein: Number(nutrition.protein) || 0,
+            fat: Number(nutrition.fat) || 0,
+            carbs: Number(nutrition.carbs) || 0,
+            fiber: Number(nutrition.fiber) || 0,
+            sodium: Number(nutrition.sodium) || 0,
+          },
           ...(imageUrl ? { imageUrl } : {}),
         };
+        console.log("Payload:", payload);
         res = await fetch("/api/recipes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -390,14 +452,6 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               >
                 <Trash2 className="h-5 w-5" />
               </button>
-              {/*<div>
-                <p className="text-sm font-montserrat font-semibold uppercase tracking-[0.2em] text-pepper/60">
-                  Create Recipe
-                </p>
-                <h2 className="text-2xl font-montserrat font-semibold text-pepper">
-                  New {recipeType?.label ?? "Recipe"}
-                </h2>
-              </div>*/}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -547,13 +601,53 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             {!isCombo && (
               <div className="space-y-3">
                 <div className="text-sm font-semibold text-pepper">Ingredients</div>
-                <textarea
-                  value={ingredientsText}
-                  onChange={(e) => setIngredientsText(e.target.value)}
-                  placeholder="List ingredients here"
-                  rows={3}
-                  className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
-                />
+                <div className="pt-6 pb-6 bg-white rounded-2xl">
+                  <div className="flex flex-col gap-2">
+                    {ingredientInputs.map((item, index) => (
+                      <div key={index} className="flex gap-3">
+                        <input
+                          type="text"
+                          placeholder="Enter Ingredient Name"
+                          value={item.name}
+                          onChange={(e) => handleIngredientChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <input
+                          type="number"
+                          placeholder="Enter Number"
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Enter Units"
+                          value={item.units}
+                          onChange={(e) => handleUnitsChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <button
+                          onClick={() => removeRow(index)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-4xl text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={addRow}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-3xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
                 <div className="h-px bg-pepper/10" />
               </div>
             )}

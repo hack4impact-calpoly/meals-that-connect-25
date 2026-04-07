@@ -250,38 +250,44 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                   <NutritionalInfo
                     label="Calories"
                     unit="kcal"
-                    value={item.nutritional_info[0] ? (item.nutritional_info[0] * servings).toString() : ""}
+                    value={item.nutritional_info.calories ? (item.nutritional_info.calories * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                   <NutritionalInfo
                     label="Protein"
                     unit="g"
-                    value={item.nutritional_info[1] ? (item.nutritional_info[1] * servings).toString() : ""}
+                    value={item.nutritional_info.protein ? (item.nutritional_info.protein * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fat"
                     unit="g"
-                    value={item.nutritional_info[2] ? (item.nutritional_info[2] * servings).toString() : ""}
+                    value={item.nutritional_info.fat ? (item.nutritional_info.fat * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                   <NutritionalInfo
                     label="Carbs"
                     unit="g"
-                    value={item.nutritional_info[3] ? (item.nutritional_info[3] * servings).toString() : ""}
+                    value={item.nutritional_info.carbs ? (item.nutritional_info.carbs * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fiber"
                     unit="g"
-                    value={item.nutritional_info[4] ? (item.nutritional_info[4] * servings).toString() : ""}
+                    value={item.nutritional_info.fiber ? (item.nutritional_info.fiber * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                   <NutritionalInfo
                     label="Sodium"
                     unit="mg"
-                    value={item.nutritional_info[5] ? (item.nutritional_info[5] * servings).toString() : ""}
+                    value={item.nutritional_info.sodium ? (item.nutritional_info.sodium * servings).toString() : ""}
                     onChange={() => {}}
+                    readOnly={true}
                   />
                 </div>
               </>

@@ -3,6 +3,15 @@ export type Ingredient = {
   quantity: string;
 };
 
+export type Nutrition = {
+  calories: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  fiber: number;
+  sodium: number;
+};
+
 export type Recipe = {
   _id: string;
   name: string;
@@ -15,6 +24,7 @@ export type Recipe = {
   lastVerified?: string | Date;
   verifiedBy?: string;
   isDraft: boolean;
+  nutritional_info: Nutrition;
 };
 
 export type Combo = {
@@ -27,7 +37,7 @@ export type Combo = {
   notes?: string;
   allergens?: string[];
   instructions?: string;
-  nutritional_info?: number[];
+  nutritional_info: Nutrition;
   imageUrl?: string;
   isDraft: boolean;
 };

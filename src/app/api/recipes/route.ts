@@ -111,6 +111,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const recipeData = await req.json();
+    console.log("Received recipe data:", recipeData);
     const response = await postRecipe(recipeData);
     return NextResponse.json(response, { status: 201 });
   } catch (err: any) {
