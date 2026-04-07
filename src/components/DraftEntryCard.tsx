@@ -32,7 +32,7 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
           <span className="flex text-white text-lg font-semibold">View Drafts</span>
           <span className="flex items-center text-white">
             {" "}
-            {numDrafts} Recipes <StickyNote className="mt-0.5" size={20} fill="white" color="#48494b" />{" "}
+            {numDrafts} Combos <StickyNote className="mt-0.5" size={20} fill="white" color="#48494b" />{" "}
           </span>
         </div>
       </div>
