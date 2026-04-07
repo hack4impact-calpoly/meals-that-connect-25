@@ -1,6 +1,7 @@
 export type Ingredient = {
   name: string;
-  quantity: string;
+  quantity: number;
+  units: string;
 };
 
 export type Nutrition = {
@@ -15,7 +16,7 @@ export type Nutrition = {
 export type Recipe = {
   _id: string;
   name: string;
-  serving?: number;
+  serving: number;
   tags?: string[];
   ingredients?: Ingredient[];
   instructions?: string;

@@ -9,9 +9,7 @@ const RecipeSchema = new Schema(
 
     serving: {
       type: Number,
-      required: function () {
-        return !this.isDraft;
-      },
+      required: true,
     },
 
     tags: { type: [String], required: false },

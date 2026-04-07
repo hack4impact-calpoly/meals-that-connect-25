@@ -106,9 +106,24 @@ function DropdownField({
   placeholder: string;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // close automatically when outside container is clicked on
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -141,7 +156,6 @@ function DropdownField({
                   type="button"
                   onClick={() => {
                     onSelect(option);
-                    setIsOpen(false);
                   }}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-montserrat text-left transition ${
                     selectedValues.includes(option)
@@ -154,7 +168,10 @@ function DropdownField({
                     checked={selectedValues.includes(option)}
                     onChange={() => {}}
                     className="h-4 w-4"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(option);
+                    }}
                   />
                   {option}
                 </button>
@@ -385,12 +402,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           comments: notes,
           isDraft,
           nutritional_info: {
-            calories: Number(nutrition.calories) || 0,
-            protein: Number(nutrition.protein) || 0,
-            fat: Number(nutrition.fat) || 0,
-            carbs: Number(nutrition.carbs) || 0,
-            fiber: Number(nutrition.fiber) || 0,
-            sodium: Number(nutrition.sodium) || 0,
+            calories: nutrition.calories !== "" ? Number(nutrition.calories) : 0,
+            protein: nutrition.protein !== "" ? Number(nutrition.protein) : 0,
+            fat: nutrition.fat !== "" ? Number(nutrition.fat) : 0,
+            carbs: nutrition.carbs !== "" ? Number(nutrition.carbs) : 0,
+            fiber: nutrition.fiber !== "" ? Number(nutrition.fiber) : 0,
+            sodium: nutrition.sodium !== "" ? Number(nutrition.sodium) : 0,
           },
           ...(imageUrl ? { imageUrl } : {}),
         };

@@ -29,14 +29,13 @@ type Props = {
 
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Props) {
   const [maximized, setMaximized] = useState(false);
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState(item?.serving || 1);
 
-  // TODO: probably need to do some math for nutritional info and ingredients based on servings
   useEffect(() => {
-    if (item && item.serving) {
+    if (open && item?.serving) {
       setServings(item.serving);
     }
-  }, [item]);
+  }, [open, item]);
 
   if (!item) return null;
 
@@ -222,8 +221,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                   <ul className="list-disc pl-5">
                     {item.ingredients.map((ing, i) => (
                       <li key={i}>
-                        {/* TODO: fix quantity schema so that it can be multiplied by serving size */}
-                        {ing.quantity} {ing.name}
+                        {ing.name}: {ing.quantity * servings} {ing.units}
                       </li>
                     ))}
                   </ul>
@@ -250,42 +248,42 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                   <NutritionalInfo
                     label="Calories"
                     unit="kcal"
-                    value={item.nutritional_info.calories ? (item.nutritional_info.calories * servings).toString() : ""}
+                    value={(item.nutritional_info.calories * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Protein"
                     unit="g"
-                    value={item.nutritional_info.protein ? (item.nutritional_info.protein * servings).toString() : ""}
+                    value={(item.nutritional_info.protein * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fat"
                     unit="g"
-                    value={item.nutritional_info.fat ? (item.nutritional_info.fat * servings).toString() : ""}
+                    value={(item.nutritional_info.fat * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Carbs"
                     unit="g"
-                    value={item.nutritional_info.carbs ? (item.nutritional_info.carbs * servings).toString() : ""}
+                    value={(item.nutritional_info.carbs * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fiber"
                     unit="g"
-                    value={item.nutritional_info.fiber ? (item.nutritional_info.fiber * servings).toString() : ""}
+                    value={(item.nutritional_info.fiber * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Sodium"
                     unit="mg"
-                    value={item.nutritional_info.sodium ? (item.nutritional_info.sodium * servings).toString() : ""}
+                    value={(item.nutritional_info.sodium * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
