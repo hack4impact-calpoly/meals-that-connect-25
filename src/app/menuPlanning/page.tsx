@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Recipe } from "@/interface/recipe";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
+import CurrentDateButton from "@/components/CurrentDateButton";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 
 const today = new Date();
@@ -53,6 +54,7 @@ export default function MenuPlanning() {
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
+              <CurrentDateButton />
               <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset - 1)}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
