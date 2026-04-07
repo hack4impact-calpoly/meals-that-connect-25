@@ -5,6 +5,7 @@ import { Recipe } from "@/interface/recipe";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
+import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 
 const today = new Date();
@@ -95,7 +96,13 @@ export default function MenuPlanning() {
           </div>
           {calendarView === "Month" && <div>Month view coming soon!</div>}
           {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
-          {calendarView === "Day" && <div>Day view coming soon!</div>}
+          {calendarView === "Day" && (
+            // dummy data
+            <div>
+              <RecipeDailyCard name="Chicken Tikka Masala" calories={225} servingSize="150g" tags={["Entree"]} />
+              <RecipeDailyCard name="Mango Fruit Cup" calories={100} servingSize="100g" tags={["Fruit"]} />
+            </div>
+          )}
         </div>
       </div>
       <div className="w-103.25">
