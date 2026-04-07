@@ -25,7 +25,7 @@ export default function DraftsPage() {
   // figma doesn't have styles for selectable RecipeCard
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
