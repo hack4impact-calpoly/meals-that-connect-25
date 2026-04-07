@@ -58,17 +58,29 @@ export default function MealBrowser({
 }: Props) {
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
-      const next = new Set(prev);
+      const next = new Set<CategoryValue>(prev);
 
+      // combo can't ever be de-selected
       if (category === "Combo") {
-        if (next.has("Combo")) return new Set<CategoryValue>();
         return new Set<CategoryValue>(["Combo"]);
       }
 
-      if (next.has("Combo")) next.delete("Combo");
+      // toggle clicked category
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
 
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
+      // automatic setting to combo category if nothing else is selected
+      const hasNonCombo = next.has("Entree") || next.has("Side") || next.has("Fruit");
+
+      if (!hasNonCombo) {
+        return new Set<CategoryValue>(["Combo"]);
+      }
+
+      // if selecting entree/side/fruit, then remove combo option
+      next.delete("Combo");
 
       return next;
     });

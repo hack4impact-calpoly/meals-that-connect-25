@@ -18,7 +18,8 @@ const EMPTY_FILTERS: FilterSelections = {
 
 export default function RecipePage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  // automatic selection of combo category when page loads!
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
