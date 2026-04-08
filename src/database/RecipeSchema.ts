@@ -12,7 +12,8 @@ const RecipeSchema = new Schema(
       required: true,
     },
 
-    tags: { type: [String], required: false },
+    allergens: { type: [String], required: false },
+    filters: { type: [String], required: false },
 
     ingredients: {
       type: [Ingredient.schema],

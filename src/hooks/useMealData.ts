@@ -75,7 +75,8 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
             if (t.includes("serving")) {
               params.append("servings", t);
             } else {
-              params.append("tags", t);
+              params.append("filters", t);
+              params.append("allergens", t);
             }
           });
         }

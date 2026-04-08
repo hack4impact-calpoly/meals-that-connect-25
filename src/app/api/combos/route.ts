@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
     const tagParams = searchParams
-      .getAll("tags")
+      .getAll("filters")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
     const servingParams = searchParams

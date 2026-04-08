@@ -424,7 +424,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
           _id: crypto.randomUUID(),
           name: title.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
-          tags: Array.from(new Set(tags)),
+          allergens: selectedAllergens.map((allergen) => allergen.name),
+          filters: Array.from(new Set(tags)),
           ingredients:
             ingredientInputs.length > 0
               ? ingredientInputs
@@ -561,10 +562,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={entreeOptions}
                   selectedValues={selectedEntrees.map((f) => f.name)}
                   onSelect={(value) => {
-                    setSelectedEntree(
-                      selectedEntrees.includes(value)
-                        ? selectedEntrees.filter((s) => s !== value)
-                        : [...selectedEntrees, value],
+                    setSelectedEntree((prev) =>
+                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
@@ -575,10 +574,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={sideOptions}
                   selectedValues={selectedSides.map((f) => f.name)}
                   onSelect={(value) => {
-                    setSelectedSides(
-                      selectedSides.includes(value)
-                        ? selectedSides.filter((s) => s !== value)
-                        : [...selectedSides, value],
+                    setSelectedSides((prev) =>
+                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading sides..." : "Select Side(s)"}
@@ -589,10 +586,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={fruitOptions}
                   selectedValues={selectedFruits.map((f) => f.name)}
                   onSelect={(value) => {
-                    setSelectedFruit(
-                      selectedFruits.includes(value)
-                        ? selectedFruits.filter((f) => f !== value)
-                        : [...selectedFruits, value],
+                    setSelectedFruit((prev) =>
+                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
@@ -605,10 +600,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
               options={filterOptions}
               selectedValues={selectedFilters.map((f) => f.name)}
               onSelect={(value) => {
-                setSelectedFilters(
-                  selectedFilters.includes(value)
-                    ? selectedFilters.filter((a) => a !== value)
-                    : [...selectedFilters, value],
+                setSelectedFilters((prev) =>
+                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
                 );
               }}
               placeholder="Select Filter(s)"
@@ -619,10 +612,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
               options={allergenOptions}
               selectedValues={selectedAllergens.map((f) => f.name)}
               onSelect={(value) => {
-                setSelectedAllergens(
-                  selectedAllergens.includes(value)
-                    ? selectedAllergens.filter((a) => a !== value)
-                    : [...selectedAllergens, value],
+                setSelectedAllergens((prev) =>
+                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
                 );
               }}
               placeholder="Select Allergen(s)"
