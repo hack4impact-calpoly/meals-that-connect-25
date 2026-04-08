@@ -17,11 +17,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
-import type { Recipe } from "@/lib/types";
+import type { Recipe, Combo, RecipeReference } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
-type Props = { open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
+type Props = { item: Recipe | Combo | null; open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
 
 type InputPair = {
   name: string;
@@ -100,9 +100,9 @@ function DropdownField({
 }: {
   icon: LucideIcon;
   label: string;
-  options: string[];
+  options: { id: string; name: string }[];
   selectedValues: string[];
-  onSelect: (value: string) => void;
+  onSelect: (option: { id: string; name: string }) => void;
   placeholder: string;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -152,20 +152,20 @@ function DropdownField({
             ) : (
               options.map((option) => (
                 <button
-                  key={option}
+                  key={option.id}
                   type="button"
                   onClick={() => {
                     onSelect(option);
                   }}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-montserrat text-left transition ${
-                    selectedValues.includes(option)
+                    selectedValues.includes(option.name)
                       ? "bg-pepper/10 text-pepper font-semibold"
                       : "text-pepper/70 hover:bg-pepper/5"
                   }`}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedValues.includes(option)}
+                    checked={selectedValues.includes(option.name)}
                     onChange={() => {}}
                     className="h-4 w-4"
                     onClick={(e) => {
@@ -173,7 +173,7 @@ function DropdownField({
                       onSelect(option);
                     }}
                   />
-                  {option}
+                  {option.name}
                 </button>
               ))
             )}
@@ -184,25 +184,34 @@ function DropdownField({
   );
 }
 
-export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) {
-  const Icon = recipeType?.icon;
+export default function CreateRecipePopUp({ item, open, onClose, recipeType }: Props) {
+  // const Icon = recipeType?.icon;
   const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
   const isCombo = recipeType?.id === "Combo";
-  const [selectedSides, setSelectedSides] = useState<string[]>([]);
-  const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
-  const [selectedEntree, setSelectedEntree] = useState<string[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-  const [entreeOptions, setEntreeOptions] = useState<string[]>([]);
-  const [sideOptions, setSideOptions] = useState<string[]>([]);
-  const [fruitOptions, setFruitOptions] = useState<string[]>([]);
+  const [selectedSides, setSelectedSides] = useState<RecipeReference[]>([]);
+  const [selectedFruits, setSelectedFruit] = useState<RecipeReference[]>([]);
+  const [selectedEntrees, setSelectedEntree] = useState<RecipeReference[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<RecipeReference[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<RecipeReference[]>([]);
+  const [entreeOptions, setEntreeOptions] = useState<{ id: string; name: string }[]>([]);
+  const [sideOptions, setSideOptions] = useState<{ id: string; name: string }[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<{ id: string; name: string }[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
-  const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
+  /*const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
     section.options.map((option) => option.label),
+  );*/
+  const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
+    section.options.map((option) => ({
+      name: option.label,
+      id: option.label,
+    })),
   );
   const allergenOptions = FILTER_SECTIONS.filter((section) => section.id == "allergens").flatMap((section) =>
-    section.options.map((option) => option.label),
+    section.options.map((option) => ({
+      name: option.label,
+      id: option.label,
+    })),
   );
 
   const [title, setTitle] = useState("");
@@ -211,7 +220,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
   const [notes, setNotes] = useState("");
   const [servings, setServings] = useState("1");
-  const [ingredientsText, setIngredientsText] = useState("");
+  //const [ingredientsText, setIngredientsText] = useState("");
   const [instructionsText, setInstructionsText] = useState("");
   const [nutrition, setNutrition] = useState({
     calories: "",
@@ -261,20 +270,51 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
 
   useEffect(() => {
     if (!open) return;
-    setTitle("");
-    setIngredientInputs([{ name: "", quantity: "", units: "" }]);
-    setSelectedSides([]);
-    setSelectedFruit([]);
-    setSelectedEntree([]);
-    setSelectedFilters([]);
-    setSelectedAllergens([]);
-    setNotes("");
-    setServings("1");
-    setIngredientsText("");
-    setInstructionsText("");
-    setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
-    setId(null);
-    setBusy(null);
+
+    if (item == null) {
+      setTitle("");
+      setIngredientInputs([{ name: "", quantity: "", units: "" }]);
+      setSelectedSides([]);
+      setSelectedFruit([]);
+      setSelectedEntree([]);
+      setSelectedFilters([]);
+      setSelectedAllergens([]);
+      setNotes("");
+      setServings("1");
+      //setIngredientsText("");
+      setInstructionsText("");
+      setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
+      setId(null);
+      setBusy(null);
+    } else {
+      setTitle(item.name);
+      setServings(item.serving.toString());
+
+      // if it's entree/side/fruit
+      /*if (recipeType && recipeType.id !== "Combo") {
+        setIngredientInputs([
+          item.ingredients.map((ingredient) => ({
+            name: ingredient.name,
+            quantity: ingredient.quantity,
+            units: ingredient.units,
+          })),
+        ]);
+      } else {
+        setSelectedSides([item.sides?.map((s) => s.name) ?? []].flat());
+        setSelectedFruit([item.fruits?.map((f) => f.name) ?? []].flat());
+        setSelectedEntree([item.entree?.name ?? ""].filter(Boolean));
+      }
+      
+      setSelectedFilters([item.filters ?? []].flat());
+      setSelectedAllergens([item.allergens ?? []].flat());
+      setNotes(item.notes ?? item.comments);
+      
+      //setIngredientsText(item.ingre);
+      setInstructionsText(item.instructions);
+      setNutrition(item.nutritional_info);
+      setId(null);
+      setBusy(null);*/
+    }
   }, [open]);
 
   useEffect(() => {
@@ -311,8 +351,11 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           await Promise.all([entreeRes.json(), sideRes.json(), fruitRes.json()]);
 
         const toOptionNames = (recipes: Recipe[] = []) =>
-          Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
+          /*Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
             a.localeCompare(b),
+          );*/
+          Array.from(new Map(recipes.map((r) => [r.name.trim(), { id: r._id, name: r.name.trim() }])).values()).sort(
+            (a, b) => a.name.localeCompare(b.name),
           );
 
         setEntreeOptions(toOptionNames(entreeJson.data));
@@ -337,19 +380,16 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
   async function saveRecipe(isDraft: boolean) {
     if (!isDraft && !title.trim()) return;
 
-    const ingredientLines = ingredientsText
+    /*const ingredientLines = ingredientsText
       .split(/[\r\n,]+/)
       .map((line) => line.trim())
-      .filter(Boolean);
+      .filter(Boolean);*/
 
-    const tags = [
-      recipeType?.id,
-      ...selectedFilters,
-      ...selectedEntree,
-      ...selectedSides,
-      ...selectedFruit,
-      ...selectedAllergens,
-    ]
+    /*const tags = [recipeType?.id, ...selectedFilters, ...selectedAllergens]
+      .filter((tag): tag is string => Boolean(tag))
+      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());*/
+
+    const tags = [recipeType?.id, ...selectedFilters.map((f) => f.name)]
       .filter((tag): tag is string => Boolean(tag))
       .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
 
@@ -364,12 +404,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           _id: crypto.randomUUID(),
           name: title.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
-          entree: selectedEntree.length > 0 ? { name: selectedEntree[0], quantity: "1" } : null,
-          sides: selectedSides.map((name) => ({ name, quantity: "1" })),
-          fruits: selectedFruit.map((name) => ({ name, quantity: "1" })),
+          entrees: selectedEntrees.map((entree) => ({ name: entree.name, id: entree.id })),
+          sides: selectedSides.map((side) => ({ name: side.name, id: side.id })),
+          fruits: selectedFruits.map((fruit) => ({ name: fruit.name, id: fruit.id })),
           filters: Array.from(new Set(tags)),
           notes: notes,
-          allergens: selectedAllergens,
+          allergens: selectedAllergens.map((allergen) => allergen.name),
           instructions: instructionsText,
           isDraft,
           ...(imageUrl ? { imageUrl } : {}),
@@ -519,12 +559,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
                   icon={Carrot}
                   label="Entree"
                   options={entreeOptions}
-                  selectedValues={selectedEntree}
+                  selectedValues={selectedEntrees.map((f) => f.name)}
                   onSelect={(value) => {
                     setSelectedEntree(
-                      selectedEntree.includes(value)
-                        ? selectedEntree.filter((s) => s !== value)
-                        : [...selectedEntree, value],
+                      selectedEntrees.includes(value)
+                        ? selectedEntrees.filter((s) => s !== value)
+                        : [...selectedEntrees, value],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
@@ -533,7 +573,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
                   icon={Carrot}
                   label="Sides"
                   options={sideOptions}
-                  selectedValues={selectedSides}
+                  selectedValues={selectedSides.map((f) => f.name)}
                   onSelect={(value) => {
                     setSelectedSides(
                       selectedSides.includes(value)
@@ -547,12 +587,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
                   icon={Apple}
                   label="Fruit"
                   options={fruitOptions}
-                  selectedValues={selectedFruit}
+                  selectedValues={selectedFruits.map((f) => f.name)}
                   onSelect={(value) => {
                     setSelectedFruit(
-                      selectedFruit.includes(value)
-                        ? selectedFruit.filter((f) => f !== value)
-                        : [...selectedFruit, value],
+                      selectedFruits.includes(value)
+                        ? selectedFruits.filter((f) => f !== value)
+                        : [...selectedFruits, value],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
@@ -563,7 +603,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               icon={Tag}
               label="Filters"
               options={filterOptions}
-              selectedValues={selectedFilters}
+              selectedValues={selectedFilters.map((f) => f.name)}
               onSelect={(value) => {
                 setSelectedFilters(
                   selectedFilters.includes(value)
@@ -577,7 +617,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               icon={CircleAlert}
               label="Allergens"
               options={allergenOptions}
-              selectedValues={selectedAllergens}
+              selectedValues={selectedAllergens.map((f) => f.name)}
               onSelect={(value) => {
                 setSelectedAllergens(
                   selectedAllergens.includes(value)

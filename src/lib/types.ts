@@ -13,6 +13,11 @@ export type Nutrition = {
   sodium: number;
 };
 
+export type RecipeReference = {
+  id: string;
+  name: string;
+};
+
 export type Recipe = {
   _id: string;
   name: string;
@@ -32,8 +37,9 @@ export type Combo = {
   _id: string;
   name: string;
   serving: number;
-  sides?: Ingredient[];
-  fruits?: Ingredient[];
+  entrees?: RecipeReference[];
+  sides?: RecipeReference[];
+  fruits?: RecipeReference[];
   filters?: string[];
   notes?: string;
   allergens?: string[];

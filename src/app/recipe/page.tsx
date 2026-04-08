@@ -3,10 +3,13 @@
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
+import CreateRecipePopUp from "@/components/CreateRecipePopUp";
 import { CategoryValue, FilterSelections } from "@/lib/types";
 import { useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
+import { CreateRecipeType } from "@/components/CreateRecipePopUp";
+import { Utensils } from "lucide-react";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -23,10 +26,13 @@ export default function RecipePage() {
   const [search, setSearch] = useState("");
   const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
 
   const handleOpenItem = (item: Recipe | Combo) => {
     setSelectedItem(item);
     setIsOpen(true);
+    setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
   };
 
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
@@ -60,7 +66,26 @@ export default function RecipePage() {
         <FilterMenu onFilterChange={setFilters} />
       </div>
 
-      <ViewRecipePopUp open={isOpen} onClose={setIsOpen} item={selectedItem} isComboMode={isComboMode} />
+      {/*<ViewRecipePopUp open={isOpen} onClose={setIsOpen} item={selectedItem} isComboMode={isComboMode} />*/}
+      {mode === "view" ? (
+        <ViewRecipePopUp
+          open={isOpen}
+          onClose={setIsOpen}
+          item={selectedItem}
+          isComboMode={isComboMode}
+          changeMode={(e) => setMode(e)}
+        />
+      ) : (
+        <CreateRecipePopUp
+          item={selectedItem}
+          open={isOpen}
+          onClose={() => {
+            setIsOpen(false);
+            setMode("view");
+          }}
+          recipeType={activeType}
+        />
+      )}
     </main>
   );
 }

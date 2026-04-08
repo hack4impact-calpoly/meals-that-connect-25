@@ -25,9 +25,10 @@ type Props = {
   onClose: (v: boolean) => void;
   item: Recipe | Combo | null;
   isComboMode: boolean;
+  changeMode: (mode: "view" | "edit") => void;
 };
 
-export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Props) {
+export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
 
@@ -38,6 +39,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
   }, [open, item]);
 
   if (!item) return null;
+
+  const applyEditMode = () => {
+    changeMode("edit");
+  };
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -64,8 +69,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                 />
               </div>
               <div className="flex flex-row gap-4">
-                <Share className="cursor-pointer" />
-                <Pencil className="cursor-pointer" />
+                <Pencil className="cursor-pointer" onClick={applyEditMode} />
                 <Ellipsis className="cursor-pointer" />
               </div>
             </div>
@@ -84,6 +88,23 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
 
             {/* title */}
             <div className="text-2xl font-bold mb-4 mt-5">{item.name}</div>
+
+            {/* entrees (combo) */}
+            {"entrees" in item && item.entrees && (
+              <div className="flex mb-4">
+                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                  <Carrot /> Entrees
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+                  {item.entrees.map((s, i) => (
+                    <div key={i} className="bg-lime px-2 py-1 rounded-md">
+                      {s.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* sides (combo) */}
             {"sides" in item && item.sides && (

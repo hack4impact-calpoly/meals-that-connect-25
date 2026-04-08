@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   try {
     const comboData = await req.json();
     await connectDB();
-
+    console.log(comboData, "COMBO DATA!");
     const combo = new Combo(comboData);
     await combo.save();
 
