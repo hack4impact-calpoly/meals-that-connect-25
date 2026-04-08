@@ -70,7 +70,7 @@ export default function CardGrid({
           imageUrl={recipe.imageUrl}
           // TODO: Update RecipeCard with correct recipe schema
           servingSize={recipe.serving.toString()}
-          tags={recipe.tags ?? []}
+          tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
           isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}

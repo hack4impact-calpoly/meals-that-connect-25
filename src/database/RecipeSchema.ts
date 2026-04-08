@@ -21,7 +21,7 @@ const RecipeSchema = new Schema(
     },
 
     instructions: { type: String, required: false },
-    comments: { type: String, required: false },
+    notes: { type: String, required: false },
     imageUrl: { type: String, required: false },
     lastVerified: { type: Date, required: false },
     verifiedBy: { type: String, required: false },

@@ -214,7 +214,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
     })),
   );
 
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [id, setId] = useState<string | null>(null);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
@@ -272,7 +272,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
     if (!open) return;
 
     if (item == null) {
-      setTitle("");
+      setName("");
       setIngredientInputs([{ name: "", quantity: "", units: "" }]);
       setSelectedSides([]);
       setSelectedFruit([]);
@@ -287,33 +287,43 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       setId(null);
       setBusy(null);
     } else {
-      setTitle(item.name);
+      setName(item.name);
       setServings(item.serving.toString());
+      setSelectedAllergens(
+        (item.allergens ?? []).map((f) => ({
+          id: f.trim(),
+          name: f.trim(),
+        })),
+      );
+      setSelectedFilters(
+        (item.filters ?? []).map((f) => ({
+          id: f.trim(),
+          name: f.trim(),
+        })),
+      );
+      setInstructionsText(item.instructions ?? "");
+      setNotes(item.notes ?? "");
+      setImageUrl(item.imageUrl ?? "");
 
       // if it's entree/side/fruit
-      /*if (recipeType && recipeType.id !== "Combo") {
+      /*if (item.filters[0] !== "Combo") {
         setIngredientInputs([
-          item.ingredients.map((ingredient) => ({
+          item.ingredients.map((ingredient: { name: string; quantity: number; units: any }) => ({
             name: ingredient.name,
             quantity: ingredient.quantity,
             units: ingredient.units,
           })),
         ]);
+
+        setNutrition(item.nutritional_info);
       } else {
-        setSelectedSides([item.sides?.map((s) => s.name) ?? []].flat());
-        setSelectedFruit([item.fruits?.map((f) => f.name) ?? []].flat());
-        setSelectedEntree([item.entree?.name ?? ""].filter(Boolean));
-      }
-      
-      setSelectedFilters([item.filters ?? []].flat());
-      setSelectedAllergens([item.allergens ?? []].flat());
-      setNotes(item.notes ?? item.comments);
-      
-      //setIngredientsText(item.ingre);
-      setInstructionsText(item.instructions);
-      setNutrition(item.nutritional_info);
+        setSelectedSides([item.sides?.map((s: RecipeReference) => s.name) ?? []].flat());
+        setSelectedFruit([item.fruits?.map((f: RecipeReference) => f.name) ?? []].flat());
+        setSelectedEntree([item.entrees?.map((e: RecipeReference) => e.name) ?? []].flat());
+      }*/
+
       setId(null);
-      setBusy(null);*/
+      setBusy(null);
     }
   }, [open]);
 
@@ -378,7 +388,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
   }, [open]);
 
   async function saveRecipe(isDraft: boolean) {
-    if (!isDraft && !title.trim()) return;
+    if (!isDraft && !name.trim()) return;
 
     /*const ingredientLines = ingredientsText
       .split(/[\r\n,]+/)
@@ -402,7 +412,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       if (isCombo) {
         payload = {
           _id: crypto.randomUUID(),
-          name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+          name: name.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
           entrees: selectedEntrees.map((entree) => ({ name: entree.name, id: entree.id })),
           sides: selectedSides.map((side) => ({ name: side.name, id: side.id })),
@@ -422,7 +432,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       } else {
         payload = {
           _id: crypto.randomUUID(),
-          name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+          name: name.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
           allergens: selectedAllergens.map((allergen) => allergen.name),
           filters: Array.from(new Set(tags)),
@@ -440,7 +450,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   }))
               : undefined,
           instructions: instructionsText,
-          comments: notes,
+          notes: notes,
           isDraft,
           nutritional_info: {
             calories: nutrition.calories !== "" ? Number(nutrition.calories) : 0,
@@ -465,6 +475,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       setId(payload._id);
     } finally {
       setBusy(null);
+
+      // close window
+      onClose();
     }
   }
 
@@ -525,7 +538,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
               <button
                 type="button"
                 onClick={() => saveRecipe(false)}
-                disabled={busy !== null || !title.trim()}
+                disabled={busy !== null || !name.trim()}
                 className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
               >
                 {busy === "publish" ? "Saving…" : "Publish"}
@@ -545,8 +558,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
             <label className="flex flex-col gap-1">
               <span className="text-sm font-montserrat font-semibold text-pepper">New {createLabel}</span>
               <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Chicken Alfredo"
                 className="w-full rounded-md border border-pepper/20 px-3 py-2 font-montserrat text-pepper outline-none focus:border-pepper/50"
               />

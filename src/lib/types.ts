@@ -22,10 +22,11 @@ export type Recipe = {
   _id: string;
   name: string;
   serving: number;
-  tags?: string[];
+  filters: string[]; // never empty bc it will automatically contain Entree/Side/Fruit
+  allergens?: string[];
   ingredients?: Ingredient[];
   instructions?: string;
-  comments?: string;
+  notes?: string;
   imageUrl?: string;
   lastVerified?: string | Date;
   verifiedBy?: string;
@@ -40,7 +41,7 @@ export type Combo = {
   entrees?: RecipeReference[];
   sides?: RecipeReference[];
   fruits?: RecipeReference[];
-  filters?: string[];
+  filters: string[]; // never empty bc it will automatically contain Combo
   notes?: string;
   allergens?: string[];
   instructions?: string;

@@ -48,13 +48,16 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
     <Dialog open={open} onClose={onClose} className="relative z-50">
       {/* backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/40" />
-
       {/* container */}
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
-          {/* <DialogPanel className="w-full max-w-3xl rounded-lg bg-white p-6 shadow-lg"> */}
           <DialogPanel
-            className={`bg-white p-6 shadow-lg rounded-lg transition-all duration-300 ${maximized ? "fixed inset-0 w-screen h-screen max-w-none rounded-none z-50" : "w-full max-w-3xl"}`}
+            className={`bg-white p-6 shadow-lg rounded-lg transition-all duration-300 
+  ${
+    maximized
+      ? "fixed inset-0 w-screen h-screen max-w-none rounded-none z-50 overflow-y-auto"
+      : "w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+  }`}
           >
             {/* header */}
             <div className="flex items-center justify-between mb-4">
@@ -140,15 +143,16 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* filters (combo) */}
+            {/* filters */}
             {"filters" in item && item.filters && (
               <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
                   <Tag /> Filters
                 </h3>
-                <div className="flex flex-wrap gap-2">
+
+                <div className="flex flex-wrap gap-2 max-w-full">
                   {item.filters.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
                       {f}
                     </div>
                   ))}
@@ -156,15 +160,16 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* allergens (combo) */}
+            {/* allergens */}
             {"allergens" in item && item.allergens && (
               <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
                   <CircleAlert /> Allergens
                 </h3>
-                <div>
+
+                <div className="flex flex-wrap gap-2 max-w-full">
                   {item.allergens.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
                       {f}
                     </div>
                   ))}
@@ -172,39 +177,13 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* notes (combo) */}
+            {/* notes */}
             {"notes" in item && item.notes && (
               <div className="flex mb-4">
                 <h3 className="flex w-30 gap-2 font-bold">
                   <SquarePen /> Notes
                 </h3>
                 <p>{item.notes}</p>
-              </div>
-            )}
-
-            {/* tags (recipe) */}
-            {"tags" in item && item.tags && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Tag /> Tags
-                </h3>
-                <div className="flex gap-2">
-                  {item.tags.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
-                      {f}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* comments (recipe) */}
-            {"comments" in item && item.comments && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 font-bold">
-                  <SquarePen /> Comments
-                </h3>
-                <p>{item.comments}</p>
               </div>
             )}
 
@@ -313,7 +292,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             )}
           </DialogPanel>
         </div>
-      </div>
+      </div>{" "}
     </Dialog>
   );
 }

@@ -9,7 +9,7 @@ type Recipe = {
     quantity: string;
   }[];
   instructions: string;
-  comments: string;
+  notes: string;
   lastVerified: Date;
   verifiedBy: string;
 };
@@ -49,7 +49,7 @@ export default async function RecipeSummary({ id }: { id: string }) {
         <b>Instructions:</b> {recipe.instructions}
       </p>
       <p>
-        <b>Comments:</b> {recipe.comments}
+        <b>Notes:</b> {recipe.notes}
       </p>
       <p>
         <b>Last Verified Date:</b> {recipe.lastVerified.toLocaleDateString()}
