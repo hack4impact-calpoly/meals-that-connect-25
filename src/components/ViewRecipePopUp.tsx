@@ -239,7 +239,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* nutritional info (combo) */}
+            {/* nutritional info */}
             {"nutritional_info" in item && item.nutritional_info && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
