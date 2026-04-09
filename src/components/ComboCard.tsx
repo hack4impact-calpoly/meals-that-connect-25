@@ -1,5 +1,4 @@
 import Image from "next/image";
-import React from "react";
 import { Utensils } from "lucide-react";
 import { RecipeReference } from "@/lib/types";
 
@@ -88,9 +87,9 @@ export default function ComboCard({
           </div>
         </div>
 
-        <div className="mt-auto flex items-center gap-1">
+        <div className="mt-auto flex items-center gap-1 ml-auto">
           <Utensils className="h-2.5 w-2.5 text-combo-jicama" />
-          <p className="font-montserrat italic text-xs">Serves {servingText}</p>
+          <p className="font-montserrat text-xs">Serves {servingText}</p>
         </div>
       </div>
     </div>

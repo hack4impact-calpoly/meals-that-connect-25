@@ -42,11 +42,11 @@ export default function AddNewRecipeButton() {
     <>
       <Menu as="div" className="relative">
         <MenuButton
-          className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-3
+          className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-2.5
                                text-base font-bold font-montserrat text-white text-nowrap"
         >
           Add New Recipe
-          <Plus size={20} strokeWidth={2.5} />
+          <Plus size={20} strokeWidth={3} />
         </MenuButton>
 
         <MenuItems
