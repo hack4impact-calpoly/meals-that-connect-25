@@ -45,7 +45,9 @@ export default function CardGrid({
             key={combo._id}
             name={combo.name}
             imageUrl={combo.imageUrl}
-            tags={[]}
+            entrees={combo.entrees ?? []}
+            sides={combo.sides ?? []}
+            fruits={combo.fruits ?? []}
             serving={combo.serving}
             isDraft={combo.isDraft}
             isSelected={selectedIds?.has(combo._id)}

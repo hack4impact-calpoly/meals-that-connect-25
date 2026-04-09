@@ -136,7 +136,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
                 <div className="flex flex-wrap gap-2">
                   {item.fruits.map((f, i) => (
-                    <div key={i} className="bg-fruit-900 text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md">
                       {f.name}
                     </div>
                   ))}

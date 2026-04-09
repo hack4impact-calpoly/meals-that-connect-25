@@ -1,11 +1,14 @@
 import Image from "next/image";
 import React from "react";
 import { Utensils } from "lucide-react";
+import { RecipeReference } from "@/lib/types";
 
 type ComboCardProps = {
   name: string;
   imageUrl?: string;
-  tags: string[];
+  entrees: RecipeReference[];
+  sides: RecipeReference[];
+  fruits: RecipeReference[];
   serving: number;
   isDraft: boolean;
   isSelected?: boolean;
@@ -16,7 +19,9 @@ type ComboCardProps = {
 export default function ComboCard({
   name,
   imageUrl,
-  tags = [],
+  entrees,
+  sides,
+  fruits,
   serving,
   isDraft = true,
   isSelected,
@@ -55,13 +60,29 @@ export default function ComboCard({
         <div className="space-y-3">
           <p className="mt-3 font-montserrat font-bold text-base text-combo-jicama">{name}</p>
 
-          <div className="flex flex-col gap-1.5">
-            {tags.map((tag) => (
+          <div className="flex flex-col gap-1.5 max-h-30 overflow-y-auto">
+            {entrees.map((i) => (
               <span
-                key={tag}
+                key={i.id}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-entree-900 text-entree-500`}
+              >
+                {i.name}
+              </span>
+            ))}
+            {fruits.map((i) => (
+              <span
+                key={i.id}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-fruit-500 text-white`}
+              >
+                {i.name}
+              </span>
+            ))}
+            {sides.map((i) => (
+              <span
+                key={i.id}
                 className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-sides-500 text-sides-900`}
               >
-                {tag}
+                {i.name}
               </span>
             ))}
           </div>
