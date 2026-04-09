@@ -19,6 +19,7 @@ export type RecipeReference = {
 };
 
 export type Recipe = {
+  item: any;
   _id: string;
   name: string;
   serving: number;

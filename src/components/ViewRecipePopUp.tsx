@@ -31,6 +31,7 @@ type Props = {
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
+  const originalServings = item?.serving || 1;
 
   useEffect(() => {
     if (open && item?.serving) {
@@ -248,42 +249,42 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   <NutritionalInfo
                     label="Calories"
                     unit="kcal"
-                    value={(item.nutritional_info.calories * servings).toString()}
+                    value={((item.nutritional_info.calories / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Protein"
                     unit="g"
-                    value={(item.nutritional_info.protein * servings).toString()}
+                    value={((item.nutritional_info.protein / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fat"
                     unit="g"
-                    value={(item.nutritional_info.fat * servings).toString()}
+                    value={((item.nutritional_info.fat / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Carbs"
                     unit="g"
-                    value={(item.nutritional_info.carbs * servings).toString()}
+                    value={((item.nutritional_info.carbs / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Fiber"
                     unit="g"
-                    value={(item.nutritional_info.fiber * servings).toString()}
+                    value={((item.nutritional_info.fiber / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />
                   <NutritionalInfo
                     label="Sodium"
                     unit="mg"
-                    value={(item.nutritional_info.sodium * servings).toString()}
+                    value={((item.nutritional_info.sodium / originalServings) * servings).toString()}
                     onChange={() => {}}
                     readOnly={true}
                   />

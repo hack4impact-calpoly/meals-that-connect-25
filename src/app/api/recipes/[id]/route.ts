@@ -3,13 +3,11 @@ import connectDB, { getRecipeById } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 
 type Params = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
@@ -30,8 +28,8 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { id } = params;
-
+  const { id } = await params;
+  console.log("ID IS HERE: ", id);
   if (!id) {
     return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
   }
@@ -69,7 +67,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   }
 }
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing Recipe ID" }, { status: 400 });

@@ -17,11 +17,17 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
-import type { Recipe, Combo, RecipeReference } from "@/lib/types";
+import type { Recipe, Combo, RecipeReference, Ingredient } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
-type Props = { item: Recipe | Combo | null; open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
+type Props = {
+  item: Recipe | Combo | null;
+  open: boolean;
+  onClose: () => void;
+  recipeType: CreateRecipeType | null;
+  editMode: boolean;
+};
 
 type InputPair = {
   name: string;
@@ -184,8 +190,7 @@ function DropdownField({
   );
 }
 
-export default function CreateRecipePopUp({ item, open, onClose, recipeType }: Props) {
-  // const Icon = recipeType?.icon;
+export default function CreateRecipePopUp({ item, open, onClose, recipeType, editMode }: Props) {
   const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
   const isCombo = recipeType?.id === "Combo";
   const [selectedSides, setSelectedSides] = useState<RecipeReference[]>([]);
@@ -198,9 +203,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
   const [fruitOptions, setFruitOptions] = useState<{ id: string; name: string }[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
-  /*const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
-    section.options.map((option) => option.label),
-  );*/
   const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
     section.options.map((option) => ({
       name: option.label,
@@ -220,7 +222,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
   const [notes, setNotes] = useState("");
   const [servings, setServings] = useState("1");
-  //const [ingredientsText, setIngredientsText] = useState("");
   const [instructionsText, setInstructionsText] = useState("");
   const [nutrition, setNutrition] = useState({
     calories: "",
@@ -268,6 +269,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
     setIngredientInputs(updated);
   };
 
+  const isRecipe = (item: Recipe | Combo): item is Recipe => {
+    return "ingredients" in item;
+  };
+
   useEffect(() => {
     if (!open) return;
 
@@ -281,7 +286,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       setSelectedAllergens([]);
       setNotes("");
       setServings("1");
-      //setIngredientsText("");
       setInstructionsText("");
       setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
       setId(null);
@@ -305,22 +309,33 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
       setNotes(item.notes ?? "");
       setImageUrl(item.imageUrl ?? "");
 
-      // if it's entree/side/fruit
-      /*if (item.filters[0] !== "Combo") {
-        setIngredientInputs([
-          item.ingredients.map((ingredient: { name: string; quantity: number; units: any }) => ({
-            name: ingredient.name,
-            quantity: ingredient.quantity,
-            units: ingredient.units,
-          })),
-        ]);
+      if (!item) return;
 
-        setNutrition(item.nutritional_info);
-      } else {
-        setSelectedSides([item.sides?.map((s: RecipeReference) => s.name) ?? []].flat());
-        setSelectedFruit([item.fruits?.map((f: RecipeReference) => f.name) ?? []].flat());
-        setSelectedEntree([item.entrees?.map((e: RecipeReference) => e.name) ?? []].flat());
-      }*/
+      // if it's entree/side/fruit
+      if (!isCombo && isRecipe(item) === true) {
+        setIngredientInputs(
+          item.ingredients
+            ? item.ingredients.map((ingredient: Ingredient) => ({
+                name: ingredient.name,
+                quantity: ingredient.quantity,
+                units: ingredient.units,
+              }))
+            : [],
+        );
+
+        setNutrition({
+          calories: item.nutritional_info.calories.toString(),
+          protein: item.nutritional_info.protein.toString(),
+          fat: item.nutritional_info.fat.toString(),
+          carbs: item.nutritional_info.carbs.toString(),
+          fiber: item.nutritional_info.fiber.toString(),
+          sodium: item.nutritional_info.sodium.toString(),
+        });
+      } else if (isCombo && isRecipe(item) === false) {
+        setSelectedSides(item.sides ?? []);
+        setSelectedFruit(item.fruits ?? []);
+        setSelectedEntree(item.entrees ?? []);
+      }
 
       setId(null);
       setBusy(null);
@@ -390,15 +405,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
   async function saveRecipe(isDraft: boolean) {
     if (!isDraft && !name.trim()) return;
 
-    /*const ingredientLines = ingredientsText
-      .split(/[\r\n,]+/)
-      .map((line) => line.trim())
-      .filter(Boolean);*/
-
-    /*const tags = [recipeType?.id, ...selectedFilters, ...selectedAllergens]
-      .filter((tag): tag is string => Boolean(tag))
-      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());*/
-
     const tags = [recipeType?.id, ...selectedFilters.map((f) => f.name)]
       .filter((tag): tag is string => Boolean(tag))
       .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
@@ -406,6 +412,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
     let payload;
 
     setBusy("publish");
+
     try {
       let res;
       // check if it's recipe or combo
@@ -424,11 +431,22 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
           isDraft,
           ...(imageUrl ? { imageUrl } : {}),
         };
-        res = await fetch("/api/combos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+
+        if (editMode === false) {
+          res = await fetch("/api/combos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        } else if (item && "_id" in item) {
+          // change to our id
+          payload["_id"] = item._id;
+          res = await fetch(`/api/combos/${item._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        }
       } else {
         payload = {
           _id: crypto.randomUUID(),
@@ -463,15 +481,30 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
           ...(imageUrl ? { imageUrl } : {}),
         };
         console.log("Payload:", payload);
-        res = await fetch("/api/recipes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+
+        if (editMode === false) {
+          res = await fetch("/api/recipes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error(`Save failed (${res.status})`);
+          await res.json().catch(() => ({}));
+        } else if (item && "_id" in item) {
+          // change to our id
+          payload["_id"] = item._id;
+          res = await fetch(`/api/recipes/${item._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error(`Save failed (${res.status})`);
+          await res.json().catch(() => ({}));
+        }
       }
 
-      if (!res.ok) throw new Error(`Save failed (${res.status})`);
-      await res.json().catch(() => ({}));
       setId(payload._id);
     } finally {
       setBusy(null);
@@ -575,8 +608,14 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={entreeOptions}
                   selectedValues={selectedEntrees.map((f) => f.name)}
                   onSelect={(value) => {
+                    const selectedOption = entreeOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
                     setSelectedEntree((prev) =>
-                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
@@ -587,8 +626,14 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={sideOptions}
                   selectedValues={selectedSides.map((f) => f.name)}
                   onSelect={(value) => {
+                    const selectedOption = sideOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
                     setSelectedSides((prev) =>
-                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading sides..." : "Select Side(s)"}
@@ -599,8 +644,14 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType }: P
                   options={fruitOptions}
                   selectedValues={selectedFruits.map((f) => f.name)}
                   onSelect={(value) => {
+                    const selectedOption = fruitOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
                     setSelectedFruit((prev) =>
-                      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}

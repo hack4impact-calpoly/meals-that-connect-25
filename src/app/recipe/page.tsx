@@ -84,6 +84,7 @@ export default function RecipePage() {
             setMode("view");
           }}
           recipeType={activeType}
+          editMode={true}
         />
       )}
     </main>

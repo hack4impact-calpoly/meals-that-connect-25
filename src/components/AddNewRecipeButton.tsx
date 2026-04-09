@@ -73,7 +73,13 @@ export default function AddNewRecipeButton() {
         </MenuItems>
       </Menu>
 
-      <CreateRecipePopUp item={null} open={!!activeType} onClose={() => setActiveType(null)} recipeType={activeType} />
+      <CreateRecipePopUp
+        item={null}
+        open={!!activeType}
+        onClose={() => setActiveType(null)}
+        recipeType={activeType}
+        editMode={false}
+      />
     </>
   );
 }
