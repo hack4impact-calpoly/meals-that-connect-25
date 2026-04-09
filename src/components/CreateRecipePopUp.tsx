@@ -19,6 +19,7 @@ import {
 import ImageUploader from "@/components/ImageUploader";
 import type { Recipe, Combo, RecipeReference, Ingredient } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
+import Image from "next/image";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
 type Props = {
@@ -511,6 +512,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       // close window
       onClose();
+
+      // reload window
+      window.location.reload();
     }
   }
 
@@ -580,11 +584,24 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           </div>
 
           {/* Image Upload */}
-          <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
-            <div className="mx-auto max-w-xs text-center">
-              <ImageUploader onUpload={(url) => setImageUrl(url)} />
+          {imageUrl ? (
+            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+              <div className="mx-auto max-w-xs text-center">
+                <Image
+                  src={imageUrl}
+                  alt="Uploaded"
+                  width={200}
+                  height={200}
+                  className="mx-auto mb-4 max-h-48 rounded-xl object-cover"
+                />
+                <button onClick={() => setImageUrl("")} className="text-sm text-blue-500">
+                  Replace image
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <ImageUploader onUpload={(url) => setImageUrl(url)} />
+          )}
 
           {/* Title */}
           <div className="mt-5">
