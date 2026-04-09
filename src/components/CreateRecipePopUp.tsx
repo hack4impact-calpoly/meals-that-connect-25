@@ -338,7 +338,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
         setSelectedEntree(item.entrees ?? []);
       }
 
-      setId(null);
+      setId(item._id);
       setBusy(null);
     }
   }, [open]);
@@ -520,7 +520,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   async function trash() {
     if (!id) return;
-    if (!window.confirm("Delete this recipe?")) return;
+    if (!window.confirm("Delete this item?")) return;
     setBusy("delete");
     try {
       let res;
@@ -533,6 +533,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       onClose();
     } finally {
       setBusy(null);
+
+      // reload window
+      window.location.reload();
     }
   }
 
@@ -551,15 +554,17 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={trash}
-                disabled={!id || busy !== null}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
-                title={id ? "Delete recipe" : "Delete available after publish"}
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
+              {/* only show trash option if we are editing */}
+              {editMode === true && (
+                <button
+                  type="button"
+                  onClick={trash}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  title={id ? "Delete recipe" : "Delete available after publish"}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-3">
@@ -600,7 +605,11 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               </div>
             </div>
           ) : (
-            <ImageUploader onUpload={(url) => setImageUrl(url)} />
+            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+              <div className="mx-auto max-w-xs text-center">
+                <ImageUploader onUpload={(url) => setImageUrl(url)} />
+              </div>
+            </div>
           )}
 
           {/* Title */}
