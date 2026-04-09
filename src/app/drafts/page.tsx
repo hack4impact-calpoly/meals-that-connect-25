@@ -69,6 +69,7 @@ export default function DraftsPage() {
   */
 
   const handleDelete = async () => {
+    if (!window.confirm("Delete all selected item(s)?")) return;
     if (selectedCategories.has("Combo")) {
       await deleteCombos(Array.from(selectedIds));
     } else {
@@ -80,6 +81,7 @@ export default function DraftsPage() {
   };
 
   const handlePublish = async () => {
+    if (!window.confirm("Publish all selected item(s)?")) return;
     if (selectedCategories.has("Combo")) {
       await publishCombos(Array.from(selectedIds));
     } else {
