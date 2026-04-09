@@ -1,6 +1,11 @@
 import Image from "next/image";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
+import CreateRecipePopUp from "./CreateRecipePopUp";
+import { Recipe } from "@/lib/types";
 
 export type RecipeCardProps = {
+  item: Recipe;
   imageUrl?: string;
   name: string;
   calories?: number;
@@ -21,6 +26,7 @@ const TAG_STYLES: Record<string, string> = {
 };
 
 export default function RecipeCard({
+  item,
   imageUrl,
   name,
   calories,
@@ -31,6 +37,7 @@ export default function RecipeCard({
   onSelect,
   onOpen,
 }: RecipeCardProps) {
+  const [editMode, setEditMode] = useState(false);
   const caloriesText = calories != null ? `${calories} cal` : null;
 
   const servingText = servingSize != null ? `${servingSize}` : null;
@@ -57,10 +64,24 @@ export default function RecipeCard({
       </div>
 
       {primaryTag ? (
-        <span className={`shrink-0 rounded-md px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}>
+        <span
+          className={`shrink-0 w-20 rounded-md text-center px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}
+        >
           {primaryTag}
         </span>
       ) : null}
+
+      {isDraft && <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />}
+
+      {editMode === true && (
+        <CreateRecipePopUp
+          onClose={() => setEditMode(false)}
+          item={item}
+          open={true}
+          recipeType={null}
+          editMode={true}
+        />
+      )}
 
       {isDraft && onSelect && (
         <input

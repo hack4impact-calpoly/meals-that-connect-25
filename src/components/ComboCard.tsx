@@ -1,8 +1,11 @@
 import Image from "next/image";
-import { Utensils } from "lucide-react";
-import { RecipeReference } from "@/lib/types";
+import { Pencil, Utensils } from "lucide-react";
+import { Combo, RecipeReference } from "@/lib/types";
+import { useState } from "react";
+import CreateRecipePopUp from "./CreateRecipePopUp";
 
 type ComboCardProps = {
+  item: Combo;
   name: string;
   imageUrl?: string;
   entrees: RecipeReference[];
@@ -16,6 +19,7 @@ type ComboCardProps = {
 };
 
 export default function ComboCard({
+  item,
   name,
   imageUrl,
   entrees,
@@ -27,6 +31,8 @@ export default function ComboCard({
   onSelect,
   onOpen,
 }: ComboCardProps) {
+  const [editMode, setEditMode] = useState(false);
+
   const servingText = serving != null ? `${serving}` : null;
 
   return (
@@ -36,6 +42,24 @@ export default function ComboCard({
     >
       <div className="relative h-28 w-full bg-medium-gray">
         {imageUrl ? <Image src={imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" /> : null}
+
+        {editMode === true && (
+          <CreateRecipePopUp
+            onClose={() => setEditMode(false)}
+            item={item}
+            open={true}
+            recipeType={{ id: "Combo", label: "Add Combo", icon: Utensils }}
+            editMode={true}
+          />
+        )}
+
+        {isDraft && (
+          <Pencil
+            className="absolute top-35 right-4 z-20 h-5 w-5 rounded-xs accent-radish-900 cursor-pointer"
+            onClick={() => setEditMode((prev) => !prev)}
+          />
+        )}
+
         {isDraft && onSelect && (
           <input
             type="checkbox"

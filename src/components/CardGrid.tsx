@@ -42,6 +42,7 @@ export default function CardGrid({
 
         {(items as Combo[]).map((combo) => (
           <ComboCard
+            item={combo}
             key={combo._id}
             name={combo.name}
             imageUrl={combo.imageUrl}
@@ -68,6 +69,7 @@ export default function CardGrid({
       {(items as Recipe[]).map((recipe) => (
         <RecipeCard
           key={recipe._id}
+          item={recipe}
           name={recipe.name}
           imageUrl={recipe.imageUrl}
           // TODO: Update RecipeCard with correct recipe schema
