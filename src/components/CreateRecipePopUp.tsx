@@ -405,8 +405,33 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     return () => controller.abort();
   }, [open]);
 
-  async function saveRecipe(isDraft: boolean) {
+  async function saveRecipe(isDraft: boolean, item_id: String | null) {
     if (!isDraft && !name.trim()) return;
+
+    // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
+    if (!isCombo && item_id !== "") {
+      const res = await fetch(`/api/combos`, { method: "GET" });
+      if (!res.ok) {
+        console.error("Failed to check recipe combos", res.status);
+        alert("Failed to save recipe. Please try again.");
+        return;
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      const isUsed = data.some(
+        (combo: Combo) =>
+          combo.entrees?.some((e) => e.id === id) ||
+          combo.sides?.some((s) => s.id === id) ||
+          combo.fruits?.some((f) => f.id === id),
+      );
+
+      if (isUsed === true) {
+        alert("Failed to save recipe as a draft. Recipe is being used in an existing combo.");
+        return;
+      }
+    }
 
     const tags = [recipeType?.id, ...selectedFilters.map((f) => f.name)]
       .filter((tag): tag is string => Boolean(tag))
@@ -639,7 +664,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             <div className="flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => saveRecipe(true)}
+                onClick={() => saveRecipe(true, item ? item._id : "")}
                 disabled={busy !== null}
                 className="inline-flex items-center gap-2 rounded-full border border-radish-200 bg-white px-4 py-2 text-sm font-semibold text-radish-900 transition hover:bg-radish-100 disabled:opacity-50"
               >
@@ -648,7 +673,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               </button>
               <button
                 type="button"
-                onClick={() => saveRecipe(false)}
+                onClick={() => saveRecipe(false, "")}
                 disabled={busy !== null || !name.trim()}
                 className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
               >
