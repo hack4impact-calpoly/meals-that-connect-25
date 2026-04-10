@@ -166,7 +166,12 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   {item.entrees.map((e, i) => (
                     <div key={i} className="bg-brown text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {e.name}
-                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${e.id}`)} />
+                      <button
+                        onClick={() => window.open(`/recipe?id=${e.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -184,7 +189,12 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   {item.sides.map((s, i) => (
                     <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
-                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${s.id}`)} />
+                      <button
+                        onClick={() => window.open(`/recipe?id=${s.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -202,7 +212,12 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   {item.fruits.map((f, i) => (
                     <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {f.name}
-                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${f.id}`)} />
+                      <button
+                        onClick={() => window.open(`/recipe?id=${f.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>{" "}
                     </div>
                   ))}
                 </div>
