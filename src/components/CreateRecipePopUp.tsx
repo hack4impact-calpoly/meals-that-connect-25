@@ -204,6 +204,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [fruitOptions, setFruitOptions] = useState<{ id: string; name: string }[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
     section.options.map((option) => ({
       name: option.label,
@@ -520,7 +522,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   async function trash() {
     if (!id) return;
-    if (!window.confirm("Delete this item?")) return;
+
+    setShowDeleteModal(true);
     setBusy("delete");
     try {
       let res;
@@ -558,7 +561,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               {editMode === true && (
                 <button
                   type="button"
-                  onClick={trash}
+                  onClick={() => setShowDeleteModal(true)}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
                   title={id ? "Delete recipe" : "Delete available after publish"}
                 >
@@ -566,6 +569,46 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 </button>
               )}
             </div>
+
+            {showDeleteModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
+                <div className="relative p-4 w-full max-w-md">
+                  <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
+                    {/* Close button */}
+                    <button
+                      type="button"
+                      className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center"
+                      onClick={() => setShowDeleteModal(false)}
+                    >
+                      ✕
+                    </button>
+
+                    {/* Modal content */}
+                    <h3 className="text-lg font-semibold text-heading">Delete item?</h3>
+
+                    <p className="text-sm text-body mt-2">This action cannot be undone.</p>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2 mt-5">
+                      <button
+                        className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray"
+                        onClick={() => setShowDeleteModal(false)}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        className="px-4 py-2 text-white hover:bg-radish-500 bg-radish-900 rounded-lg"
+                        onClick={trash}
+                        disabled={busy === "delete"}
+                      >
+                        {busy === "delete" ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-end gap-3">
               <button

@@ -1,4 +1,4 @@
-import React from "react";
+/*import React from "react";
 
 type TrashButtonProps = {
   recipeId?: string | null;
@@ -54,3 +54,4 @@ export function TrashButton({ recipeId, onSuccess, onError, disabled, confirm = 
     </button>
   );
 }
+*/
