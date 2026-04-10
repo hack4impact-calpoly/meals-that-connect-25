@@ -271,12 +271,11 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-
             {/* ingredients (recipe) */}
             {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just sides + fruit?) */}
             {"ingredients" in item && item.ingredients && (
               <>
+                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
                 <div className="mb-4">
                   <h3 className="text-xl mb-4 font-semibold">Ingredients</h3>
 
@@ -288,17 +287,19 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                     ))}
                   </ul>
                 </div>
-                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
               </>
             )}
 
             {/* instructions */}
             {/* TODO: fix instructions schema (change from string -> array) */}
             {"instructions" in item && item.instructions && (
-              <div className="mb-4">
-                <h3 className="text-xl mb-4 font-semibold">Instructions</h3>
-                <p className="whitespace-pre-wrap">{item.instructions}</p>
-              </div>
+              <>
+                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
+                <div className="mb-4">
+                  <h3 className="text-xl mb-4 font-semibold">Instructions</h3>
+                  <p className="whitespace-pre-wrap">{item.instructions}</p>
+                </div>
+              </>
             )}
 
             {/* nutritional info */}
