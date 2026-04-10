@@ -16,6 +16,7 @@ import {
   SquarePen,
   Minus,
   Plus,
+  ArrowUpRight,
 } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
@@ -162,9 +163,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.entrees.map((s, i) => (
-                    <div key={i} className="bg-brown text-white px-2 py-1 rounded-md">
-                      {s.name}
+                  {item.entrees.map((e, i) => (
+                    <div key={i} className="bg-brown text-white px-2 py-1 rounded-md flex items-center gap-1">
+                      {e.name}
+                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${e.id}`)} />
                     </div>
                   ))}
                 </div>
@@ -180,8 +182,9 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
                 <div className="flex flex-wrap gap-2">
                   {item.sides.map((s, i) => (
-                    <div key={i} className="bg-lime px-2 py-1 rounded-md">
+                    <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
+                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${s.id}`)} />
                     </div>
                   ))}
                 </div>
@@ -197,8 +200,9 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
                 <div className="flex flex-wrap gap-2">
                   {item.fruits.map((f, i) => (
-                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {f.name}
+                      <ArrowUpRight size={20} onClick={() => window.open(`/recipe?id=${f.id}`)} />
                     </div>
                   ))}
                 </div>

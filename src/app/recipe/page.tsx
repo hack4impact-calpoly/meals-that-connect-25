@@ -5,11 +5,12 @@ import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
 import CreateRecipePopUp from "@/components/CreateRecipePopUp";
 import { CategoryValue, FilterSelections } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
 import { CreateRecipeType } from "@/components/CreateRecipePopUp";
 import { Utensils } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 
 const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
@@ -19,7 +20,11 @@ const EMPTY_FILTERS: FilterSelections = {
   serving: new Set(),
 };
 
-export default function RecipePage() {
+export default function RecipePage({ params }: { params: Promise<{ id: string }> }) {
+  const searchParams = useSearchParams();
+
+  const id = searchParams.get("id");
+
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   // automatic selection of combo category when page loads!
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
@@ -35,12 +40,33 @@ export default function RecipePage() {
     setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
   };
 
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
     search,
     filters,
     selectedCategories,
     draftMode: false,
   });
+
+  useEffect(() => {
+    if (!id || id === "") return;
+    // fetch recipe item
+    getRecipe(id)
+      .then((recipe) => {
+        setSelectedItem(recipe);
+        setIsOpen(true);
+        setActiveType(null);
+        setMode("view");
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, []);
 
   return (
     <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
@@ -66,7 +92,6 @@ export default function RecipePage() {
         <FilterMenu onFilterChange={setFilters} />
       </div>
 
-      {/*<ViewRecipePopUp open={isOpen} onClose={setIsOpen} item={selectedItem} isComboMode={isComboMode} />*/}
       {mode === "view" ? (
         <ViewRecipePopUp
           open={isOpen}

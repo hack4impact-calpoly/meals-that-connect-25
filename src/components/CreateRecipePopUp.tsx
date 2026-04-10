@@ -530,6 +530,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       if (isCombo) {
         res = await fetch(`/api/combos/${encodeURIComponent(id)}`, { method: "DELETE" });
       } else {
+        // verify we can delete this recipe as long as it's not being used in an existing combo
         res = await fetch(`/api/recipes/${encodeURIComponent(id)}`, { method: "DELETE" });
       }
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
