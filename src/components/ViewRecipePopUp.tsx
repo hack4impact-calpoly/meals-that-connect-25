@@ -56,34 +56,34 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
       item.entrees?.forEach((e) => {
         // go through each entree information and sum up nutritional info
         getRecipe(e.id).then((recipe) => {
-          setCalories((c) => recipe.nutritional_info.calories);
-          setProtein((p) => recipe.nutritional_info.protein);
-          setFat((f) => recipe.nutritional_info.fat);
-          setCarbs((c) => recipe.nutritional_info.carbs);
-          setFiber((f) => recipe.nutritional_info.fiber);
-          setSodium((s) => recipe.nutritional_info.sodium);
+          setCalories((c) => recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => recipe.nutritional_info.sodium / recipe.serving);
         });
       });
 
       item.sides?.forEach((s) => {
         getRecipe(s.id).then((recipe) => {
-          setCalories((c) => c + recipe.nutritional_info.calories);
-          setProtein((p) => p + recipe.nutritional_info.protein);
-          setFat((f) => f + recipe.nutritional_info.fat);
-          setCarbs((c) => c + recipe.nutritional_info.carbs);
-          setFiber((f) => f + recipe.nutritional_info.fiber);
-          setSodium((s) => s + recipe.nutritional_info.sodium);
+          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
         });
       });
 
       item.fruits?.forEach((f) => {
         getRecipe(f.id).then((recipe) => {
-          setCalories((c) => c + recipe.nutritional_info.calories);
-          setProtein((p) => p + recipe.nutritional_info.protein);
-          setFat((f) => f + recipe.nutritional_info.fat);
-          setCarbs((c) => c + recipe.nutritional_info.carbs);
-          setFiber((f) => f + recipe.nutritional_info.fiber);
-          setSodium((s) => s + recipe.nutritional_info.sodium);
+          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
         });
       });
     } else if (item) {
@@ -261,7 +261,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 >
                   <Minus />
                 </button>
-                <span className="text-center w-8 font-mono">{servings}</span>
+                <span className="text-center w-15 font-mono">{servings}</span>
                 <button
                   className="bg-gray-200 rounded text-gray-600 hover:bg-gray-300"
                   onClick={() => setServings((s) => s + 1)}

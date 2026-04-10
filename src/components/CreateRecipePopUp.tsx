@@ -724,7 +724,13 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="min-w-[24px] text-center text-xl font-semibold text-pepper">{servings || "1"}</span>
+                <input
+                  type="number"
+                  value={servings || "1"}
+                  onChange={(e) => setServings(e.target.value)}
+                  className="max-w-[54px] text-center text-xl font-semibold text-pepper"
+                />
+
                 <button
                   type="button"
                   onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}

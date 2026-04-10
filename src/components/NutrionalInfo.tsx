@@ -12,7 +12,7 @@ function NutritionalInfo({
   readOnly: boolean;
 }) {
   return (
-    <div className="w-[92px] rounded-lg border border-pepper/20 bg-white px-2 py-2">
+    <div className="w-[110px] rounded-lg border border-pepper/20 bg-white px-2 py-2">
       <div className="flex items-center justify-center gap-1">
         <input
           value={value}
