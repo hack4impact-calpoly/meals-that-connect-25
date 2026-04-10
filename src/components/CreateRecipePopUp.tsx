@@ -523,6 +523,31 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   async function trash() {
     if (!id) return;
 
+    // check if valid deletion can occur - no recipe should be able to be deleted if it's being used in an existing combo, but combos can be deleted regardless
+    if (!isCombo) {
+      const res = await fetch(`/api/combos`, { method: "GET" });
+      if (!res.ok) {
+        console.error("Failed to check recipe combos", res.status);
+        alert("Failed to delete recipe. Please try again.");
+        return;
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      const isUsed = data.some(
+        (combo: Combo) =>
+          combo.entrees?.some((e) => e.id === id) ||
+          combo.sides?.some((s) => s.id === id) ||
+          combo.fruits?.some((f) => f.id === id),
+      );
+
+      if (isUsed === true) {
+        alert("Failed to delete. Recipe is being used in an existing combo.");
+        return;
+      }
+    }
+
     setShowDeleteModal(true);
     setBusy("delete");
     try {
