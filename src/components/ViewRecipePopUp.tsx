@@ -33,7 +33,68 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   const [servings, setServings] = useState(item?.serving || 1);
   const originalServings = item?.serving || 1;
 
+  const [calories, setCalories] = useState(0);
+  const [protein, setProtein] = useState(0);
+  const [fat, setFat] = useState(0);
+  const [carbs, setCarbs] = useState(0);
+  const [fiber, setFiber] = useState(0);
+  const [sodium, setSodium] = useState(0);
+
+  const isRecipe = (item: Recipe | Combo): item is Recipe => {
+    return "ingredients" in item;
+  };
+
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
   useEffect(() => {
+    // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
+    if (item && isRecipe(item) === false) {
+      item.entrees?.forEach((e) => {
+        // go through each entree information and sum up nutritional info
+        getRecipe(e.id).then((recipe) => {
+          setCalories((c) => recipe.nutritional_info.calories);
+          setProtein((p) => recipe.nutritional_info.protein);
+          setFat((f) => recipe.nutritional_info.fat);
+          setCarbs((c) => recipe.nutritional_info.carbs);
+          setFiber((f) => recipe.nutritional_info.fiber);
+          setSodium((s) => recipe.nutritional_info.sodium);
+        });
+      });
+
+      item.sides?.forEach((s) => {
+        getRecipe(s.id).then((recipe) => {
+          setCalories((c) => c + recipe.nutritional_info.calories);
+          setProtein((p) => p + recipe.nutritional_info.protein);
+          setFat((f) => f + recipe.nutritional_info.fat);
+          setCarbs((c) => c + recipe.nutritional_info.carbs);
+          setFiber((f) => f + recipe.nutritional_info.fiber);
+          setSodium((s) => s + recipe.nutritional_info.sodium);
+        });
+      });
+
+      item.fruits?.forEach((f) => {
+        getRecipe(f.id).then((recipe) => {
+          setCalories((c) => c + recipe.nutritional_info.calories);
+          setProtein((p) => p + recipe.nutritional_info.protein);
+          setFat((f) => f + recipe.nutritional_info.fat);
+          setCarbs((c) => c + recipe.nutritional_info.carbs);
+          setFiber((f) => f + recipe.nutritional_info.fiber);
+          setSodium((s) => s + recipe.nutritional_info.sodium);
+        });
+      });
+    } else if (item) {
+      setCalories(item.nutritional_info.calories || 0);
+      setProtein(item.nutritional_info.protein || 0);
+      setFat(item.nutritional_info.fat || 0);
+      setCarbs(item.nutritional_info.carbs || 0);
+      setFiber(item.nutritional_info.fiber || 0);
+      setSodium(item.nutritional_info.sodium || 0);
+    }
+
     if (open && item?.serving) {
       setServings(item.serving);
     }
@@ -102,7 +163,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
                 <div className="flex flex-wrap gap-2">
                   {item.entrees.map((s, i) => (
-                    <div key={i} className="bg-lime px-2 py-1 rounded-md">
+                    <div key={i} className="bg-brown text-white px-2 py-1 rounded-md">
                       {s.name}
                     </div>
                   ))}
@@ -241,56 +302,52 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             )}
 
             {/* nutritional info */}
-            {"nutritional_info" in item && item.nutritional_info && (
-              <>
-                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-                <h3 className="text-xl mb-4 font-semibold">Nutritional Information</h3>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <NutritionalInfo
-                    label="Calories"
-                    unit="kcal"
-                    value={((item.nutritional_info.calories / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                  <NutritionalInfo
-                    label="Protein"
-                    unit="g"
-                    value={((item.nutritional_info.protein / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                  <NutritionalInfo
-                    label="Fat"
-                    unit="g"
-                    value={((item.nutritional_info.fat / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                  <NutritionalInfo
-                    label="Carbs"
-                    unit="g"
-                    value={((item.nutritional_info.carbs / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                  <NutritionalInfo
-                    label="Fiber"
-                    unit="g"
-                    value={((item.nutritional_info.fiber / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                  <NutritionalInfo
-                    label="Sodium"
-                    unit="mg"
-                    value={((item.nutritional_info.sodium / originalServings) * servings).toString()}
-                    onChange={() => {}}
-                    readOnly={true}
-                  />
-                </div>
-              </>
-            )}
+            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
+            <h3 className="text-xl mb-4 font-semibold">Nutritional Information</h3>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <NutritionalInfo
+                label="Calories"
+                unit="kcal"
+                value={((calories / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Protein"
+                unit="g"
+                value={((protein / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Fat"
+                unit="g"
+                value={((fat / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Carbs"
+                unit="g"
+                value={((carbs / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Fiber"
+                unit="g"
+                value={((fiber / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Sodium"
+                unit="mg"
+                value={((sodium / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+            </div>
           </DialogPanel>
         </div>
       </div>{" "}
