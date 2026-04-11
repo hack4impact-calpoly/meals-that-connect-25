@@ -588,7 +588,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     } finally {
       setBusy(null);
 
-      // reload window
       window.location.reload();
     }
   }
