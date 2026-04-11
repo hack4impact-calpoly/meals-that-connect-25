@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Pencil, Utensils } from "lucide-react";
-import { Combo, RecipeReference } from "@/lib/types";
-import { useState } from "react";
+import { Combo, Recipe, RecipeReference } from "@/lib/types";
+import { useEffect, useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 
 type ComboCardProps = {
@@ -32,6 +32,31 @@ export default function ComboCard({
   onOpen,
 }: ComboCardProps) {
   const [editMode, setEditMode] = useState(false);
+  const [entreeMap, setEntreeMap] = useState<string[]>([]);
+  const [sideMap, setSideMap] = useState<string[]>([]);
+  const [fruitMap, setFruitMap] = useState<string[]>([]);
+
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
+  useEffect(() => {
+    const loadAll = async () => {
+      const [entreeNames, sideNames, fruitNames] = await Promise.all([
+        Promise.all(entrees.map(async (e) => (await getRecipe(e.id)).name)),
+        Promise.all(sides.map(async (s) => (await getRecipe(s.id)).name)),
+        Promise.all(fruits.map(async (f) => (await getRecipe(f.id)).name)),
+      ]);
+
+      setEntreeMap(entreeNames);
+      setSideMap(sideNames);
+      setFruitMap(fruitNames);
+    };
+
+    loadAll();
+  }, []);
 
   const servingText = serving != null ? `${serving}` : null;
 
@@ -84,28 +109,28 @@ export default function ComboCard({
           <p className="mt-3 font-montserrat font-bold text-base text-combo-jicama">{name}</p>
 
           <div className="flex flex-col gap-1.5 max-h-30 overflow-y-auto">
-            {entrees.map((i) => (
+            {entreeMap.map((i) => (
               <span
-                key={i.id}
+                key={i}
                 className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-entree-900 text-entree-500`}
               >
-                {i.name}
+                {i}
               </span>
             ))}
-            {fruits.map((i) => (
+            {fruitMap.map((i) => (
               <span
-                key={i.id}
+                key={i}
                 className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-fruit-500 text-white`}
               >
-                {i.name}
+                {i}
               </span>
             ))}
-            {sides.map((i) => (
+            {sideMap.map((i) => (
               <span
-                key={i.id}
+                key={i}
                 className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-sides-500 text-sides-900`}
               >
-                {i.name}
+                {i}
               </span>
             ))}
           </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
-import { Recipe, Combo } from "@/lib/types";
+import { Recipe, Combo, RecipeReference } from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
@@ -41,6 +41,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   const [fiber, setFiber] = useState(0);
   const [sodium, setSodium] = useState(0);
 
+  const [entreeMap, setEntreeMap] = useState<RecipeReference[]>([]);
+  const [sideMap, setSideMap] = useState<RecipeReference[]>([]);
+  const [fruitMap, setFruitMap] = useState<RecipeReference[]>([]);
+
   const isRecipe = (item: Recipe | Combo): item is Recipe => {
     return "ingredients" in item;
   };
@@ -54,6 +58,35 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   useEffect(() => {
     // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
     if (item && isRecipe(item) === false) {
+      const loadAll = async () => {
+        const [eM, sN, fN] = await Promise.all([
+          Promise.all(
+            (item.entrees ?? []).map(async (e) => {
+              const r = await getRecipe(e.id);
+              return { id: e.id, name: r.name };
+            }),
+          ),
+          Promise.all(
+            (item.sides ?? []).map(async (s) => {
+              const r = await getRecipe(s.id);
+              return { id: s.id, name: r.name };
+            }),
+          ),
+          Promise.all(
+            (item.fruits ?? []).map(async (f) => {
+              const r = await getRecipe(f.id);
+              return { id: f.id, name: r.name };
+            }),
+          ),
+        ]);
+
+        setEntreeMap(eM);
+        setSideMap(sN);
+        setFruitMap(fN);
+      };
+
+      loadAll();
+
       item.entrees?.forEach((e) => {
         // go through each entree information and sum up nutritional info
         getRecipe(e.id).then((recipe) => {
@@ -163,7 +196,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.entrees.map((e, i) => (
+                  {entreeMap.map((e, i) => (
                     <div key={i} className="bg-brown text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {e.name}
                       <button
@@ -186,7 +219,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.sides.map((s, i) => (
+                  {sideMap.map((s, i) => (
                     <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
                       <button
@@ -209,7 +242,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.fruits.map((f, i) => (
+                  {fruitMap.map((f, i) => (
                     <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {f.name}
                       <button
