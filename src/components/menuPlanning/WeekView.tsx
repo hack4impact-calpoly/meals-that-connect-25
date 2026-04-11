@@ -1,13 +1,19 @@
 "use client";
 import WeekMealCard, { type WeekMealCardData } from "./WeekMealCard";
+import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
-  mealsByDay?: WeekMealCardData[][];
+  weekViewMeals?: WeekViewDayData[];
 }
 
-export default function WeekView({ dateToday, weekDates, mealsByDay = [] }: WeekViewProps) {
+export type WeekViewDayData = {
+  meals: WeekMealCardData[];
+  showNutritionInfoNotMet?: boolean;
+};
+
+export default function WeekView({ dateToday, weekDates, weekViewMeals = [] }: WeekViewProps) {
   return (
     <div className="relative my-4 grid flex-1 grid-cols-5 gap-3">
       {weekDates.map((date, idx) => (
@@ -29,13 +35,15 @@ export default function WeekView({ dateToday, weekDates, mealsByDay = [] }: Week
                 : "border border-medium-gray/35"
             } bg-white`}
           >
-            {(mealsByDay[idx] ?? []).length > 0 ? (
-              (mealsByDay[idx] ?? []).map((meal) => <WeekMealCard key={meal.id} {...meal} />)
+            {(weekViewMeals[idx]?.meals ?? []).length > 0 ? (
+              (weekViewMeals[idx]?.meals ?? []).map((meal) => <WeekMealCard key={meal.id} {...meal} />)
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 text-center font-montserrat text-xs font-medium text-pepper/55">
                 No meals planned
               </div>
             )}
+
+            {weekViewMeals[idx]?.showNutritionInfoNotMet ? <NutritionInfoNotMetCard /> : null}
           </div>
         </div>
       ))}

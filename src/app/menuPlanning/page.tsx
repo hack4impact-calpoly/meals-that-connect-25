@@ -2,102 +2,101 @@
 
 import { useState, useEffect } from "react";
 import { Recipe } from "@/interface/recipe";
-import WeekView from "@/components/menuPlanning/WeekView";
+import WeekView, { type WeekViewDayData } from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
-import { type WeekMealCardData } from "@/components/menuPlanning/WeekMealCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 
 const today = new Date();
-const weekViewMeals: WeekMealCardData[][] = [
-  [
-    {
-      id: "mon-entree",
-      name: "Chicken Tikka Masala",
-      calories: 225,
-      servingSize: "150g",
-      tag: "Entree",
-    },
-    {
-      id: "mon-side",
-      name: "Brown Rice",
-      calories: 200,
-      servingSize: "150g",
-      tag: "Sides",
-    },
-  ],
-  [
-    {
-      id: "tue-pasta",
-      name: "Italian Noodles",
-      calories: 350,
-      servingSize: "170g",
-      backgroundColor: "#7b4c0a",
-      textColor: "#ffffff",
-    },
-    {
-      id: "tue-fruit",
-      name: "Mango Cup",
-      calories: 100,
-      servingSize: "1 cup",
-      tag: "Fruit",
-    },
-  ],
-  [
-    {
-      id: "wed-entree",
-      name: "Veggie Stir Fry",
-      calories: 280,
-      servingSize: "160g",
-      backgroundColor: "#7b4c0a",
-      textColor: "#ffffff",
-    },
-    {
-      id: "wed-side",
-      name: "Sesame Broccoli",
-      calories: 110,
-      servingSize: "90g",
-      tag: "Sides",
-    },
-    {
-      id: "wed-fruit",
-      name: "Orange Slices",
-      calories: 80,
-      servingSize: "1 cup",
-      tag: "Fruit",
-    },
-  ],
-  [
-    {
-      id: "thu-combo",
-      name: "Taco Lunch Combo",
-      calories: 420,
-      servingSize: "1 tray",
-      tag: "Combo",
-    },
-    {
-      id: "thu-fruit",
-      name: "Pineapple Cup",
-      calories: 95,
-      servingSize: "1 cup",
-      tag: "Fruit",
-    },
-  ],
-  [
-    {
-      id: "fri-entree",
-      name: "Teriyaki Chicken",
-      calories: 300,
-      servingSize: "155g",
-      tag: "Entree",
-    },
-    {
-      id: "fri-side",
-      name: "Steamed Rice",
-      calories: 190,
-      servingSize: "140g",
-      tag: "Sides",
-    },
-  ],
+const weekViewMeals: WeekViewDayData[] = [
+  {
+    meals: [
+      {
+        id: "mon-entree",
+        name: "Chicken Tikka Masala",
+        calories: 225,
+        servingSize: "150g",
+        tag: "Entree",
+      },
+      {
+        id: "mon-side",
+        name: "Brown Rice",
+        calories: 200,
+        servingSize: "150g",
+        tag: "Sides",
+      },
+    ],
+    showNutritionInfoNotMet: true,
+  },
+  {
+    meals: [
+      {
+        id: "tue-pasta",
+        name: "Italian Noodles",
+        calories: 350,
+        servingSize: "170g",
+        backgroundColor: "#7b4c0a",
+        textColor: "#ffffff",
+      },
+      {
+        id: "tue-fruit",
+        name: "Mango Cup",
+        calories: 100,
+        servingSize: "1 cup",
+        tag: "Fruit",
+      },
+    ],
+    showNutritionInfoNotMet: true,
+  },
+  {
+    meals: [
+      {
+        id: "wed-entree",
+        name: "Veggie Stir Fry",
+        calories: 280,
+        servingSize: "160g",
+        backgroundColor: "#7b4c0a",
+        textColor: "#ffffff",
+      },
+      {
+        id: "wed-side",
+        name: "Sesame Broccoli",
+        calories: 110,
+        servingSize: "90g",
+        tag: "Sides",
+      },
+      {
+        id: "wed-fruit",
+        name: "Orange Slices",
+        calories: 80,
+        servingSize: "1 cup",
+        tag: "Fruit",
+      },
+    ],
+    showNutritionInfoNotMet: false,
+  },
+  {
+    meals: [
+      {
+        id: "thu-combo",
+        name: "Taco Lunch Combo",
+        calories: 420,
+        servingSize: "1 tray",
+        tag: "Combo",
+      },
+      {
+        id: "thu-fruit",
+        name: "Pineapple Cup",
+        calories: 95,
+        servingSize: "1 cup",
+        tag: "Fruit",
+      },
+    ],
+    showNutritionInfoNotMet: false,
+  },
+  {
+    meals: [],
+    showNutritionInfoNotMet: true,
+  },
 ];
 
 const getOffsetDate = (date: Date, offset: number) => {
@@ -184,7 +183,9 @@ export default function MenuPlanning() {
             </div>
           </div>
           {calendarView === "Month" && <div className="w-275 h-full text-center">Month view coming soon!</div>}
-          {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} mealsByDay={weekViewMeals} />}
+          {calendarView === "Week" && (
+            <WeekView dateToday={today} weekDates={weekDates} weekViewMeals={weekViewMeals} />
+          )}
           {calendarView === "Day" && <div className="w-275 h-full text-center">Day view coming soon!</div>}
         </div>
       </div>
