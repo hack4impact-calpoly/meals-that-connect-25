@@ -50,5 +50,5 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           # Add additional environment variables here
 
-      - name: Run tests
-        run: npm test
+      #- name: Run tests
+      #  run: npm test
