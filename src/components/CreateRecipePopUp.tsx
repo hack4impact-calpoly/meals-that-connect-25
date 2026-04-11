@@ -808,33 +808,35 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           <div className="my-6 h-px bg-pepper/10" />
 
           <div className="space-y-6">
-            <div className="space-y-3">
-              <div className="text-sm font-semibold text-pepper">Servings</div>
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
-                <button
-                  type="button"
-                  onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <input
-                  type="number"
-                  value={servings || "1"}
-                  onChange={(e) => setServings(e.target.value)}
-                  className="max-w-[54px] text-center text-xl font-semibold text-pepper"
-                />
+            {!isCombo && (
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-pepper">Servings</div>
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <input
+                    type="number"
+                    value={servings || "1"}
+                    onChange={(e) => setServings(e.target.value)}
+                    className="max-w-[54px] text-center text-xl font-semibold text-pepper"
+                  />
 
-                <button
-                  type="button"
-                  onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="h-px bg-pepper/10" />
               </div>
-              <div className="h-px bg-pepper/10" />
-            </div>
+            )}
 
             {!isCombo && (
               <div className="space-y-3">
