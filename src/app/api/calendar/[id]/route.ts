@@ -2,14 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Calendar from "@/database/CalendarSchema";
 
-type Params = {
-  params: {
-    id: string;
-  };
-};
-
-export async function GET(req: NextRequest, { params }: Params) {
-  const { id } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });

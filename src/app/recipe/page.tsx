@@ -20,10 +20,8 @@ const EMPTY_FILTERS: FilterSelections = {
   serving: new Set(),
 };
 
-export default function RecipePage({ params }: { params: Promise<{ id: string }> }) {
-  const searchParams = useSearchParams();
-
-  const id = searchParams.get("id");
+export default function RecipePage({ params }: { params: { id: string } }) {
+  const id = params.id;
 
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   // automatic selection of combo category when page loads!
