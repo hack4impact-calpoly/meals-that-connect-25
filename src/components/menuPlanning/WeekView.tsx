@@ -1,19 +1,105 @@
 "use client";
+import { useEffect, useState } from "react";
 import WeekMealCard, { type WeekMealCardData } from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
-  weekViewMeals?: WeekViewDayData[];
 }
 
-export type WeekViewDayData = {
+type WeekViewDayData = {
   meals: WeekMealCardData[];
   showNutritionInfoNotMet?: boolean;
 };
 
-export default function WeekView({ dateToday, weekDates, weekViewMeals = [] }: WeekViewProps) {
+type CalendarRecipe = {
+  _id: string;
+  name: string;
+  serving?: number;
+};
+
+type CalendarDayResponse = {
+  _id: string;
+  entrees?: CalendarRecipe[];
+  fruits?: CalendarRecipe[];
+  sides?: CalendarRecipe[];
+};
+
+const formatCalendarDayId = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+};
+
+const mapCalendarRecipesToMeals = (recipes: CalendarRecipe[] | undefined, tag: WeekMealCardData["tag"]) =>
+  (recipes ?? []).map((recipe) => ({
+    id: recipe._id,
+    name: recipe.name,
+    servingSize: recipe.serving != null ? `${recipe.serving} servings` : undefined,
+    tag,
+  }));
+
+export default function WeekView({ dateToday, weekDates }: WeekViewProps) {
+  const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchWeekMeals() {
+      setIsLoading(true);
+
+      try {
+        const weekMeals = await Promise.all(
+          weekDates.map(async (date) => {
+            const response = await fetch(`/api/calendar/${formatCalendarDayId(date)}`);
+
+            if (response.status === 404) {
+              return { meals: [], showNutritionInfoNotMet: true };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Failed to fetch calendar day ${formatCalendarDayId(date)}`);
+            }
+
+            const calendarDay: CalendarDayResponse = await response.json();
+
+            return {
+              meals: [
+                ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
+                ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
+                ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
+              ],
+              showNutritionInfoNotMet: false,
+            };
+          }),
+        );
+
+        if (isMounted) {
+          setWeekViewMeals(weekMeals);
+        }
+      } catch (error) {
+        console.error("Error fetching week meals:", error);
+
+        if (isMounted) {
+          setWeekViewMeals(weekDates.map(() => ({ meals: [], showNutritionInfoNotMet: false })));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchWeekMeals();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [weekDates]);
+
   return (
     <div className="relative my-4 grid flex-1 grid-cols-5 gap-3">
       {weekDates.map((date, idx) => (
@@ -35,7 +121,11 @@ export default function WeekView({ dateToday, weekDates, weekViewMeals = [] }: W
                 : "border border-medium-gray/35"
             } bg-white`}
           >
-            {(weekViewMeals[idx]?.meals ?? []).length > 0 ? (
+            {isLoading ? (
+              <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 text-center font-montserrat text-xs font-medium text-pepper/55">
+                Loading meals...
+              </div>
+            ) : (weekViewMeals[idx]?.meals ?? []).length > 0 ? (
               (weekViewMeals[idx]?.meals ?? []).map((meal) => <WeekMealCard key={meal.id} {...meal} />)
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 text-center font-montserrat text-xs font-medium text-pepper/55">

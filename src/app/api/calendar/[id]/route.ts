@@ -23,7 +23,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     if (!calendarDay) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });
     }
-
+    console.log(calendarDay);
     return NextResponse.json(calendarDay, { status: 200 });
   } catch (err) {
     console.error("Error fetching calendar day:", err);
