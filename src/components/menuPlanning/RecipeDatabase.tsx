@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import { CategoryValue, Combo, Recipe } from "@/lib/types";
+
+type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 
 interface RecipeDatabaseProps {
   items: Recipe[] | Combo[];
@@ -15,9 +16,9 @@ interface RecipeDatabaseProps {
   onSearch: (value: string) => void;
   selectedCategories: Set<CategoryValue>;
   onToggleCategory: (category: CategoryValue) => void;
+  sortBy: SortOption;
+  onSortChange: (value: SortOption) => void;
 }
-
-type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "combo", label: "Combos" },
@@ -48,49 +49,9 @@ export default function RecipeDatabase({
   onSearch,
   selectedCategories,
   onToggleCategory,
+  sortBy,
+  onSortChange,
 }: RecipeDatabaseProps) {
-  const [sortBy, setSortBy] = useState<SortOption>("createdDate");
-
-  const sortedItems = useMemo(() => {
-    const getTime = (value?: string | Date) => {
-      if (!value) return 0;
-      return new Date(value).getTime();
-    };
-
-    const sorted = [...items].sort((a, b) => {
-      const itemA = a as {
-        name?: string;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-      };
-
-      const itemB = b as {
-        name?: string;
-        createdAt?: string | Date;
-        updatedAt?: string | Date;
-      };
-
-      switch (sortBy) {
-        case "lastUpdated":
-          return getTime(itemB.updatedAt) - getTime(itemA.updatedAt);
-
-        case "createdDate":
-          return getTime(itemB.createdAt) - getTime(itemA.createdAt);
-
-        case "aToZ":
-          return (itemA.name ?? "").localeCompare(itemB.name ?? "");
-
-        case "zToA":
-          return (itemB.name ?? "").localeCompare(itemA.name ?? "");
-
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }, [items, sortBy]);
-
   return (
     <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
       <div className="text-xl font-semibold mb-6">Recipe Database</div>
@@ -118,7 +79,7 @@ export default function RecipeDatabase({
                 <MenuItem key={option.value}>
                   <button
                     type="button"
-                    onClick={() => setSortBy(option.value)}
+                    onClick={() => onSortChange(option.value)}
                     className="flex w-full items-center gap-2 text-left text-sm text-pepper data-focus:text-radish-900"
                   >
                     <SortCircle selected={sortBy === option.value} />
@@ -139,7 +100,7 @@ export default function RecipeDatabase({
       {error && <div>{error}</div>}
 
       <div className="flex flex-col gap-4">
-        {sortedItems.map((item, index) => {
+        {items.map((item, index) => {
           const displayItem = item as {
             id?: string;
             _id?: string;

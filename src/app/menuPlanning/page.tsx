@@ -4,7 +4,7 @@ import { useState } from "react";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
-import { CategoryValue, EMPTY_FILTERS } from "@/lib/types";
+import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 
 const today = new Date();
@@ -29,6 +29,7 @@ const getCurrentWeekDates = (today: Date) => {
 
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [weekOffset, setWeekOffset] = useState(0);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
@@ -58,6 +59,7 @@ export default function MenuPlanning() {
     filters: EMPTY_FILTERS,
     selectedCategories,
     draftMode: false,
+    sortBy,
   });
 
   return (
@@ -119,6 +121,8 @@ export default function MenuPlanning() {
           onSearch={setSearch}
           selectedCategories={selectedCategories}
           onToggleCategory={toggleCategory}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
         />
       </div>
     </main>

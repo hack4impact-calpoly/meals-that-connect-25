@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { buildFilterTags } from "@/lib/helpers";
-import { CategoryValue, Combo, FilterSelections, Recipe } from "@/lib/types";
+import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
 
 type Params = {
   search: string;
   filters: FilterSelections;
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
+  sortBy?: SortOption;
 };
 
 type Return = {
@@ -23,7 +24,13 @@ type Return = {
 
 const PAGE_SIZE = 10;
 
-export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
+export function useMealData({
+  search,
+  filters,
+  selectedCategories,
+  draftMode,
+  sortBy = "createdDate",
+}: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
@@ -38,8 +45,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   const isComboMode = selectedCategories.has("combo");
 
-  /* ---------------- Debounce ---------------- */
-
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
     return () => clearTimeout(t);
@@ -47,9 +52,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode]);
-
-  /* ---------------- Fetch ---------------- */
+  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,8 +67,8 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
         const params = new URLSearchParams();
 
-        // Draft filtering
         params.append("isDraft", draftMode ? "true" : "false");
+        params.append("sortBy", sortBy);
 
         if (trimmed) {
           params.append("name", trimmed);
@@ -86,13 +89,13 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
         }
 
         const url = `${base}?${params.toString()}`;
-
         const paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
         const res = await fetch(paginatedUrl, { signal: controller.signal });
 
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`);
         }
+
         const { data, totalCount, totalPages: serverTotalPages } = await res.json();
         const safeTotalPages = Math.max(1, Number(serverTotalPages) || 0);
         setTotalPages(safeTotalPages);
@@ -108,7 +111,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
           setRecipes(data);
         }
 
-        // Drafts count fetch
         if (draftMode) {
           setDraftCount(totalCount);
         } else {
@@ -134,7 +136,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
     load();
     return () => controller.abort();
-  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, refreshKey]);
+  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy, refreshKey]);
 
   const items = isComboMode ? combos : recipes;
 

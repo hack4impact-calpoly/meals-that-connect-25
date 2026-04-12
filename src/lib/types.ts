@@ -40,5 +40,6 @@ export const EMPTY_FILTERS: FilterSelections = {
   serving: new Set(),
 };
 
+export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "entree" | "side" | "fruit" | "combo";
 export type FilterSelections = Record<string, Set<string>>;

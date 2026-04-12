@@ -3,7 +3,7 @@
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
-import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
+import { CategoryValue, EMPTY_FILTERS } from "@/lib/types";
 import { useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";

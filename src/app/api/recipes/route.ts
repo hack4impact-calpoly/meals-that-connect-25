@@ -24,15 +24,18 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
       .getAll("tags")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+
     const categoryParams = searchParams
       .getAll("categories")
       .map((c) => c.trim().toLowerCase())
       .filter(Boolean);
+
     const servingParams = searchParams
       .getAll("servings")
       .map((s) => s.trim().toLowerCase())
@@ -86,11 +89,35 @@ export async function GET(req: NextRequest) {
       filter.isDraft = false;
     }
 
+    let sort: Record<string, 1 | -1> = { createdAt: -1 };
+
+    switch (sortBy) {
+      case "lastUpdated":
+        sort = { updatedAt: -1 };
+        break;
+      case "createdDate":
+        sort = { createdAt: -1 };
+        break;
+      case "aToZ":
+        sort = { name: 1 };
+        break;
+      case "zToA":
+        sort = { name: -1 };
+        break;
+    }
+
     const totalCount = await Recipe.countDocuments(filter);
 
-    const recipes = await Recipe.find(filter)
+    let query = Recipe.find(filter)
+      .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (sortBy === "aToZ" || sortBy === "zToA") {
+      query = query.collation({ locale: "en", strength: 2 });
+    }
+
+    const recipes = await query;
 
     return NextResponse.json(
       {
