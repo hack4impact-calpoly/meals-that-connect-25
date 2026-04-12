@@ -1,43 +1,163 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Recipe } from "@/interface/recipe";
+
+import { useMemo, useState } from "react";
+import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
+import SearchBarClient from "@/components/SearchbarClient";
+import CategoryToggle from "@/components/CategoryToggle";
+import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 interface RecipeDatabaseProps {
-  recipes: Recipe[];
+  items: Recipe[] | Combo[];
+  loading: boolean;
+  error: string | null;
+  onSearch: (value: string) => void;
+  selectedCategories: Set<CategoryValue>;
+  onToggleCategory: (category: CategoryValue) => void;
 }
 
-export default function RecipeDatabase({ recipes }: RecipeDatabaseProps) {
-  const [value, setValue] = useState("");
+type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
+
+const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
+  { value: "combo", label: "Combos" },
+  { value: "entree", label: "Entrées" },
+  { value: "side", label: "Sides" },
+  { value: "fruit", label: "Fruits" },
+];
+
+const sortOptions: Array<{ value: SortOption; label: string }> = [
+  { value: "lastUpdated", label: "Last Updated" },
+  { value: "createdDate", label: "Created Date" },
+  { value: "aToZ", label: "A to Z" },
+  { value: "zToA", label: "Z to A" },
+];
+
+function SortCircle({ selected }: { selected: boolean }) {
+  return (
+    <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-radish-900">
+      {selected && <span className="h-2 w-2 rounded-full bg-radish-900" />}
+    </span>
+  );
+}
+
+export default function RecipeDatabase({
+  items,
+  loading,
+  error,
+  onSearch,
+  selectedCategories,
+  onToggleCategory,
+}: RecipeDatabaseProps) {
+  const [sortBy, setSortBy] = useState<SortOption>("createdDate");
+
+  const sortedItems = useMemo(() => {
+    const getTime = (value?: string | Date) => {
+      if (!value) return 0;
+      return new Date(value).getTime();
+    };
+
+    const sorted = [...items].sort((a, b) => {
+      const itemA = a as {
+        name?: string;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
+      };
+
+      const itemB = b as {
+        name?: string;
+        createdAt?: string | Date;
+        updatedAt?: string | Date;
+      };
+
+      switch (sortBy) {
+        case "lastUpdated":
+          return getTime(itemB.updatedAt) - getTime(itemA.updatedAt);
+
+        case "createdDate":
+          return getTime(itemB.createdAt) - getTime(itemA.createdAt);
+
+        case "aToZ":
+          return (itemA.name ?? "").localeCompare(itemB.name ?? "");
+
+        case "zToA":
+          return (itemB.name ?? "").localeCompare(itemA.name ?? "");
+
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [items, sortBy]);
 
   return (
     <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
       <div className="text-xl font-semibold mb-6">Recipe Database</div>
+
       <div className="flex flex-row items-center gap-4">
-        <input
-          type="text"
-          placeholder="Search a recipe"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="w-full rounded-md border border-medium-gray py-2.5 pl-10 pr-4 "
-        />
-        <span className="bg-radish-900 rounded-lg p-2">
-          <SlidersHorizontal className="cursor-pointer" color="white" size={24} strokeWidth={1.7} />
-        </span>
+        <SearchBarClient placeholder="Search a recipe" onSearch={onSearch} />
+
+        <Menu as="div" className="relative">
+          <MenuButton className="rounded-lg bg-radish-900 p-2">
+            <SlidersHorizontal className="cursor-pointer" color="white" size={24} strokeWidth={1.7} />
+          </MenuButton>
+
+          <MenuItems
+            transition
+            className="absolute right-0 z-50 mt-3 w-40 origin-top-right rounded-xl bg-white p-4 shadow-md outline-none
+                       data-closed:scale-95 data-closed:opacity-0
+                       data-enter:duration-100 data-leave:duration-75
+                       before:absolute before:-top-2 before:right-4 before:h-4 before:w-4 before:rotate-45
+                       before:bg-white before:content-['']"
+          >
+            <div className="mb-2 text-sm font-semibold text-pepper">Sort by:</div>
+
+            <div className="flex flex-col gap-2">
+              {sortOptions.map((option) => (
+                <MenuItem key={option.value}>
+                  <button
+                    type="button"
+                    onClick={() => setSortBy(option.value)}
+                    className="flex w-full items-center gap-2 text-left text-sm text-pepper data-focus:text-radish-900"
+                  >
+                    <SortCircle selected={sortBy === option.value} />
+                    <span>{option.label}</span>
+                  </button>
+                </MenuItem>
+              ))}
+            </div>
+          </MenuItems>
+        </Menu>
       </div>
-      <div className="my-2">placeholder for buttons</div>
+
+      <div className="my-4">
+        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={onToggleCategory} />
+      </div>
+
+      {loading && <div>Loading...</div>}
+      {error && <div>{error}</div>}
+
       <div className="flex flex-col gap-4">
-        {recipes.map((recipe) => (
-          <DraggableRecipeCard
-            key={recipe.id}
-            imageUrl={""}
-            name={recipe.name}
-            calories={0}
-            servingSize={"100g"}
-            tags={recipe.tags}
-          />
-        ))}
+        {sortedItems.map((item, index) => {
+          const displayItem = item as {
+            id?: string;
+            _id?: string;
+            name?: string;
+            tags?: string[];
+          };
+
+          return (
+            <DraggableRecipeCard
+              key={displayItem.id ?? displayItem._id ?? index}
+              imageUrl={""}
+              name={displayItem.name ?? "Untitled"}
+              calories={0}
+              servingSize={"100g"}
+              tags={displayItem.tags ?? []}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -3,18 +3,10 @@
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
-import { CategoryValue, FilterSelections } from "@/lib/types";
+import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
 import { useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
-
-const EMPTY_FILTERS: FilterSelections = {
-  allergens: new Set(),
-  proteins: new Set(),
-  vitamins: new Set(),
-  dietary: new Set(),
-  serving: new Set(),
-};
 
 export default function RecipePage() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
