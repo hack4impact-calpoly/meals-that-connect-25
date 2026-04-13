@@ -7,6 +7,7 @@ import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
+import { first } from "firebase/firestore/pipelines";
 
 const today = new Date();
 
@@ -61,7 +62,18 @@ export default function MenuPlanning() {
               </button>
               <span className="font-bold text-xl">
                 {calendarView === "Week" &&
-                  `${today.toLocaleDateString(undefined, { month: "short" })} ${weekDates[0].getDate()} - ${weekDates[4].getDate()}`}
+                  (() => {
+                    const firstDay = weekDates[0];
+                    const lastDay = weekDates[4];
+
+                    const startMonth = firstDay.toLocaleDateString(undefined, { month: "short" });
+                    const endMonth = lastDay.toLocaleDateString(undefined, { month: "short" });
+
+                    if (startMonth !== endMonth) {
+                      return `${startMonth} ${firstDay.getDate()} - ${endMonth} ${lastDay.getDate()}`;
+                    }
+                    return `${startMonth} ${firstDay.getDate()} - ${lastDay.getDate()}`;
+                  })()}
               </span>
               <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset + 1)}>
                 <ChevronRight size={20} strokeWidth={2.5} />
