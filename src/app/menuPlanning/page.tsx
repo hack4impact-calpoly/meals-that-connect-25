@@ -11,44 +11,60 @@ import { first } from "firebase/firestore/pipelines";
 
 const today = new Date();
 
-const getOffsetDate = (date: Date, offset: number) => {
+const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day") => {
   const newDate = new Date(date);
-  newDate.setDate(date.getDate() + offset * 7);
+  if (view === "Day") {
+    newDate.setDate(date.getDate() + offset);
+  } else if (view === "Week") {
+    newDate.setDate(date.getDate() + offset * 7);
+  } else if (view === "Month") {
+    newDate.setMonth(date.getMonth() + offset);
+  }
   return newDate;
 };
 
-const getCurrentWeekDates = (today: Date) => {
-  const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - dayOfWeek + 1); // start from Monday
+const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
+  if (view === "Day") {
+    return [today];
+  } else if (view === "Week") {
+    const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek + 1); // start from Monday
+    return Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+  } else if (view === "Month") {
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  return Array.from({ length: 5 }, (_, i) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    return date;
-  });
-};
+    let startDay: Date;
+    startDay = new Date(startOfMonth);
 
-const getOffsetMonthDate = (date: Date, offset: number) => {
-  const newDate = new Date(date);
-  newDate.setMonth(date.getMonth() + offset);
-  return newDate;
-};
+    if (startDay.getDay() !== 0) {
+      const prevMonthStartDay =
+        new Date(today.getFullYear(), today.getMonth(), 0).getDate() - startOfMonth.getDay() + 1;
+      const prevMonth = today.getMonth() - 1;
+      const prevMonthYear = prevMonth < 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const prevMonthDate = new Date(prevMonthYear, (prevMonth + 12) % 12, prevMonthStartDay);
+      startDay = new Date(prevMonthDate);
+    }
 
-const getOffsetDayDate = (date: Date, offset: number) => {
-  const newDate = new Date(date);
-  newDate.setDate(date.getDate() + offset);
-  return newDate;
+    return Array.from({ length: 35 }, (_, i) => {
+      const date = new Date(startDay);
+      date.setDate(startDay.getDate() + i);
+      console.log(date);
+      return date;
+    });
+  }
+  return [];
 };
 
 export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [dayOffset, setDayOffset] = useState(0);
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [monthOffset, setMonthOffset] = useState(0);
-  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
-  const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
+  const [datesOffset, setDatesOffset] = useState(0);
+  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView); // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -65,63 +81,26 @@ export default function MenuPlanning() {
     fetchRecipes();
   }, []);
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (calendarView === "Week") {
-      setWeekOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    } else if (calendarView === "Month") {
-      setMonthOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    } else if (calendarView === "Day") {
-      setDayOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    }
-  };
-
-  const handleReset = () => {
-    setWeekOffset(0);
-    setMonthOffset(0);
-    setDayOffset(0);
-  };
-
   return (
     <main className="flex flex-row">
       <div className="flex flex-1 justify-center items-center bg-gray-100">
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
-              <CurrentDateButton onClick={() => handleReset()} />
-              <button className="cursor-pointer" onClick={() => handleNavigate("prev")}>
+              <CurrentDateButton onClick={() => setDatesOffset(0)} />
+              <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset - 1)}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
               <span className="font-bold text-xl">
-                {(calendarView === "Week" &&
-                  (() => {
-                    const firstDay = weekDates[0];
-                    const lastDay = weekDates[4];
-
-                    const startMonth = firstDay.toLocaleDateString(undefined, { month: "short" });
-                    const endMonth = lastDay.toLocaleDateString(undefined, { month: "short" });
-
-                    if (startMonth !== endMonth) {
-                      return `${startMonth} ${firstDay.getDate()} - ${endMonth} ${lastDay.getDate()}`;
-                    }
-                    return `${startMonth} ${firstDay.getDate()} - ${lastDay.getDate()}`;
-                  })()) ||
-                  (calendarView === "Month" &&
-                    (() => {
-                      const month = monthDate.toLocaleDateString(undefined, { month: "short" });
-                      const year = monthDate.getFullYear();
-                      return `${month} ${year}`;
-                    })()) ||
-                  (calendarView === "Day" &&
-                    (() => {
-                      const currentDay = getOffsetDayDate(today, dayOffset);
-                      const dayOfWeek = currentDay.toLocaleDateString(undefined, { weekday: "long" });
-                      const day = currentDay.getDate();
-                      const month = currentDay.toLocaleDateString(undefined, { month: "long" });
-                      const year = currentDay.getFullYear();
-                      return `${dayOfWeek}, ${month} ${day}, ${year}`;
-                    })())}
+                {calendarView === "Day" &&
+                  `${viewDates[0].toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
+                {calendarView === "Week" &&
+                  `${viewDates[0].toLocaleDateString(undefined, { month: "long" })} ${viewDates[0].getDate()} - ${viewDates[4].toLocaleDateString(undefined, { month: "long" })} ${viewDates[4].getDate()}`}
+                {/* use 10th date instead of 0 to guarantee a date in the current month */}
+                {calendarView === "Month" &&
+                  viewDates[10].toLocaleDateString(undefined, { month: "long", year: "numeric" })}
               </span>
-              <button className="cursor-pointer" onClick={() => handleNavigate("next")}>
+              <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset + 1)}>
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
             </div>
@@ -153,7 +132,7 @@ export default function MenuPlanning() {
             </div>
           </div>
           {calendarView === "Month" && <div>Month view coming soon!</div>}
-          {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
+          {calendarView === "Week" && <WeekView dateToday={today} weekDates={viewDates} />}
           {calendarView === "Day" && (
             // dummy data
             <div>
