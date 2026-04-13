@@ -29,10 +29,18 @@ const getCurrentWeekDates = (today: Date) => {
   });
 };
 
+const getOffsetMonthDate = (date: Date, offset: number) => {
+  const newDate = new Date(date);
+  newDate.setMonth(date.getMonth() + offset);
+  return newDate;
+};
+
 export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
   const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
+  const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
 
   useEffect(() => {
@@ -50,18 +58,31 @@ export default function MenuPlanning() {
     fetchRecipes();
   }, []);
 
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (calendarView === "Week") {
+      setWeekOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    } else if (calendarView === "Month") {
+      setMonthOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    }
+  };
+
+  const handleReset = () => {
+    setWeekOffset(0);
+    setMonthOffset(0);
+  };
+
   return (
     <main className="flex flex-row">
       <div className="flex flex-1 justify-center items-center bg-gray-100">
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
-              <CurrentDateButton onClick={() => setWeekOffset(0)} />
-              <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset - 1)}>
+              <CurrentDateButton onClick={() => handleReset()} />
+              <button className="cursor-pointer" onClick={() => handleNavigate("prev")}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
               <span className="font-bold text-xl">
-                {calendarView === "Week" &&
+                {(calendarView === "Week" &&
                   (() => {
                     const firstDay = weekDates[0];
                     const lastDay = weekDates[4];
@@ -73,9 +94,15 @@ export default function MenuPlanning() {
                       return `${startMonth} ${firstDay.getDate()} - ${endMonth} ${lastDay.getDate()}`;
                     }
                     return `${startMonth} ${firstDay.getDate()} - ${lastDay.getDate()}`;
-                  })()}
+                  })()) ||
+                  (calendarView === "Month" &&
+                    (() => {
+                      const month = monthDate.toLocaleDateString(undefined, { month: "short" });
+                      const year = monthDate.getFullYear();
+                      return `${month} ${year}`;
+                    })())}
               </span>
-              <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset + 1)}>
+              <button className="cursor-pointer" onClick={() => handleNavigate("next")}>
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
             </div>
