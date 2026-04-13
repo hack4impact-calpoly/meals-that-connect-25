@@ -35,8 +35,15 @@ const getOffsetMonthDate = (date: Date, offset: number) => {
   return newDate;
 };
 
+const getOffsetDayDate = (date: Date, offset: number) => {
+  const newDate = new Date(date);
+  newDate.setDate(date.getDate() + offset);
+  return newDate;
+};
+
 export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
@@ -63,12 +70,15 @@ export default function MenuPlanning() {
       setWeekOffset((prev) => prev + (direction === "prev" ? -1 : 1));
     } else if (calendarView === "Month") {
       setMonthOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    } else if (calendarView === "Day") {
+      setDayOffset((prev) => prev + (direction === "prev" ? -1 : 1));
     }
   };
 
   const handleReset = () => {
     setWeekOffset(0);
     setMonthOffset(0);
+    setDayOffset(0);
   };
 
   return (
@@ -100,6 +110,15 @@ export default function MenuPlanning() {
                       const month = monthDate.toLocaleDateString(undefined, { month: "short" });
                       const year = monthDate.getFullYear();
                       return `${month} ${year}`;
+                    })()) ||
+                  (calendarView === "Day" &&
+                    (() => {
+                      const currentDay = getOffsetDayDate(today, dayOffset);
+                      const dayOfWeek = currentDay.toLocaleDateString(undefined, { weekday: "long" });
+                      const day = currentDay.getDate();
+                      const month = currentDay.toLocaleDateString(undefined, { month: "long" });
+                      const year = currentDay.getFullYear();
+                      return `${dayOfWeek}, ${month} ${day}, ${year}`;
                     })())}
               </span>
               <button className="cursor-pointer" onClick={() => handleNavigate("next")}>
