@@ -55,7 +55,7 @@ export default function MenuPlanning() {
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
-              <CurrentDateButton />
+              <CurrentDateButton onClick={() => setWeekOffset(0)} />
               <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset - 1)}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
