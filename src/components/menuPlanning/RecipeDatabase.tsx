@@ -2,7 +2,6 @@
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { useState } from "react";
-import { Recipe } from "@/interface/recipe";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
@@ -23,10 +22,10 @@ interface RecipeDatabaseProps {
 }
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "combo", label: "Combos" },
-  { value: "entree", label: "Entrées" },
-  { value: "side", label: "Sides" },
-  { value: "fruit", label: "Fruits" },
+  { value: "Combo", label: "Combos" },
+  { value: "Entree", label: "Entrées" },
+  { value: "Side", label: "Sides" },
+  { value: "Fruit", label: "Fruits" },
 ];
 
 const sortOptions: Array<{ value: SortOption; label: string }> = [

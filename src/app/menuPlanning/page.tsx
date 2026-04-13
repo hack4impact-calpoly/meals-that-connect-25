@@ -40,12 +40,12 @@ export default function MenuPlanning() {
     setSelectedCategories((prev) => {
       const next = new Set(prev);
 
-      if (category === "combo") {
-        if (next.has("combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["combo"]);
+      if (category === "Combo") {
+        if (next.has("Combo")) return new Set<CategoryValue>();
+        return new Set<CategoryValue>(["Combo"]);
       }
 
-      if (next.has("combo")) next.delete("combo");
+      if (next.has("Combo")) next.delete("Combo");
 
       if (next.has(category)) next.delete(category);
       else next.add(category);
