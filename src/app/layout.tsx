@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ClerkProvider } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 
 //! Update metadata to match your project
@@ -13,13 +14,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="h-full">
-      <body className="flex flex-col h-full bg-light-gray">
-        <header>
-          <Navbar></Navbar>
-        </header>
-        {children}
-      </body>
-    </html>
+    // @ts-expect-error
+    <ClerkProvider>
+      <html lang="en" className="h-full">
+        <body className="flex flex-col h-full bg-light-gray">
+          <header>
+            <Navbar />
+          </header>
+          {children}
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
