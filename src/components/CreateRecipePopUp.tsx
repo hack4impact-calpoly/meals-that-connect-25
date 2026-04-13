@@ -276,15 +276,37 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       .map((line) => line.trim())
       .filter(Boolean);
 
-    const tags = [recipeType?.id, ...selectedFilters, ...selectedSides, ...selectedFruit, ...selectedAllergens]
-      .filter((tag): tag is string => Boolean(tag))
-      .map((tag) => tag.trim().toLowerCase());
+    const nutritionalInfo = [
+      Number(nutrition.calories) || 0,
+      Number(nutrition.protein) || 0,
+      Number(nutrition.fat) || 0,
+      Number(nutrition.carbs) || 0,
+      Number(nutrition.fiber) || 0,
+      Number(nutrition.sodium) || 0,
+    ];
 
-    const payload = {
+    const comboPayload = {
       _id: crypto.randomUUID(),
       name: title.trim() || (isDraft ? "Untitled Draft" : ""),
       isDraft,
-      tags: Array.from(new Set(tags)),
+      serving: Number(servings) || 1,
+      sides: selectedSides.map((name) => ({ name, quantity: "1" })),
+      fruits: selectedFruit.map((name) => ({ name, quantity: "1" })),
+      filters: selectedFilters.map((filter) => filter.trim().toLowerCase()).filter(Boolean),
+      allergens: selectedAllergens.map((allergen) => allergen.trim().toLowerCase()).filter(Boolean),
+      instructions: instructionsText,
+      notes,
+      ...(imageUrl ? { imageUrl } : {}),
+      ...(nutritionalInfo.some((value) => value > 0) ? { nutritional_info: nutritionalInfo } : {}),
+    };
+
+    const recipePayload = {
+      _id: crypto.randomUUID(),
+      name: title.trim() || (isDraft ? "Untitled Draft" : ""),
+      isDraft,
+      tags: [recipeType?.id, ...selectedFilters, ...selectedAllergens]
+        .filter((tag): tag is string => Boolean(tag))
+        .map((tag) => tag.trim().toLowerCase()),
       serving: Number(servings) || 1,
       ingredients:
         ingredientLines.length > 0
@@ -295,9 +317,12 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       ...(imageUrl ? { imageUrl } : {}),
     };
 
+    const payload = isCombo ? comboPayload : recipePayload;
+    const apiPath = isCombo ? "/api/combos" : "/api/recipes";
+
     setBusy("publish");
     try {
-      const res = await fetch("/api/recipes", {
+      const res = await fetch(apiPath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

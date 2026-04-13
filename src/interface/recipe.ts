@@ -4,13 +4,15 @@ export interface Ingredient {
 }
 
 export interface Recipe {
-  id: string;
+  _id?: string;
+  id?: string;
   name: string;
-  serving: number;
-  tags: string[];
-  ingredients: Ingredient[];
-  instructions: string;
-  comments: string;
-  lastVerified: Date;
-  verifiedBy: string;
+  serving?: number;
+  tags?: string[];
+  ingredients?: Ingredient[];
+  instructions?: string;
+  comments?: string;
+  lastVerified?: Date;
+  verifiedBy?: string;
+  isDraft?: boolean;
 }
