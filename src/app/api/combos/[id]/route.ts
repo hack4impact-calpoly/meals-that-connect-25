@@ -3,13 +3,11 @@ import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
 
 type Params = {
-  params: {
-    id: string;
-  };
+  params: Promise<{ id: string }>;
 };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Combo ID is required" }, { status: 400 });
@@ -30,8 +28,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: Params) {
-  const { id } = params;
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Combo ID is required" }, { status: 400 });
@@ -71,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Missing Combo ID" }, { status: 400 });

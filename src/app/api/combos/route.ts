@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
     const tagParams = searchParams
-      .getAll("tags")
+      .getAll("filters")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
     const servingParams = searchParams
@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
   try {
     const comboData = await req.json();
     await connectDB();
-
+    console.log(comboData, "COMBO DATA!");
     const combo = new Combo(comboData);
     await combo.save();
 

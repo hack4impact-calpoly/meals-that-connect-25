@@ -21,7 +21,7 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
 export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -36,7 +36,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const isComboMode = selectedCategories.has("combo");
+  const isComboMode = selectedCategories.has("Combo");
 
   /* ---------------- Debounce ---------------- */
 
@@ -75,19 +75,26 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
             if (t.includes("serving")) {
               params.append("servings", t);
             } else {
-              params.append("tags", t);
+              params.append("filters", t);
+              params.append("allergens", t);
             }
           });
         }
 
         if (!isComboMode) {
-          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "combo");
+          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
           categoryParams.forEach((category) => params.append("categories", category));
         }
 
         const url = `${base}?${params.toString()}`;
 
-        const paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
+        // if in draft view, change PAGE_SIZE to PAGE_SIZE - 1
+        let paginatedUrl;
+        if (draftMode) {
+          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE - 1}`;
+        } else {
+          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
+        }
         const res = await fetch(paginatedUrl, { signal: controller.signal });
 
         if (!res.ok) {

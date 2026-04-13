@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Recipe } from "@/interface/recipe";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
