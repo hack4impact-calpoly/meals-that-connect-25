@@ -14,8 +14,8 @@ const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
   Sides: "bg-sides-500 text-sides-900",
   Fruit: "bg-fruit-500 text-fruit-900",
-  Entree: "bg-entree-900 text-entree-500",
-  Entrée: "bg-entree-900 text-entree-500",
+  Entree: "bg-yellow-900 text-white",
+  Entrée: "bg-yellow-900 text-white",
   fallback: "bg-gray-100 text-gray-700",
 };
 
