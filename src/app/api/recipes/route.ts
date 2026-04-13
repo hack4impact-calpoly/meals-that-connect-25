@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
-      .getAll("tags")
+      .getAll("filters")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
 
@@ -51,7 +51,10 @@ export async function GET(req: NextRequest) {
 
     if (tagParams.length > 0) {
       andClauses.push({
-        tags: {
+        filters: {
+          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+        },
+        allergens: {
           $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
         },
       });
@@ -60,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (categoryParams.length > 0) {
       andClauses.push({
         $or: categoryParams.map((category) => ({
-          tags: { $elemMatch: { $regex: category, $options: "i" } },
+          filters: { $elemMatch: { $regex: category, $options: "i" } },
         })),
       });
     }
@@ -107,6 +110,7 @@ export async function GET(req: NextRequest) {
     }
 
     const totalCount = await Recipe.countDocuments(filter);
+    console.log(`Filter: ${JSON.stringify(filter)}, Total Count: ${totalCount}`);
 
     let query = Recipe.find(filter)
       .sort(sort)

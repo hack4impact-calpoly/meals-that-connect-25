@@ -1,11 +1,16 @@
 import Image from "next/image";
-import React from "react";
-import { Utensils } from "lucide-react";
+import { Pencil, Utensils } from "lucide-react";
+import { Combo, Recipe, RecipeReference } from "@/lib/types";
+import { useEffect, useState } from "react";
+import CreateRecipePopUp from "./CreateRecipePopUp";
 
 type ComboCardProps = {
+  item: Combo;
   name: string;
   imageUrl?: string;
-  tags: string[];
+  entrees: RecipeReference[];
+  sides: RecipeReference[];
+  fruits: RecipeReference[];
   serving: number;
   isDraft: boolean;
   isSelected?: boolean;
@@ -14,24 +19,72 @@ type ComboCardProps = {
 };
 
 export default function ComboCard({
+  item,
   name,
   imageUrl,
-  tags = [],
+  entrees,
+  sides,
+  fruits,
   serving,
   isDraft = true,
   isSelected,
   onSelect,
   onOpen,
 }: ComboCardProps) {
+  const [editMode, setEditMode] = useState(false);
+  const [entreeMap, setEntreeMap] = useState<string[]>([]);
+  const [sideMap, setSideMap] = useState<string[]>([]);
+  const [fruitMap, setFruitMap] = useState<string[]>([]);
+
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
+  useEffect(() => {
+    const loadAll = async () => {
+      const [entreeNames, sideNames, fruitNames] = await Promise.all([
+        Promise.all(entrees.map(async (e) => (await getRecipe(e.id)).name)),
+        Promise.all(sides.map(async (s) => (await getRecipe(s.id)).name)),
+        Promise.all(fruits.map(async (f) => (await getRecipe(f.id)).name)),
+      ]);
+
+      setEntreeMap(entreeNames);
+      setSideMap(sideNames);
+      setFruitMap(fruitNames);
+    };
+
+    loadAll();
+  }, []);
+
   const servingText = serving != null ? `${serving}` : null;
 
   return (
     <div
       onClick={onOpen} // TODO: cursor pointer only if onOpen is provided?
-      className={`relative w-72 h-86.5 overflow-hidden rounded-[14px] cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
+      className={`relative w-83 h-86.5 overflow-hidden rounded-[14px] cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
     >
       <div className="relative h-28 w-full bg-medium-gray">
         {imageUrl ? <Image src={imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" /> : null}
+
+        {editMode === true && (
+          <CreateRecipePopUp
+            onClose={() => setEditMode(false)}
+            item={item}
+            open={true}
+            recipeType={{ id: "Combo", label: "Add Combo", icon: Utensils }}
+            editMode={true}
+          />
+        )}
+
+        {isDraft && (
+          <Pencil
+            className="absolute top-35 right-4 z-20 h-5 w-5 rounded-xs accent-radish-900 cursor-pointer"
+            onClick={() => setEditMode((prev) => !prev)}
+          />
+        )}
+
         {isDraft && onSelect && (
           <input
             type="checkbox"
@@ -55,21 +108,37 @@ export default function ComboCard({
         <div className="space-y-3">
           <p className="mt-3 font-montserrat font-bold text-base text-combo-jicama">{name}</p>
 
-          <div className="flex flex-col gap-1.5">
-            {tags.map((tag) => (
+          <div className="flex flex-col gap-1.5 max-h-30 overflow-y-auto">
+            {entreeMap.map((i) => (
               <span
-                key={tag}
+                key={i}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-entree-900 text-entree-500`}
+              >
+                {i}
+              </span>
+            ))}
+            {fruitMap.map((i) => (
+              <span
+                key={i}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-fruit-500 text-white`}
+              >
+                {i}
+              </span>
+            ))}
+            {sideMap.map((i) => (
+              <span
+                key={i}
                 className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-sides-500 text-sides-900`}
               >
-                {tag}
+                {i}
               </span>
             ))}
           </div>
         </div>
 
-        <div className="mt-auto flex items-center gap-1">
+        <div className="mt-auto flex items-center gap-1 ml-auto">
           <Utensils className="h-2.5 w-2.5 text-combo-jicama" />
-          <p className="font-montserrat italic text-xs">Serves {servingText}</p>
+          <p className="font-montserrat text-xs">Serves {servingText}</p>
         </div>
       </div>
     </div>

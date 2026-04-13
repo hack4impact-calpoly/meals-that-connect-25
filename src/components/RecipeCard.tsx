@@ -1,10 +1,15 @@
 import Image from "next/image";
+import { Pencil } from "lucide-react";
+import { useState } from "react";
+import CreateRecipePopUp from "./CreateRecipePopUp";
+import { Recipe } from "@/lib/types";
 
 export type RecipeCardProps = {
+  item: Recipe;
   imageUrl?: string;
   name: string;
   calories?: number;
-  servingSize?: string;
+  servingSize: string;
   tags?: string[];
   isDraft?: boolean;
   isSelected?: boolean;
@@ -21,6 +26,7 @@ const TAG_STYLES: Record<string, string> = {
 };
 
 export default function RecipeCard({
+  item,
   imageUrl,
   name,
   calories,
@@ -31,6 +37,7 @@ export default function RecipeCard({
   onSelect,
   onOpen,
 }: RecipeCardProps) {
+  const [editMode, setEditMode] = useState(false);
   const caloriesText = calories != null ? `${calories} cal` : null;
 
   const servingText = servingSize != null ? `${servingSize}` : null;
@@ -43,7 +50,7 @@ export default function RecipeCard({
   return (
     <div
       onClick={onOpen}
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
+      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-10 px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
     >
       <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
@@ -57,10 +64,24 @@ export default function RecipeCard({
       </div>
 
       {primaryTag ? (
-        <span className={`shrink-0 rounded-md px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}>
+        <span
+          className={`shrink-0 w-20 rounded-md text-center px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}
+        >
           {primaryTag}
         </span>
       ) : null}
+
+      {isDraft && <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />}
+
+      {editMode === true && (
+        <CreateRecipePopUp
+          onClose={() => setEditMode(false)}
+          item={item}
+          open={true}
+          recipeType={null}
+          editMode={true}
+        />
+      )}
 
       {isDraft && onSelect && (
         <input
