@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import WeekMealCard, { type WeekMealCardData } from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
+import DroppableCalendarArea from "./DroppableCalendarArea";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
+  refetchTrigger?: number;
 }
 
 type WeekViewDayData = {
@@ -41,64 +43,63 @@ const mapCalendarRecipesToMeals = (recipes: CalendarRecipe[] | undefined, tag: W
     tag,
   }));
 
-export default function WeekView({ dateToday, weekDates }: WeekViewProps) {
+export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  async function fetchWeekMeals() {
+    setIsLoading(true);
+
+    try {
+      const weekMeals = await Promise.all(
+        weekDates.map(async (date) => {
+          const response = await fetch(`/api/calendar/${formatCalendarDayId(date)}`);
+
+          if (response.status === 404) {
+            return { meals: [], showNutritionInfoNotMet: true };
+          }
+
+          if (!response.ok) {
+            throw new Error(`Failed to fetch calendar day ${formatCalendarDayId(date)}`);
+          }
+
+          const calendarDay: CalendarDayResponse = await response.json();
+
+          return {
+            meals: [
+              ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
+              ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
+              ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
+            ],
+            showNutritionInfoNotMet: false,
+          };
+        }),
+      );
+
+      setWeekViewMeals(weekMeals);
+    } catch (error) {
+      console.error("Error fetching week meals:", error);
+      setWeekViewMeals(weekDates.map(() => ({ meals: [], showNutritionInfoNotMet: false })));
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchWeekMeals() {
-      setIsLoading(true);
-
-      try {
-        const weekMeals = await Promise.all(
-          weekDates.map(async (date) => {
-            const response = await fetch(`/api/calendar/${formatCalendarDayId(date)}`);
-
-            if (response.status === 404) {
-              return { meals: [], showNutritionInfoNotMet: true };
-            }
-
-            if (!response.ok) {
-              throw new Error(`Failed to fetch calendar day ${formatCalendarDayId(date)}`);
-            }
-
-            const calendarDay: CalendarDayResponse = await response.json();
-
-            return {
-              meals: [
-                ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
-                ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
-                ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
-              ],
-              showNutritionInfoNotMet: false,
-            };
-          }),
-        );
-
-        if (isMounted) {
-          setWeekViewMeals(weekMeals);
-        }
-      } catch (error) {
-        console.error("Error fetching week meals:", error);
-
-        if (isMounted) {
-          setWeekViewMeals(weekDates.map(() => ({ meals: [], showNutritionInfoNotMet: false })));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+    async function fetch() {
+      if (isMounted) {
+        await fetchWeekMeals();
       }
     }
 
-    fetchWeekMeals();
+    fetch();
 
     return () => {
       isMounted = false;
     };
-  }, [weekDates]);
+  }, [weekDates, refetchTrigger]);
 
   return (
     <div className="relative my-4 grid flex-1 grid-cols-5 gap-3">
@@ -126,11 +127,15 @@ export default function WeekView({ dateToday, weekDates }: WeekViewProps) {
                 Loading meals...
               </div>
             ) : (weekViewMeals[idx]?.meals ?? []).length > 0 ? (
-              (weekViewMeals[idx]?.meals ?? []).map((meal) => <WeekMealCard key={meal.id} {...meal} />)
+              <DroppableCalendarArea dayId={formatCalendarDayId(date)}>
+                {weekViewMeals[idx]?.meals?.map((meal) => <WeekMealCard key={meal.id} {...meal} />) || null}
+              </DroppableCalendarArea>
             ) : (
-              <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 text-center font-montserrat text-xs font-medium text-pepper/55">
-                No meals planned
-              </div>
+              <DroppableCalendarArea dayId={formatCalendarDayId(date)}>
+                <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
+                  Drop recipe here
+                </div>
+              </DroppableCalendarArea>
             )}
 
             {weekViewMeals[idx]?.showNutritionInfoNotMet ? <NutritionInfoNotMetCard /> : null}

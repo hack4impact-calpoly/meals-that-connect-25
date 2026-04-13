@@ -26,8 +26,8 @@ const CARD_STYLE_BY_TAG: Record<string, { backgroundColor: string; textColor: st
     textColor: "#ffffff",
   },
   Entree: {
-    backgroundColor: "#7b4c0a",
-    textColor: "#ffffff",
+    backgroundColor: "var(--color-entree-500)",
+    textColor: "var(--color-pepper)",
   },
 };
 

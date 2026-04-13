@@ -1,15 +1,25 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Recipe } from "@/interface/recipe";
+import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
 
+interface RecipeDatabaseItem {
+  _id?: string;
+  id?: string;
+  name: string;
+  serving?: number;
+  tags?: string[];
+  itemType?: "recipe" | "combo";
+}
+
 interface RecipeDatabaseProps {
-  recipes: Recipe[];
+  recipes: RecipeDatabaseItem[];
 }
 
 export default function RecipeDatabase({ recipes }: RecipeDatabaseProps) {
   const [value, setValue] = useState("");
+
+  const filteredRecipes = recipes.filter((recipe) => recipe.name.toLowerCase().includes(value.toLowerCase()));
 
   return (
     <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
@@ -28,16 +38,23 @@ export default function RecipeDatabase({ recipes }: RecipeDatabaseProps) {
       </div>
       <div className="my-2">placeholder for buttons</div>
       <div className="flex flex-col gap-4">
-        {recipes.map((recipe) => (
-          <DraggableRecipeCard
-            key={recipe.id}
-            imageUrl={""}
-            name={recipe.name}
-            calories={0}
-            servingSize={"100g"}
-            tags={recipe.tags}
-          />
-        ))}
+        {filteredRecipes.map((recipe) => {
+          const recipeId = recipe._id || recipe.id;
+          return (
+            <DraggableRecipeCard
+              key={recipeId}
+              recipeId={recipeId || ""}
+              imageUrl={""}
+              name={recipe.name}
+              calories={0}
+              servingSize={recipe.serving ? `${recipe.serving} servings` : "100g"}
+              tags={recipe.tags}
+              itemType={recipe.itemType}
+              sides={recipe.sides}
+              fruits={recipe.fruits}
+            />
+          );
+        })}
       </div>
     </div>
   );
