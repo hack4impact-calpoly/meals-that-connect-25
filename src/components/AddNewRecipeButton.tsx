@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
 import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 

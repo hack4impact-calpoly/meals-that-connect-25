@@ -1,4 +1,4 @@
-import { CategoryValue, FilterSelections } from "./types";
+import { FilterSelections } from "./types";
 
 export function buildFilterTags(filters: FilterSelections) {
   const out: string[] = [];
@@ -11,22 +11,3 @@ export function buildFilterTags(filters: FilterSelections) {
 
   return Array.from(new Set(out));
 }
-
-/*export function normalizeTag(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
-export function hasCategoryTag(tags: string[] = [], category: CategoryValue) {
-  const normalizedTags = tags.map((t) => normalizeTag(t));
-
-  return normalizedTags.some((tag) => {
-    if (category === "combo") return tag.includes("combo");
-    if (category === "entree") return tag.includes("entree");
-    if (category === "side") return tag.includes("side");
-    return tag.includes("fruit");
-  });
-}*/

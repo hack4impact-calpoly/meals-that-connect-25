@@ -1,6 +1,4 @@
 "use client";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 
 interface WeekViewProps {
   dateToday: Date;
