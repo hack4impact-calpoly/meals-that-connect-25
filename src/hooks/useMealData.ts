@@ -21,7 +21,7 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 11;
+const PAGE_SIZE = 5;
 
 export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
