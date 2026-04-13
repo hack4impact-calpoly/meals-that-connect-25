@@ -38,14 +38,17 @@ export default function CardGrid({
   if (isComboMode) {
     return (
       <div className="flex flex-wrap gap-6">
-        {!draftMode && <DraftEntryCard variant="combo" numDrafts={draftCount} />}
+        {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
 
         {(items as Combo[]).map((combo) => (
           <ComboCard
+            item={combo}
             key={combo._id}
             name={combo.name}
             imageUrl={combo.imageUrl}
-            tags={[]}
+            entrees={combo.entrees ?? []}
+            sides={combo.sides ?? []}
+            fruits={combo.fruits ?? []}
             serving={combo.serving}
             isDraft={combo.isDraft}
             isSelected={selectedIds?.has(combo._id)}
@@ -66,11 +69,12 @@ export default function CardGrid({
       {(items as Recipe[]).map((recipe) => (
         <RecipeCard
           key={recipe._id}
+          item={recipe}
           name={recipe.name}
           imageUrl={recipe.imageUrl}
           // TODO: Update RecipeCard with correct recipe schema
-          servingSize={recipe.serving ? `${recipe.serving}` : undefined}
-          tags={recipe.tags ?? []}
+          servingSize={recipe.serving.toString()}
+          tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
           isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}

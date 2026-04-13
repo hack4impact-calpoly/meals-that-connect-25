@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from "@headlessui/react";
-import { Recipe, Combo } from "@/lib/types";
+import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Recipe, Combo, RecipeReference } from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
@@ -16,6 +16,7 @@ import {
   SquarePen,
   Minus,
   Plus,
+  ArrowUpRight,
 } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
@@ -25,32 +26,134 @@ type Props = {
   onClose: (v: boolean) => void;
   item: Recipe | Combo | null;
   isComboMode: boolean;
+  changeMode: (mode: "view" | "edit") => void;
 };
 
-export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Props) {
+export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState(item?.serving || 1);
+  const originalServings = item?.serving || 1;
 
-  // TODO: probably need to do some math for nutritional info and ingredients based on servings
+  const [calories, setCalories] = useState(0);
+  const [protein, setProtein] = useState(0);
+  const [fat, setFat] = useState(0);
+  const [carbs, setCarbs] = useState(0);
+  const [fiber, setFiber] = useState(0);
+  const [sodium, setSodium] = useState(0);
+
+  const [entreeMap, setEntreeMap] = useState<RecipeReference[]>([]);
+  const [sideMap, setSideMap] = useState<RecipeReference[]>([]);
+  const [fruitMap, setFruitMap] = useState<RecipeReference[]>([]);
+
+  const isRecipe = (item: Recipe | Combo): item is Recipe => {
+    return "ingredients" in item;
+  };
+
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
   useEffect(() => {
-    if (item && item.serving) {
+    // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
+    if (item && isRecipe(item) === false) {
+      const loadAll = async () => {
+        const [eM, sN, fN] = await Promise.all([
+          Promise.all(
+            (item.entrees ?? []).map(async (e) => {
+              const r = await getRecipe(e.id);
+              return { id: e.id, name: r.name };
+            }),
+          ),
+          Promise.all(
+            (item.sides ?? []).map(async (s) => {
+              const r = await getRecipe(s.id);
+              return { id: s.id, name: r.name };
+            }),
+          ),
+          Promise.all(
+            (item.fruits ?? []).map(async (f) => {
+              const r = await getRecipe(f.id);
+              return { id: f.id, name: r.name };
+            }),
+          ),
+        ]);
+
+        setEntreeMap(eM);
+        setSideMap(sN);
+        setFruitMap(fN);
+      };
+
+      loadAll();
+
+      item.entrees?.forEach((e) => {
+        // go through each entree information and sum up nutritional info
+        getRecipe(e.id).then((recipe) => {
+          setCalories((c) => recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => recipe.nutritional_info.sodium / recipe.serving);
+        });
+      });
+
+      item.sides?.forEach((s) => {
+        getRecipe(s.id).then((recipe) => {
+          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
+        });
+      });
+
+      item.fruits?.forEach((f) => {
+        getRecipe(f.id).then((recipe) => {
+          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
+        });
+      });
+    } else if (item) {
+      setCalories(item.nutritional_info.calories || 0);
+      setProtein(item.nutritional_info.protein || 0);
+      setFat(item.nutritional_info.fat || 0);
+      setCarbs(item.nutritional_info.carbs || 0);
+      setFiber(item.nutritional_info.fiber || 0);
+      setSodium(item.nutritional_info.sodium || 0);
+    }
+
+    if (open && item?.serving) {
       setServings(item.serving);
     }
-  }, [item]);
+  }, [open, item]);
 
   if (!item) return null;
+
+  const applyEditMode = () => {
+    changeMode("edit");
+  };
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
       {/* backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/40" />
-
       {/* container */}
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
-          {/* <DialogPanel className="w-full max-w-3xl rounded-lg bg-white p-6 shadow-lg"> */}
           <DialogPanel
-            className={`bg-white p-6 shadow-lg rounded-lg transition-all duration-300 ${maximized ? "fixed inset-0 w-screen h-screen max-w-none rounded-none z-50" : "w-full max-w-3xl"}`}
+            className={`bg-white p-6 shadow-lg rounded-lg transition-all duration-300 
+  ${
+    maximized
+      ? "fixed inset-0 w-screen h-screen max-w-none rounded-none z-50 overflow-y-auto"
+      : "w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+  }`}
           >
             {/* header */}
             <div className="flex items-center justify-between mb-4">
@@ -65,23 +168,16 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                 />
               </div>
               <div className="flex flex-row gap-4">
-                <Share className="cursor-pointer" />
-                <Pencil className="cursor-pointer" />
+                <Pencil className="cursor-pointer" onClick={applyEditMode} />
                 <Ellipsis className="cursor-pointer" />
               </div>
             </div>
 
             {/* image */}
-            <div className="relative h-28 w-full bg-medium-gray rounded-lg">
+            <div className="relative h-50 w-full bg-medium-gray rounded-lg overflow-hidden">
               {"imageUrl" in item && item.imageUrl && (
                 <div className="relative w-full h-64 mb-4">
-                  <Image
-                    src={item.imageUrl}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="w-full max-h-64 object-cover rounded"
-                  />
+                  <Image src={item.imageUrl} alt="" fill className="object-cover" />
                 </div>
               )}
               {/* <span
@@ -90,7 +186,30 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
             </div>
 
             {/* title */}
-            <div className="text-2xl font-bold mb-4">{item.name}</div>
+            <div className="text-2xl font-bold mb-4 mt-5">{item.name}</div>
+
+            {/* entrees (combo) */}
+            {"entrees" in item && item.entrees && (
+              <div className="flex mb-4">
+                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                  <Carrot /> Entrees
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+                  {entreeMap.map((e, i) => (
+                    <div key={i} className="bg-brown text-white px-2 py-1 rounded-md flex items-center gap-1">
+                      {e.name}
+                      <button
+                        onClick={() => window.open(`/recipe?id=${e.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* sides (combo) */}
             {"sides" in item && item.sides && (
@@ -100,9 +219,15 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.sides.map((s, i) => (
-                    <div key={i} className="bg-lime px-2 py-1 rounded-md">
+                  {sideMap.map((s, i) => (
+                    <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
+                      <button
+                        onClick={() => window.open(`/recipe?id=${s.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -117,24 +242,31 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {item.fruits.map((f, i) => (
-                    <div key={i} className="bg-fruit-900 text-white px-2 py-1 rounded-md">
+                  {fruitMap.map((f, i) => (
+                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
                       {f.name}
+                      <button
+                        onClick={() => window.open(`/recipe?id=${f.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>{" "}
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* filters (combo) */}
+            {/* filters */}
             {"filters" in item && item.filters && (
               <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
                   <Tag /> Filters
                 </h3>
-                <div className="flex flex-wrap gap-2">
+
+                <div className="flex flex-wrap gap-2 max-w-full">
                   {item.filters.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
                       {f}
                     </div>
                   ))}
@@ -142,15 +274,16 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
               </div>
             )}
 
-            {/* allergens (combo) */}
+            {/* allergens */}
             {"allergens" in item && item.allergens && (
               <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
                   <CircleAlert /> Allergens
                 </h3>
-                <div>
+
+                <div className="flex flex-wrap gap-2 max-w-full">
                   {item.allergens.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
+                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
                       {f}
                     </div>
                   ))}
@@ -158,39 +291,13 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
               </div>
             )}
 
-            {/* notes (combo) */}
+            {/* notes */}
             {"notes" in item && item.notes && (
               <div className="flex mb-4">
                 <h3 className="flex w-30 gap-2 font-bold">
                   <SquarePen /> Notes
                 </h3>
                 <p>{item.notes}</p>
-              </div>
-            )}
-
-            {/* tags (recipe) */}
-            {"tags" in item && item.tags && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Tag /> Tags
-                </h3>
-                <div className="flex gap-2">
-                  {item.tags.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md">
-                      {f}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* comments (recipe) */}
-            {"comments" in item && item.comments && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 font-bold">
-                  <SquarePen /> Comments
-                </h3>
-                <p>{item.comments}</p>
               </div>
             )}
 
@@ -206,7 +313,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
                 >
                   <Minus />
                 </button>
-                <span className="text-center w-8 font-mono">{servings}</span>
+                <span className="text-center w-15 font-mono">{servings}</span>
                 <button
                   className="bg-gray-200 rounded text-gray-600 hover:bg-gray-300"
                   onClick={() => setServings((s) => s + 1)}
@@ -216,85 +323,87 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode }: Pr
               </div>
             )}
 
-            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-
             {/* ingredients (recipe) */}
             {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just sides + fruit?) */}
             {"ingredients" in item && item.ingredients && (
               <>
+                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
                 <div className="mb-4">
                   <h3 className="text-xl mb-4 font-semibold">Ingredients</h3>
 
                   <ul className="list-disc pl-5">
                     {item.ingredients.map((ing, i) => (
                       <li key={i}>
-                        {/* TODO: fix quantity schema so that it can be multiplied by serving size */}
-                        {ing.quantity} {ing.name}
+                        {ing.name}: {ing.quantity * servings} {ing.units}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
               </>
             )}
 
             {/* instructions */}
             {/* TODO: fix instructions schema (change from string -> array) */}
             {"instructions" in item && item.instructions && (
-              <div className="mb-4">
-                <h3 className="text-xl mb-4 font-semibold">Instructions</h3>
-                <p className="whitespace-pre-wrap">{item.instructions}</p>
-              </div>
-            )}
-
-            {/* nutritional info (combo) */}
-            {"nutritional_info" in item && item.nutritional_info && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-                <h3 className="text-xl mb-4 font-semibold">Nutritional Information</h3>
-                <div className="mt-3 flex flex-wrap gap-3">
-                  <NutritionalInfo
-                    label="Calories"
-                    unit="kcal"
-                    value={item.nutritional_info[0] ? (item.nutritional_info[0] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
-                  <NutritionalInfo
-                    label="Protein"
-                    unit="g"
-                    value={item.nutritional_info[1] ? (item.nutritional_info[1] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
-                  <NutritionalInfo
-                    label="Fat"
-                    unit="g"
-                    value={item.nutritional_info[2] ? (item.nutritional_info[2] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
-                  <NutritionalInfo
-                    label="Carbs"
-                    unit="g"
-                    value={item.nutritional_info[3] ? (item.nutritional_info[3] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
-                  <NutritionalInfo
-                    label="Fiber"
-                    unit="g"
-                    value={item.nutritional_info[4] ? (item.nutritional_info[4] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
-                  <NutritionalInfo
-                    label="Sodium"
-                    unit="mg"
-                    value={item.nutritional_info[5] ? (item.nutritional_info[5] * servings).toString() : ""}
-                    onChange={() => {}}
-                  />
+                <div className="mb-4">
+                  <h3 className="text-xl mb-4 font-semibold">Instructions</h3>
+                  <p className="whitespace-pre-wrap">{item.instructions}</p>
                 </div>
               </>
             )}
+
+            {/* nutritional info */}
+            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
+            <h3 className="text-xl mb-4 font-semibold">Nutritional Information</h3>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <NutritionalInfo
+                label="Calories"
+                unit="kcal"
+                value={((calories / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Protein"
+                unit="g"
+                value={((protein / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Fat"
+                unit="g"
+                value={((fat / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Carbs"
+                unit="g"
+                value={((carbs / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Fiber"
+                unit="g"
+                value={((fiber / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+              <NutritionalInfo
+                label="Sodium"
+                unit="mg"
+                value={((sodium / originalServings) * servings).toString()}
+                onChange={() => {}}
+                readOnly={true}
+              />
+            </div>
           </DialogPanel>
         </div>
-      </div>
+      </div>{" "}
     </Dialog>
   );
 }

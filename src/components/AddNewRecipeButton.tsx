@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
 import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 
 /* Dropdown options for creating a new recipe. Add/remove entries here to change
    what appears in the menu. */
 const RECIPE_TYPES: CreateRecipeType[] = [
-  { id: "combo", label: "Add Combo", icon: Utensils },
-  { id: "entree", label: "Add Entrée", icon: Soup },
-  { id: "side", label: "Add Side", icon: Carrot },
-  { id: "fruit", label: "Add Fruit", icon: Apple },
+  { id: "Combo", label: "Add Combo", icon: Utensils },
+  { id: "Entree", label: "Add Entrée", icon: Soup },
+  { id: "Side", label: "Add Side", icon: Carrot },
+  { id: "Fruit", label: "Add Fruit", icon: Apple },
 ];
 
 function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {
@@ -42,11 +42,11 @@ export default function AddNewRecipeButton() {
     <>
       <Menu as="div" className="relative">
         <MenuButton
-          className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-3
+          className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-2.5
                                text-base font-bold font-montserrat text-white text-nowrap"
         >
           Add New Recipe
-          <Plus size={20} strokeWidth={2.5} />
+          <Plus size={20} strokeWidth={3} />
         </MenuButton>
 
         <MenuItems
@@ -73,7 +73,13 @@ export default function AddNewRecipeButton() {
         </MenuItems>
       </Menu>
 
-      <CreateRecipePopUp open={!!activeType} onClose={() => setActiveType(null)} recipeType={activeType} />
+      <CreateRecipePopUp
+        item={null}
+        open={!!activeType}
+        onClose={() => setActiveType(null)}
+        recipeType={activeType}
+        editMode={false}
+      />
     </>
   );
 }

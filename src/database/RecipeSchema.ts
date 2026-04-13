@@ -1,5 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import Ingredient from "./IngredientSchema";
+import Nutrition from "./NutritionSchema";
 
 const RecipeSchema = new Schema(
   {
@@ -8,26 +9,24 @@ const RecipeSchema = new Schema(
 
     serving: {
       type: Number,
-      required: function () {
-        return !this.isDraft;
-      },
+      required: true,
     },
 
-    tags: { type: [String], required: false },
+    allergens: { type: [String], required: false },
+    filters: { type: [String], required: false },
 
     ingredients: {
       type: [Ingredient.schema],
-      required: function () {
-        return !this.isDraft;
-      },
+      required: false,
     },
 
     instructions: { type: String, required: false },
-    comments: { type: String, required: false },
+    notes: { type: String, required: false },
     imageUrl: { type: String, required: false },
     lastVerified: { type: Date, required: false },
     verifiedBy: { type: String, required: false },
     isDraft: { type: Boolean, required: true, default: true },
+    nutritional_info: { type: Nutrition.schema, required: true },
   },
   {
     timestamps: true,
