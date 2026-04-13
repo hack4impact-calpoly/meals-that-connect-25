@@ -142,12 +142,12 @@ export default function MenuPlanning() {
       ),
     );
 
-    const defaultComboCategories = [
-      ...(sides.length > 0 ? ["sides"] : []),
-      ...(fruits.length > 0 ? ["fruits"] : []),
-    ] as Array<"entrees" | "sides" | "fruits">;
+    const defaultComboCategories: Array<"entrees" | "sides" | "fruits"> = [
+      ...(sides.length > 0 ? ["sides" as const] : []),
+      ...(fruits.length > 0 ? ["fruits" as const] : []),
+    ];
 
-    const categoriesToSend =
+    const categoriesToSend: Array<"entrees" | "sides" | "fruits"> =
       explicitCategories.length > 0
         ? explicitCategories
         : hasComboTag
@@ -156,7 +156,7 @@ export default function MenuPlanning() {
             : ["entrees"]
           : ["entrees"];
 
-    const categoryItemIds = (category: "entrees" | "sides" | "fruits") => {
+    const categoryItemIds = (category: "entrees" | "sides" | "fruits"): string[] => {
       if (itemType === "combo") {
         if (category === "sides") return sides;
         if (category === "fruits") return fruits;
