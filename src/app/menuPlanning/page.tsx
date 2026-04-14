@@ -3,9 +3,12 @@
 import { useState } from "react";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
+import CurrentDateButton from "@/components/CurrentDateButton";
+import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
+import { first } from "firebase/firestore/pipelines";
 
 const today = new Date();
 
@@ -27,10 +30,27 @@ const getCurrentWeekDates = (today: Date) => {
   });
 };
 
+const getOffsetMonthDate = (date: Date, offset: number) => {
+  const newDate = new Date(date);
+  newDate.setMonth(date.getMonth() + offset);
+  return newDate;
+};
+
+const getOffsetDayDate = (date: Date, offset: number) => {
+  const newDate = new Date(date);
+  newDate.setDate(date.getDate() + offset);
+  return newDate;
+};
+
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
+  const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
@@ -62,20 +82,63 @@ export default function MenuPlanning() {
     sortBy,
   });
 
+  const handleNavigate = (direction: "prev" | "next") => {
+    if (calendarView === "Week") {
+      setWeekOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    } else if (calendarView === "Month") {
+      setMonthOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    } else if (calendarView === "Day") {
+      setDayOffset((prev) => prev + (direction === "prev" ? -1 : 1));
+    }
+  };
+
+  const handleReset = () => {
+    setWeekOffset(0);
+    setMonthOffset(0);
+    setDayOffset(0);
+  };
+
   return (
     <main className="flex flex-row">
       <div className="flex flex-1 justify-center items-center bg-gray-100">
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
-              <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset - 1)}>
+              <CurrentDateButton onClick={() => handleReset()} />
+              <button className="cursor-pointer" onClick={() => handleNavigate("prev")}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
               <span className="font-bold text-xl">
-                {calendarView === "Week" &&
-                  `${today.toLocaleDateString(undefined, { month: "short" })} ${weekDates[0].getDate()} - ${weekDates[4].getDate()}`}
+                {(calendarView === "Week" &&
+                  (() => {
+                    const firstDay = weekDates[0];
+                    const lastDay = weekDates[4];
+
+                    const startMonth = firstDay.toLocaleDateString(undefined, { month: "short" });
+                    const endMonth = lastDay.toLocaleDateString(undefined, { month: "short" });
+
+                    if (startMonth !== endMonth) {
+                      return `${startMonth} ${firstDay.getDate()} - ${endMonth} ${lastDay.getDate()}`;
+                    }
+                    return `${startMonth} ${firstDay.getDate()} - ${lastDay.getDate()}`;
+                  })()) ||
+                  (calendarView === "Month" &&
+                    (() => {
+                      const month = monthDate.toLocaleDateString(undefined, { month: "short" });
+                      const year = monthDate.getFullYear();
+                      return `${month} ${year}`;
+                    })()) ||
+                  (calendarView === "Day" &&
+                    (() => {
+                      const currentDay = getOffsetDayDate(today, dayOffset);
+                      const dayOfWeek = currentDay.toLocaleDateString(undefined, { weekday: "long" });
+                      const day = currentDay.getDate();
+                      const month = currentDay.toLocaleDateString(undefined, { month: "long" });
+                      const year = currentDay.getFullYear();
+                      return `${dayOfWeek}, ${month} ${day}, ${year}`;
+                    })())}
               </span>
-              <button className="cursor-pointer" onClick={() => setWeekOffset(weekOffset + 1)}>
+              <button className="cursor-pointer" onClick={() => handleNavigate("next")}>
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
             </div>
@@ -109,7 +172,13 @@ export default function MenuPlanning() {
 
           {calendarView === "Month" && <div>Month view coming soon!</div>}
           {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
-          {calendarView === "Day" && <div>Day view coming soon!</div>}
+          {calendarView === "Day" && (
+            // dummy data
+            <div>
+              <RecipeDailyCard name="Chicken Tikka Masala" calories={225} servingSize="150g" tags={["Entree"]} />
+              <RecipeDailyCard name="Mango Fruit Cup" calories={100} servingSize="100g" tags={["Fruit"]} />
+            </div>
+          )}
         </div>
       </div>
 
