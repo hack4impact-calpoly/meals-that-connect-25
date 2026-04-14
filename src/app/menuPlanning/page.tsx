@@ -45,7 +45,6 @@ const getOffsetDayDate = (date: Date, offset: number) => {
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
