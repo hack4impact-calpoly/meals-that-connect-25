@@ -51,5 +51,14 @@ export type Combo = {
   isDraft: boolean;
 };
 
+export const EMPTY_FILTERS: FilterSelections = {
+  allergens: new Set(),
+  proteins: new Set(),
+  vitamins: new Set(),
+  dietary: new Set(),
+  serving: new Set(),
+};
+
+export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;

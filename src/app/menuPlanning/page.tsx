@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Recipe } from "@/interface/recipe";
+import { useState } from "react";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
+import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
+import { useMealData } from "@/hooks/useMealData";
 import { first } from "firebase/firestore/pipelines";
 
 const today = new Date();
@@ -18,9 +19,9 @@ const getOffsetDate = (date: Date, offset: number) => {
 };
 
 const getCurrentWeekDates = (today: Date) => {
-  const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+  const dayOfWeek = today.getDay();
   const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - dayOfWeek + 1); // start from Monday
+  startOfWeek.setDate(today.getDate() - dayOfWeek + 1);
 
   return Array.from({ length: 5 }, (_, i) => {
     const date = new Date(startOfWeek);
@@ -42,28 +43,42 @@ const getOffsetDayDate = (date: Date, offset: number) => {
 };
 
 export default function MenuPlanning() {
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
-  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
   const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
 
-  useEffect(() => {
-    async function fetchRecipes() {
-      try {
-        const res = await fetch("/api/recipes");
-        if (!res.ok) throw new Error("Failed to fetch recipes");
-        const data = await res.json();
-        console.log(data);
-        setRecipes(data.data);
-      } catch (error) {
-        console.error(error);
+  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
+
+  const toggleCategory = (category: CategoryValue) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+
+      if (category === "Combo") {
+        if (next.has("Combo")) return new Set<CategoryValue>();
+        return new Set<CategoryValue>(["Combo"]);
       }
-    }
-    fetchRecipes();
-  }, []);
+
+      if (next.has("Combo")) next.delete("Combo");
+
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+
+      return next;
+    });
+  };
+
+  const { items, loading, error } = useMealData({
+    search,
+    filters: EMPTY_FILTERS,
+    selectedCategories,
+    draftMode: false,
+    sortBy,
+  });
 
   const handleNavigate = (direction: "prev" | "next") => {
     if (calendarView === "Week") {
@@ -152,6 +167,7 @@ export default function MenuPlanning() {
               </span>
             </div>
           </div>
+
           {calendarView === "Month" && <div>Month view coming soon!</div>}
           {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
           {calendarView === "Day" && (
@@ -163,8 +179,18 @@ export default function MenuPlanning() {
           )}
         </div>
       </div>
+
       <div className="w-103.25">
-        <RecipeDatabase recipes={recipes} />
+        <RecipeDatabase
+          items={items}
+          loading={loading}
+          error={error}
+          onSearch={setSearch}
+          selectedCategories={selectedCategories}
+          onToggleCategory={toggleCategory}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
+        />
       </div>
     </main>
   );

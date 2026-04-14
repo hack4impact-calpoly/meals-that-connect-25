@@ -16,7 +16,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@headlessui/react": "^2.2.9",
     "@tailwindcss/postcss": "^4.1.18",
-    "firebase": "^12.11.0",
+    "firebase": "^12.12.0",
     "lucide-react": "^0.563.0",
     "mongoose": "^8",
     "next": "^16.2.3",
