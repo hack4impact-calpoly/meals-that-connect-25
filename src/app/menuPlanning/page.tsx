@@ -49,7 +49,6 @@ export default function MenuPlanning() {
   const [dayOffset, setDayOffset] = useState(0);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
-  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
   const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
