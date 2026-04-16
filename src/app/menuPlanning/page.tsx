@@ -6,6 +6,7 @@ import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
+import WarningQuota from "@/components/WarningQuota";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
@@ -182,6 +183,7 @@ export default function MenuPlanning() {
               <div className="w-40">
                 <RecipeMonthlyCard name="Brown Rice" tags={["Sides"]} />
               </div>
+              <WarningQuota />
             </div>
           )}
           {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
