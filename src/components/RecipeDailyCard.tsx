@@ -27,7 +27,7 @@ export default function RecipeDailyCard({ imageUrl, name, calories, servingSize,
   const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
 
   const primaryTag = tags[0];
-  const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
+  const tagStyle = (primaryTag && [primaryTag]) ?? TAG_STYLES.fallback;
 
   return (
     <div
