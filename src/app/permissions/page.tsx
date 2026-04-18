@@ -1,7 +1,21 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import dbConnect from "@/database/db";
+import User from "@/database/UserSchema";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
 
-export default function Permissions() {
+export default async function Permissions() {
+  const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
+
+  await dbConnect();
+  const currentUser = await User.findOne({ clerkId: userId });
+
+  if (!currentUser || currentUser.role !== "Admin") {
+    redirect("/");
+  }
+
   const users = [
     {
       _id: "u1",

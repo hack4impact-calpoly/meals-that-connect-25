@@ -334,7 +334,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   <ul className="list-disc pl-5">
                     {item.ingredients.map((ing, i) => (
                       <li key={i}>
-                        {ing.name}: {ing.quantity * servings} {ing.units}
+                        {ing.name}: {(ing.quantity / originalServings) * servings} {ing.units}
                       </li>
                     ))}
                   </ul>
