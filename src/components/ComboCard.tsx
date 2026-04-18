@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Pencil, Utensils } from "lucide-react";
-import { Combo, Recipe, RecipeReference } from "@/lib/types";
+import { Combo, Recipe } from "@/lib/types";
 import { useEffect, useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 
@@ -8,9 +8,9 @@ type ComboCardProps = {
   item: Combo;
   name: string;
   imageUrl?: string;
-  entrees: RecipeReference[];
-  sides: RecipeReference[];
-  fruits: RecipeReference[];
+  entrees: string[];
+  sides: string[];
+  fruits: string[];
   serving: number;
   isDraft: boolean;
   isSelected?: boolean;
@@ -45,9 +45,9 @@ export default function ComboCard({
   useEffect(() => {
     const loadAll = async () => {
       const [entreeNames, sideNames, fruitNames] = await Promise.all([
-        Promise.all(entrees.map(async (e) => (await getRecipe(e.id)).name)),
-        Promise.all(sides.map(async (s) => (await getRecipe(s.id)).name)),
-        Promise.all(fruits.map(async (f) => (await getRecipe(f.id)).name)),
+        Promise.all(entrees.map(async (e) => (await getRecipe(e)).name)),
+        Promise.all(sides.map(async (s) => (await getRecipe(s)).name)),
+        Promise.all(fruits.map(async (f) => (await getRecipe(f)).name)),
       ]);
 
       setEntreeMap(entreeNames);

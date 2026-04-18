@@ -62,34 +62,34 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
         const [eM, sN, fN] = await Promise.all([
           Promise.all(
             (item.entrees ?? []).map(async (e) => {
-              const r = await getRecipe(e.id);
-              return { id: e.id, name: r.name };
+              const r = await getRecipe(e);
+              return { id: r._id, name: r.name };
             }),
           ),
           Promise.all(
             (item.sides ?? []).map(async (s) => {
-              const r = await getRecipe(s.id);
-              return { id: s.id, name: r.name };
+              const r = await getRecipe(s);
+              return { id: r._id, name: r.name };
             }),
           ),
           Promise.all(
             (item.fruits ?? []).map(async (f) => {
-              const r = await getRecipe(f.id);
-              return { id: f.id, name: r.name };
+              const r = await getRecipe(f);
+              return { id: r._id, name: r.name };
             }),
           ),
         ]);
 
-        setEntreeMap(eM);
         setSideMap(sN);
         setFruitMap(fN);
+        setEntreeMap(eM);
       };
 
       loadAll();
 
       item.entrees?.forEach((e) => {
         // go through each entree information and sum up nutritional info
-        getRecipe(e.id).then((recipe) => {
+        getRecipe(e).then((recipe) => {
           setCalories((c) => recipe.nutritional_info.calories / recipe.serving);
           setProtein((p) => recipe.nutritional_info.protein / recipe.serving);
           setFat((f) => recipe.nutritional_info.fat / recipe.serving);
@@ -100,7 +100,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
       });
 
       item.sides?.forEach((s) => {
-        getRecipe(s.id).then((recipe) => {
+        getRecipe(s).then((recipe) => {
           setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
           setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
           setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
@@ -111,7 +111,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
       });
 
       item.fruits?.forEach((f) => {
-        getRecipe(f.id).then((recipe) => {
+        getRecipe(f).then((recipe) => {
           setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
           setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
           setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);

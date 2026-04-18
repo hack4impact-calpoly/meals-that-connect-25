@@ -17,7 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
-import type { Recipe, Combo, RecipeReference, Ingredient } from "@/lib/types";
+import type { Recipe, Combo, Ingredient, RecipeReference } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
 import Image from "next/image";
 
@@ -276,6 +276,12 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     return "ingredients" in item;
   };
 
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
   useEffect(() => {
     if (!open) return;
 
@@ -335,9 +341,33 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           sodium: item.nutritional_info.sodium.toString(),
         });
       } else if (isCombo && isRecipe(item) === false) {
-        setSelectedSides(item.sides ?? []);
-        setSelectedFruit(item.fruits ?? []);
-        setSelectedEntree(item.entrees ?? []);
+        const loadAll = async () => {
+          const [eM, sN, fN] = await Promise.all([
+            Promise.all(
+              (item.entrees ?? []).map(async (e) => {
+                const r = await getRecipe(e);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+            Promise.all(
+              (item.sides ?? []).map(async (s) => {
+                const r = await getRecipe(s);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+            Promise.all(
+              (item.fruits ?? []).map(async (f) => {
+                const r = await getRecipe(f);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+          ]);
+
+          setSelectedSides(sN);
+          setSelectedFruit(fN);
+          setSelectedEntree(eM);
+        };
+        loadAll();
       }
 
       setId(item._id);
@@ -422,9 +452,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       const isUsed = data.some(
         (combo: Combo) =>
-          combo.entrees?.some((e) => e.id === id) ||
-          combo.sides?.some((s) => s.id === id) ||
-          combo.fruits?.some((f) => f.id === id),
+          combo.entrees?.some((e) => e === id) ||
+          combo.sides?.some((s) => s === id) ||
+          combo.fruits?.some((f) => f === id),
       );
 
       if (isUsed === true) {
@@ -449,9 +479,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           _id: crypto.randomUUID(),
           name: name.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
-          entrees: selectedEntrees.map((entree) => ({ name: entree.name, id: entree.id })),
-          sides: selectedSides.map((side) => ({ name: side.name, id: side.id })),
-          fruits: selectedFruits.map((fruit) => ({ name: fruit.name, id: fruit.id })),
+          entrees: selectedEntrees.map((entree) => entree.id),
+          sides: selectedSides.map((side) => side.id),
+          fruits: selectedFruits.map((fruit) => fruit.id),
           filters: Array.from(new Set(tags)),
           notes: notes,
           allergens: selectedAllergens.map((allergen) => allergen.name),
@@ -562,9 +592,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       const isUsed = data.some(
         (combo: Combo) =>
-          combo.entrees?.some((e) => e.id === id) ||
-          combo.sides?.some((s) => s.id === id) ||
-          combo.fruits?.some((f) => f.id === id),
+          combo.entrees?.some((e) => e === id) ||
+          combo.sides?.some((s) => s === id) ||
+          combo.fruits?.some((f) => f === id),
       );
 
       if (isUsed === true) {
