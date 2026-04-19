@@ -5,10 +5,12 @@ import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
+import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import { first } from "firebase/firestore/pipelines";
+import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 
 const today = new Date();
 
@@ -168,7 +170,22 @@ export default function MenuPlanning() {
             </div>
           </div>
 
-          {calendarView === "Month" && <div>Month view coming soon!</div>}
+          {calendarView === "Month" && (
+            // dummy data
+            <div className="space-y-2">
+              <div>Month view coming soon!</div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Chicken Tikka Masala" tags={["Entree"]} />
+              </div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Mango Cup" tags={["Fruit"]} />
+              </div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Brown Rice" tags={["Sides"]} />
+              </div>
+              <WarningQuotaMonthly />
+            </div>
+          )}
           {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
           {calendarView === "Day" && (
             // dummy data
