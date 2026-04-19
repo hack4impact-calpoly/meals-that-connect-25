@@ -9,7 +9,7 @@ export type RecipeCardProps = {
   imageUrl?: string;
   name: string;
   calories?: number;
-  servingSize: string;
+  notes: string;
   tags?: string[];
   isDraft?: boolean;
   isSelected?: boolean;
@@ -31,7 +31,7 @@ export default function RecipeCard({
   imageUrl,
   name,
   calories,
-  servingSize,
+  notes,
   tags = [],
   isDraft = false,
   isSelected,
@@ -41,9 +41,9 @@ export default function RecipeCard({
   const [editMode, setEditMode] = useState(false);
   const caloriesText = calories != null ? `${calories} cal` : null;
 
-  const servingText = servingSize != null ? `${servingSize}` : null;
+  const notesText = notes != null ? `${notes}` : null;
 
-  const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
+  const metaText = caloriesText && notesText ? `${caloriesText} / ${notesText}` : caloriesText || notesText;
 
   const primaryTag = tags[0];
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
@@ -61,7 +61,7 @@ export default function RecipeCard({
         <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
           {name}
         </h3>
-        {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
+        {metaText ? <p className="text-base font-medium font-montserrat truncate">{metaText}</p> : null}
       </div>
 
       {primaryTag ? (
