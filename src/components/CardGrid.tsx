@@ -73,8 +73,7 @@ export default function CardGrid({
           item={recipe}
           name={recipe.name}
           imageUrl={recipe.imageUrl}
-          // TODO: Update RecipeCard with correct recipe schema
-          servingSize={recipe.serving.toString()}
+          notes={recipe.notes ?? ""}
           tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
           isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
