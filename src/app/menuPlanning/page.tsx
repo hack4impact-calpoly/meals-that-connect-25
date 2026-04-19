@@ -7,9 +7,12 @@ import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSumma
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
+import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
+import { first } from "firebase/firestore/pipelines";
+import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 
 const today = new Date();
 
@@ -209,12 +212,27 @@ export default function MenuPlanning() {
             </div>
           </div>
 
-          {calendarView === "Month" && <div>Month view coming soon!</div>}
           {calendarView === "Week" && (
             <>
               <WeekView dateToday={today} weekDates={weekDates} />
               <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
             </>
+          )}
+          {calendarView === "Month" && (
+            // dummy data
+            <div className="space-y-2">
+              <div>Month view coming soon!</div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Chicken Tikka Masala" tags={["Entree"]} />
+              </div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Mango Cup" tags={["Fruit"]} />
+              </div>
+              <div className="w-40">
+                <RecipeMonthlyCard name="Brown Rice" tags={["Sides"]} />
+              </div>
+              <WarningQuotaMonthly />
+            </div>
           )}
           {calendarView === "Day" && (
             <div className="mt-4 flex flex-col gap-3">
