@@ -33,8 +33,10 @@ type Props = {
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "Combo", label: "Combos" },
   { value: "Entree", label: "Entrées" },
-  { value: "Side", label: "Sides" },
+  { value: "Vegetable", label: "Vegetables" },
+  { value: "Grain", label: "Grains" },
   { value: "Fruit", label: "Fruits" },
+  { value: "Subrecipe", label: "Sub-Recipes" },
 ];
 
 export default function MealBrowser({
@@ -73,13 +75,14 @@ export default function MealBrowser({
       }
 
       // automatic setting to combo category if nothing else is selected
-      const hasNonCombo = next.has("Entree") || next.has("Side") || next.has("Fruit");
+      const hasNonCombo =
+        next.has("Entree") || next.has("Vegetable") || next.has("Grain") || next.has("Subrecipe") || next.has("Fruit");
 
       if (!hasNonCombo) {
         return new Set<CategoryValue>(["Combo"]);
       }
 
-      // if selecting entree/side/fruit, then remove combo option
+      // if selecting entree/veg/grain/fruit, then remove combo option
       next.delete("Combo");
 
       return next;

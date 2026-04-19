@@ -17,6 +17,7 @@ import {
   Minus,
   Plus,
   ArrowUpRight,
+  Wheat,
 } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
@@ -42,7 +43,8 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   const [sodium, setSodium] = useState(0);
 
   const [entreeMap, setEntreeMap] = useState<RecipeReference[]>([]);
-  const [sideMap, setSideMap] = useState<RecipeReference[]>([]);
+  const [vegMap, setVegMap] = useState<RecipeReference[]>([]);
+  const [grainMap, setGrainMap] = useState<RecipeReference[]>([]);
   const [fruitMap, setFruitMap] = useState<RecipeReference[]>([]);
 
   const isRecipe = (item: Recipe | Combo): item is Recipe => {
@@ -56,10 +58,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   }
 
   useEffect(() => {
-    // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
+    // get data on every entree/veg/grain/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
     if (item && isRecipe(item) === false) {
       const loadAll = async () => {
-        const [eM, sN, fN] = await Promise.all([
+        const [eM, vN, gN, fN] = await Promise.all([
           Promise.all(
             (item.entrees ?? []).map(async (e) => {
               const r = await getRecipe(e);
@@ -67,7 +69,13 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             }),
           ),
           Promise.all(
-            (item.sides ?? []).map(async (s) => {
+            (item.vegetables ?? []).map(async (s) => {
+              const r = await getRecipe(s);
+              return { id: r._id, name: r.name };
+            }),
+          ),
+          Promise.all(
+            (item.grains ?? []).map(async (s) => {
               const r = await getRecipe(s);
               return { id: r._id, name: r.name };
             }),
@@ -80,7 +88,8 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
           ),
         ]);
 
-        setSideMap(sN);
+        setVegMap(vN);
+        setGrainMap(gN);
         setFruitMap(fN);
         setEntreeMap(eM);
       };
@@ -99,7 +108,18 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
         });
       });
 
-      item.sides?.forEach((s) => {
+      item.vegetables?.forEach((s) => {
+        getRecipe(s).then((recipe) => {
+          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
+          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
+          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
+          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
+          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
+          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
+        });
+      });
+
+      item.grains?.forEach((s) => {
         getRecipe(s).then((recipe) => {
           setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
           setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
@@ -211,15 +231,38 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* sides (combo) */}
-            {"sides" in item && item.sides && (
+            {/* veg (combo) */}
+            {"vegetables" in item && item.vegetables && (
               <div className="flex mb-4">
                 <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Carrot /> Sides
+                  <Carrot /> Vegetables
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {sideMap.map((s, i) => (
+                  {vegMap.map((s, i) => (
+                    <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
+                      {s.name}
+                      <button
+                        onClick={() => window.open(`/recipe?id=${s.id}`)}
+                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                      >
+                        <ArrowUpRight size={20} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* grain (combo) */}
+            {"grains" in item && item.grains && (
+              <div className="flex mb-4">
+                <h3 className="flex w-30 gap-2 py-1 font-bold">
+                  <Wheat /> Grains
+                </h3>
+
+                <div className="flex flex-wrap gap-2">
+                  {grainMap.map((s, i) => (
                     <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
                       <button
@@ -324,7 +367,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             )}
 
             {/* ingredients (recipe) */}
-            {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just sides + fruit?) */}
+            {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just grain + veg + fruit?) */}
             {"ingredients" in item && item.ingredients && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />

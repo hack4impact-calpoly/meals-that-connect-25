@@ -6,7 +6,7 @@ const RecipeSchema = new Schema(
   {
     _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
-
+    type: { type: String, required: true },
     serving: {
       type: Number,
       required: true,
