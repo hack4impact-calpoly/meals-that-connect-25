@@ -3,14 +3,55 @@
 import { useState } from "react";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
+import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
+import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
-import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
+import { CategoryValue, EMPTY_FILTERS, Nutrition, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
-import { first } from "firebase/firestore/pipelines";
 
 const today = new Date();
+
+// Dummy recipe data for Day view
+const DUMMY_DAY_RECIPES: Array<{
+  name: string;
+  calories: number;
+  servingSize: string;
+  tags: string[];
+  nutrition: Nutrition;
+}> = [
+  {
+    name: "Chicken Tikka Masala",
+    calories: 225,
+    servingSize: "150g",
+    tags: ["Entree"],
+    nutrition: { calories: 225, protein: 22, fat: 9, carbs: 14, fiber: 2, sodium: 480 },
+  },
+  {
+    name: "Mango Fruit Cup",
+    calories: 100,
+    servingSize: "100g",
+    tags: ["Fruit"],
+    nutrition: { calories: 100, protein: 1, fat: 0, carbs: 25, fiber: 3, sodium: 10 },
+  },
+  {
+    name: "Steamed Broccoli",
+    calories: 55,
+    servingSize: "80g",
+    tags: ["Side"],
+    nutrition: { calories: 55, protein: 4, fat: 1, carbs: 10, fiber: 4, sodium: 30 },
+  },
+];
+
+// Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
+const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
+  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
+  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
+  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
+  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
+  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
+];
 
 const getOffsetDate = (date: Date, offset: number) => {
   const newDate = new Date(date);
@@ -72,7 +113,7 @@ export default function MenuPlanning() {
     });
   };
 
-  const { items, loading, error } = useMealData({
+  const { items, loading, error, currentPage, totalPages, setCurrentPage } = useMealData({
     search,
     filters: EMPTY_FILTERS,
     selectedCategories,
@@ -169,12 +210,24 @@ export default function MenuPlanning() {
           </div>
 
           {calendarView === "Month" && <div>Month view coming soon!</div>}
-          {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
+          {calendarView === "Week" && (
+            <>
+              <WeekView dateToday={today} weekDates={weekDates} />
+              <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
+            </>
+          )}
           {calendarView === "Day" && (
-            // dummy data
-            <div>
-              <RecipeDailyCard name="Chicken Tikka Masala" calories={225} servingSize="150g" tags={["Entree"]} />
-              <RecipeDailyCard name="Mango Fruit Cup" calories={100} servingSize="100g" tags={["Fruit"]} />
+            <div className="mt-4 flex flex-col gap-3">
+              {DUMMY_DAY_RECIPES.map((recipe) => (
+                <RecipeDailyCard
+                  key={recipe.name}
+                  name={recipe.name}
+                  calories={recipe.calories}
+                  servingSize={recipe.servingSize}
+                  tags={recipe.tags}
+                />
+              ))}
+              <DailyNutritionSummary recipes={DUMMY_DAY_RECIPES.map((r) => r.nutrition)} />
             </div>
           )}
         </div>
@@ -190,6 +243,9 @@ export default function MenuPlanning() {
           onToggleCategory={toggleCategory}
           sortBy={sortBy}
           onSortChange={setSortBy}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
         />
       </div>
     </main>
