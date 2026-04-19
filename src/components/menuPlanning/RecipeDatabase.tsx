@@ -28,7 +28,8 @@ interface RecipeDatabaseProps {
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "Combo", label: "Combos" },
   { value: "Entree", label: "Entrées" },
-  { value: "Side", label: "Sides" },
+  { value: "Vegetable", label: "Vegetable" },
+  { value: "Grain", label: "Grain" },
   { value: "Fruit", label: "Fruits" },
 ];
 

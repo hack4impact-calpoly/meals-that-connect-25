@@ -47,7 +47,8 @@ export default function CardGrid({
             name={combo.name}
             imageUrl={combo.imageUrl}
             entrees={combo.entrees ?? []}
-            sides={combo.sides ?? []}
+            vegetables={combo.vegetables ?? []}
+            grains={combo.grains ?? []}
             fruits={combo.fruits ?? []}
             serving={combo.serving}
             isDraft={combo.isDraft}

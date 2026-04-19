@@ -12,7 +12,8 @@ export type RecipeCardProps = {
 
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
-  Sides: "bg-sides-500 text-sides-900",
+  Vegetable: "bg-veg-500 text-veg-900",
+  Grain: "bg-veg-500 text-veg-900",
   Fruit: "bg-fruit-500 text-fruit-900",
   Entree: "bg-yellow-900 text-white",
   Entrée: "bg-yellow-900 text-white",

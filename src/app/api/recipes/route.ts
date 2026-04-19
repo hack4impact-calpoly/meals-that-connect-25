@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (categoryParams.length > 0) {
       andClauses.push({
         $or: categoryParams.map((category) => ({
-          filters: { $elemMatch: { $regex: category, $options: "i" } },
+          type: { $regex: category, $options: "i" },
         })),
       });
     }

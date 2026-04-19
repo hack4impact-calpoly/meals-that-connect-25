@@ -4,8 +4,9 @@ const CalendarSchema = new Schema(
   {
     _id: { type: String, required: true }, // YYYYMMDD
     entrees: { type: [String], ref: "Recipe", required: false },
+    vegetables: { type: [String], ref: "Recipe", required: false },
+    grains: { type: [String], ref: "Recipe", required: false },
     fruits: { type: [String], ref: "Recipe", required: false },
-    sides: { type: [String], ref: "Recipe", required: false },
   },
   {
     timestamps: true,
