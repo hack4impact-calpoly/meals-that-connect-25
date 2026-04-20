@@ -1,60 +1,192 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
-import { CategoryValue, EMPTY_FILTERS, SortOption } from "@/lib/types";
+import { CategoryValue, EMPTY_FILTERS, Recipe, SortOption } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import { first } from "firebase/firestore/pipelines";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
+import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
+import { Label } from "@headlessui/react";
+
+interface CalendarDay {
+  _id: string;
+  entrees: Recipe[];
+  fruits: Recipe[];
+  sides: Recipe[];
+}
 
 const today = new Date();
 
-const getOffsetDate = (date: Date, offset: number) => {
+const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day") => {
   const newDate = new Date(date);
-  newDate.setDate(date.getDate() + offset * 7);
+
+  if (view === "Day") {
+    newDate.setDate(date.getDate() + offset);
+  } else if (view === "Week") {
+    newDate.setDate(date.getDate() + offset * 7);
+  } else if (view === "Month") {
+    newDate.setMonth(date.getMonth() + offset);
+  }
+
   return newDate;
 };
 
-const getCurrentWeekDates = (today: Date) => {
-  const dayOfWeek = today.getDay();
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - dayOfWeek + 1);
+const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
+  if (view === "Day") {
+    return [today];
+  } else if (view === "Week") {
+    const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - dayOfWeek + 1); // start from Monday
+    return Array.from({ length: 5 }, (_, i) => {
+      const date = new Date(startOfWeek);
+      date.setDate(startOfWeek.getDate() + i);
+      return date;
+    });
+  } else if (view === "Month") {
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 
-  return Array.from({ length: 5 }, (_, i) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    return date;
-  });
-};
+    let startDay: Date;
+    startDay = new Date(startOfMonth);
 
-const getOffsetMonthDate = (date: Date, offset: number) => {
-  const newDate = new Date(date);
-  newDate.setMonth(date.getMonth() + offset);
-  return newDate;
-};
+    if (startDay.getDay() !== 0) {
+      const prevMonthStartDay =
+        new Date(today.getFullYear(), today.getMonth(), 0).getDate() - startOfMonth.getDay() + 1;
+      const prevMonth = today.getMonth() - 1;
+      const prevMonthYear = prevMonth < 0 ? today.getFullYear() - 1 : today.getFullYear();
+      const prevMonthDate = new Date(prevMonthYear, (prevMonth + 12) % 12, prevMonthStartDay);
+      startDay = new Date(prevMonthDate);
+    }
 
-const getOffsetDayDate = (date: Date, offset: number) => {
-  const newDate = new Date(date);
-  newDate.setDate(date.getDate() + offset);
-  return newDate;
+    return Array.from({ length: 35 }, (_, i) => {
+      const date = new Date(startDay);
+      date.setDate(startDay.getDate() + i);
+      return date;
+    });
+  }
+  return [];
 };
 
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
-  const [dayOffset, setDayOffset] = useState(0);
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [monthOffset, setMonthOffset] = useState(0);
-  const monthDate = getOffsetMonthDate(today, monthOffset);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
+  const [datesOffset, setDatesOffset] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView); // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
 
-  const weekDates = getCurrentWeekDates(getOffsetDate(today, weekOffset));
+  const downloadMonthlyMenu = async () => {
+    let currentMonth: number;
+    let currentYear: number;
+    if (calendarView === "Day") {
+      currentMonth = viewDates[0].getMonth();
+      currentYear = viewDates[0].getFullYear();
+    } else if (calendarView === "Week") {
+      currentMonth = viewDates[0].getMonth();
+      currentYear = viewDates[0].getFullYear();
+    } else {
+      currentMonth = viewDates[10].getMonth();
+      currentYear = viewDates[10].getFullYear();
+    }
+
+    try {
+      const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth + 1}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const dates = await res.json();
+
+      const data: IContent[] = [];
+
+      dates.forEach((date: CalendarDay) => {
+        const formattedDate = `${date._id.slice(0, 4)}-${date._id.slice(4, 6)}-${date._id.slice(6, 8)}`;
+        const allItems = [...(date.entrees || []), ...(date.fruits || []), ...(date.sides || [])];
+
+        // Calculate totals
+        const totals = allItems.reduce(
+          (acc, item) => {
+            acc.calorie += item.nutritional_info.calories || 0;
+            acc.protein += item.nutritional_info.protein || 0;
+            acc.fat += item.nutritional_info.fat || 0;
+            acc.carbs += item.nutritional_info.carbs || 0;
+            acc.fiber += item.nutritional_info.fiber || 0;
+            acc.sodium += item.nutritional_info.sodium || 0;
+            return acc;
+          },
+          {
+            name: formattedDate,
+            serving: "",
+            calorie: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            fiber: 0,
+            sodium: 0,
+          },
+        );
+        data.push(totals);
+
+        // Push individual items
+        const pushItems = (items: Recipe[], type: string) => {
+          items?.forEach((item) => {
+            data.push({
+              name: item.name,
+              serving: item.serving,
+              calorie: item.nutritional_info.calories,
+              protein: item.nutritional_info.protein,
+              fat: item.nutritional_info.fat,
+              carbs: item.nutritional_info.carbs,
+              fiber: item.nutritional_info.fiber,
+              sodium: item.nutritional_info.sodium,
+            });
+          });
+        };
+        pushItems(date.entrees, "Entree");
+        pushItems(date.fruits, "Fruit");
+        pushItems(date.sides, "Side");
+
+        // spacing
+        data.push({
+          name: "",
+          serving: "",
+          calorie: "",
+          protein: "",
+          fat: "",
+          carbs: "",
+          fiber: "",
+          sodium: "",
+        });
+      });
+
+      const sheetData: IJsonSheet[] = [
+        {
+          sheet: "Menu",
+          columns: [
+            { label: "Item Name", value: "name" },
+            { label: "Serving", value: "serving" },
+            { label: "Cals (kcal)", value: "calorie" },
+            { label: "Prot (g)", value: "protein" },
+            { label: "Fat (g)", value: "fat" },
+            { label: "Carbs (g)", value: "carbs" },
+            { label: "Fiber (g)", value: "fiber" },
+            { label: "Sodium (mg)", value: "sodium" },
+          ],
+          content: data,
+        },
+      ];
+
+      const settings = { fileName: `${currentYear}_${(currentMonth + 1).toString().padStart(2, "0")}_MTC_Menu.xlsx` };
+      xlsx(sheetData, settings);
+    } catch (error) {
+      console.error("Error downloading monthly menu:", error);
+    }
+  };
 
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
@@ -82,21 +214,9 @@ export default function MenuPlanning() {
     sortBy,
   });
 
-  const handleNavigate = (direction: "prev" | "next") => {
-    if (calendarView === "Week") {
-      setWeekOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    } else if (calendarView === "Month") {
-      setMonthOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    } else if (calendarView === "Day") {
-      setDayOffset((prev) => prev + (direction === "prev" ? -1 : 1));
-    }
-  };
-
-  const handleReset = () => {
-    setWeekOffset(0);
-    setMonthOffset(0);
-    setDayOffset(0);
-  };
+  useEffect(() => {
+    setDatesOffset(0);
+  }, [calendarView]);
 
   return (
     <main className="flex flex-row">
@@ -104,41 +224,20 @@ export default function MenuPlanning() {
         <div className="flex flex-col h-full w-210">
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center justify-center gap-2">
-              <CurrentDateButton onClick={() => handleReset()} />
-              <button className="cursor-pointer" onClick={() => handleNavigate("prev")}>
+              <CurrentDateButton onClick={() => setDatesOffset(0)} />
+              <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset - 1)}>
                 <ChevronLeft size={20} strokeWidth={2.5} />
               </button>
               <span className="font-bold text-xl">
-                {(calendarView === "Week" &&
-                  (() => {
-                    const firstDay = weekDates[0];
-                    const lastDay = weekDates[4];
-
-                    const startMonth = firstDay.toLocaleDateString(undefined, { month: "short" });
-                    const endMonth = lastDay.toLocaleDateString(undefined, { month: "short" });
-
-                    if (startMonth !== endMonth) {
-                      return `${startMonth} ${firstDay.getDate()} - ${endMonth} ${lastDay.getDate()}`;
-                    }
-                    return `${startMonth} ${firstDay.getDate()} - ${lastDay.getDate()}`;
-                  })()) ||
-                  (calendarView === "Month" &&
-                    (() => {
-                      const month = monthDate.toLocaleDateString(undefined, { month: "short" });
-                      const year = monthDate.getFullYear();
-                      return `${month} ${year}`;
-                    })()) ||
-                  (calendarView === "Day" &&
-                    (() => {
-                      const currentDay = getOffsetDayDate(today, dayOffset);
-                      const dayOfWeek = currentDay.toLocaleDateString(undefined, { weekday: "long" });
-                      const day = currentDay.getDate();
-                      const month = currentDay.toLocaleDateString(undefined, { month: "long" });
-                      const year = currentDay.getFullYear();
-                      return `${dayOfWeek}, ${month} ${day}, ${year}`;
-                    })())}
+                {calendarView === "Day" &&
+                  `${viewDates[0].toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
+                {calendarView === "Week" &&
+                  `${viewDates[0].toLocaleDateString(undefined, { month: "long" })} ${viewDates[0].getDate()} - ${viewDates[4].toLocaleDateString(undefined, { month: "long" })} ${viewDates[4].getDate()}`}
+                {/* use 10th date instead of 0 to guarantee a date in the current month */}
+                {calendarView === "Month" &&
+                  viewDates[10].toLocaleDateString(undefined, { month: "long", year: "numeric" })}
               </span>
-              <button className="cursor-pointer" onClick={() => handleNavigate("next")}>
+              <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset + 1)}>
                 <ChevronRight size={20} strokeWidth={2.5} />
               </button>
             </div>
@@ -165,7 +264,13 @@ export default function MenuPlanning() {
                 </button>
               </div>
               <span className="bg-radish-900 rounded-md p-2 ml-2">
-                <ArrowDownToLine className="cursor-pointer" color="white" size={20} strokeWidth={2.5} />
+                <ArrowDownToLine
+                  className="cursor-pointer"
+                  color="white"
+                  size={20}
+                  strokeWidth={2.5}
+                  onClick={downloadMonthlyMenu}
+                />
               </span>
             </div>
           </div>
@@ -186,7 +291,7 @@ export default function MenuPlanning() {
               <WarningQuotaMonthly />
             </div>
           )}
-          {calendarView === "Week" && <WeekView dateToday={today} weekDates={weekDates} />}
+          {calendarView === "Week" && <WeekView dateToday={today} weekDates={viewDates} />}
           {calendarView === "Day" && (
             // dummy data
             <div>
