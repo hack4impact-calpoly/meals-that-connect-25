@@ -1,6 +1,5 @@
 import crypto from "crypto";
 import Combo from "@/database/ComboSchema";
-import { makeIngredient } from "./recipes";
 
 // These functions are used for generating mock combos for testing purposes
 
@@ -15,13 +14,14 @@ export function makeCombo(overrides = {}) {
     _id: crypto.randomUUID(),
     name: "Test Combo",
     serving: 1,
-    sides: [makeIngredient({ name: "Rice", quantity: "100g" })],
-    fruits: [makeIngredient({ name: "Apple", quantity: "1" })],
+    entrees: [crypto.randomUUID()],
+    sides: [crypto.randomUUID()],
+    fruits: [crypto.randomUUID()],
     filters: ["Vegetarian"],
     notes: "Test combo fixture",
     allergens: [],
     instructions: "Serve together.",
-    nutritional_info: [200, 5, 30],
+    isDraft: true,
     ...overrides,
   };
 }

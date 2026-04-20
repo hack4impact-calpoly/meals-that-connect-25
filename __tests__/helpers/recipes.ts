@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import Recipe from "@/database/RecipeSchema";
 
-// These functions are used for generating mock recipes for testing purpouses
+// These functions are used for generating mock recipes for testing purposes
 
 export async function seedRecipes(count: number, overrides: any = {}) {
   const recipes = Array.from({ length: count }, () => makeRecipe(overrides));
@@ -12,7 +12,20 @@ export async function seedRecipes(count: number, overrides: any = {}) {
 export function makeIngredient(overrides = {}) {
   return {
     name: "Carrot",
-    quantity: "2g",
+    quantity: 2,
+    units: "g",
+    ...overrides,
+  };
+}
+
+export function makeNutrition(overrides = {}) {
+  return {
+    calories: 200,
+    protein: 5,
+    fat: 6,
+    carbs: 30,
+    fiber: 4,
+    sodium: 120,
     ...overrides,
   };
 }
@@ -22,10 +35,13 @@ export function makeRecipe(overrides = {}) {
     _id: crypto.randomUUID(),
     name: "Vegetable Soup",
     serving: 4,
-    tags: ["Side", "Soup", "Vegetarian"],
-    ingredients: [makeIngredient(), makeIngredient({ name: "Potato", quantity: "3g" })],
+    filters: ["Side", "Soup", "Vegetarian"],
+    allergens: [],
+    ingredients: [makeIngredient(), makeIngredient({ name: "Potato", quantity: 3 })],
     instructions: "Chop vegetables and simmer.",
-    comments: "Test fixture",
+    notes: "Test fixture",
+    isDraft: true,
+    nutritional_info: makeNutrition(),
     ...overrides,
   };
 }
