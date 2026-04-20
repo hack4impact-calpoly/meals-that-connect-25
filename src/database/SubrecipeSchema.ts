@@ -1,9 +1,10 @@
 import mongoose, { Schema } from "mongoose";
 
-const IngredientSchema = new Schema({
+const SubrecipeSchema = new Schema({
   name: { type: String, required: true, unique: false },
   quantity: { type: Number, required: true },
   units: { type: String, required: true },
+  notes: { type: String },
 });
 
-export default mongoose.models.Ingredient || mongoose.model("Ingredient", IngredientSchema);
+export default mongoose.models.Subrecipe || mongoose.model("Subrecipe", SubrecipeSchema);

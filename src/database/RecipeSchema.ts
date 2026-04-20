@@ -1,6 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import Ingredient from "./IngredientSchema";
 import Nutrition from "./NutritionSchema";
+import SubrecipeSchema from "./SubrecipeSchema";
 
 const RecipeSchema = new Schema(
   {
@@ -15,9 +15,9 @@ const RecipeSchema = new Schema(
     allergens: { type: [String], required: false },
     filters: { type: [String], required: false },
 
-    ingredients: {
-      type: [Ingredient.schema],
-      required: false,
+    subrecipes: {
+      type: [String],
+      ref: "Subrecipe",
     },
 
     instructions: { type: String, required: false },
