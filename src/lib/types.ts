@@ -1,7 +1,8 @@
-export type Ingredient = {
+export type Subrecipe = {
   name: string;
   quantity: number;
   units: string;
+  notes: string;
 };
 
 export type Nutrition = {
@@ -19,9 +20,9 @@ export type Recipe = {
   name: string;
   type: string;
   serving: number;
-  filters: string[]; // never empty bc it will automatically contain Entree/Veg/Grain/Fruit
+  filters: string[];
   allergens?: string[];
-  ingredients?: Ingredient[];
+  subrecipes?: string[];
   instructions?: string;
   notes?: string;
   imageUrl?: string;
