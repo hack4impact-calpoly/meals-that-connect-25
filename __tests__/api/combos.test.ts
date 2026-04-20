@@ -6,6 +6,10 @@ import { NextRequest } from "next/server";
 
 withMongo();
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function makeRequest(method: string, body?: any, url = "http://localhost/api/combos") {
   return new NextRequest(url, {
     method,
@@ -168,6 +172,71 @@ describe("/api/combos", () => {
       for (const combo of body.data) {
         expect(combo.isDraft).toBe(false);
       }
+    });
+
+    it("sorts combos aToZ", async () => {
+      await Combo.create([
+        makeCombo({ name: "Carrot Combo" }),
+        makeCombo({ name: "Apple Combo" }),
+        makeCombo({ name: "Banana Combo" }),
+      ]);
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?sortBy=aToZ"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+
+      const names = body.data.map((combo: any) => combo.name);
+      expect(names).toEqual(["Apple Combo", "Banana Combo", "Carrot Combo"]);
+    });
+
+    it("sorts combos zToA", async () => {
+      await Combo.create([
+        makeCombo({ name: "Carrot Combo" }),
+        makeCombo({ name: "Apple Combo" }),
+        makeCombo({ name: "Banana Combo" }),
+      ]);
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?sortBy=zToA"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+
+      const names = body.data.map((combo: any) => combo.name);
+      expect(names).toEqual(["Carrot Combo", "Banana Combo", "Apple Combo"]);
+    });
+
+    it("sorts combos by createdDate descending", async () => {
+      await Combo.create(makeCombo({ _id: "older_combo", name: "Older Combo" }));
+      await sleep(20);
+      await Combo.create(makeCombo({ _id: "newer_combo", name: "Newer Combo" }));
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?sortBy=createdDate"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+
+      const ids = body.data.map((combo: any) => combo._id);
+      expect(ids[0]).toBe("newer_combo");
+      expect(ids[1]).toBe("older_combo");
+    });
+
+    it("sorts combos by lastUpdated descending", async () => {
+      await Combo.create(makeCombo({ _id: "combo_a", name: "Combo A", notes: "old" }));
+      await sleep(20);
+      await Combo.create(makeCombo({ _id: "combo_b", name: "Combo B", notes: "old" }));
+
+      await sleep(20);
+      await Combo.findByIdAndUpdate("combo_a", { $set: { notes: "recently updated" } });
+
+      const res = await GET(new NextRequest("http://localhost/api/combos?sortBy=lastUpdated"));
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+
+      const ids = body.data.map((combo: any) => combo._id);
+      expect(ids[0]).toBe("combo_a");
+      expect(ids[1]).toBe("combo_b");
     });
   });
 
