@@ -13,7 +13,7 @@ const RECIPE_TYPES: CreateRecipeType[] = [
   { id: "Vegetable", label: "Add Vegetable", icon: Carrot },
   { id: "Grain", label: "Add Grain", icon: Wheat },
   { id: "Fruit", label: "Add Fruit", icon: Apple },
-  { id: "Subrecipe", label: "Add Sub-Recipe", icon: CookingPot },
+  { id: "Subrecipe", label: "Add Subrecipe", icon: CookingPot },
 ];
 
 function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {

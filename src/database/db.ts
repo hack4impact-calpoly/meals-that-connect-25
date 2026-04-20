@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import RecipeModel from "./RecipeSchema";
+import SubrecipeModel from "./SubrecipeSchema";
 import ComboModel from "./ComboSchema";
 let connection: typeof mongoose;
 
@@ -23,10 +24,23 @@ export async function postRecipe(recipeData: typeof RecipeModel.prototype) {
   return recipe;
 }
 
+export async function postSubrecipe(subrecipeData: typeof SubrecipeModel.prototype) {
+  const connection = await connectDB();
+  const subrecipe = new SubrecipeModel(subrecipeData);
+  await subrecipe.save();
+  return subrecipe;
+}
+
 export async function getRecipeById(id: string) {
   const connection = await connectDB();
   const recipe = await RecipeModel.findById(id).exec();
   return recipe;
+}
+
+export async function getSubrecipeById(id: string) {
+  const connection = await connectDB();
+  const subrecipe = await SubrecipeModel.findById(id).exec();
+  return subrecipe;
 }
 
 export async function fetchRecipesByTags(tagParams: Array<string> | null, page: number = 1, limit: number = 10) {
@@ -37,10 +51,29 @@ export async function fetchRecipesByTags(tagParams: Array<string> | null, page: 
     .skip((page - 1) * limit)
     .limit(limit);
 }
+
+export async function fetchSubrecipesByTags(tagParams: Array<string> | null, page: number = 1, limit: number = 10) {
+  const connection = await connectDB();
+  const filter =
+    tagParams && tagParams.length ? { tags: { $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")) } } : {};
+  return await SubrecipeModel.find(filter)
+    .skip((page - 1) * limit)
+    .limit(limit);
+}
+
 export async function searchRecipesByName(name: string) {
   if (!name?.trim()) return [];
   await connectDB();
   const recipes = await RecipeModel.find({
+    name: { $regex: name.trim(), $options: "i" },
+  }).exec();
+  return recipes;
+}
+
+export async function searchSubRecipesByName(name: string) {
+  if (!name?.trim()) return [];
+  await connectDB();
+  const recipes = await SubrecipeModel.find({
     name: { $regex: name.trim(), $options: "i" },
   }).exec();
   return recipes;

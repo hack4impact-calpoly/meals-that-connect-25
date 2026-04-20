@@ -32,7 +32,7 @@ export default function DraftsPage() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
+  const { items, loading, error, isCombo: isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
       filters,
@@ -108,7 +108,8 @@ export default function DraftsPage() {
           items={items}
           loading={loading}
           error={error}
-          isComboMode={isComboMode}
+          isCombo={isComboMode}
+          isSubrecipe={false}
           draftCount={draftCount}
           currentPage={currentPage}
           totalPages={totalPages}
