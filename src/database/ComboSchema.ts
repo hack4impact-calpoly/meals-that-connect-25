@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 const ComboSchema = new Schema(
   {
-    _id: { type: String, required: true },
+    _id: { type: String, required: true, unique: true },
     name: { type: String, required: true, unique: false },
     serving: { type: Number, required: true },
     entrees: { type: [String], ref: "Recipe", required: false },

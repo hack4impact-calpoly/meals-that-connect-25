@@ -30,13 +30,22 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
-    useMealData({
-      search,
-      filters: EMPTY_FILTERS,
-      selectedCategories,
-      draftMode: true,
-    });
+  const {
+    items,
+    loading,
+    error,
+    isCombo: isComboMode,
+    draftCount,
+    currentPage,
+    totalPages,
+    setCurrentPage,
+    refresh,
+  } = useMealData({
+    search,
+    filters: EMPTY_FILTERS,
+    selectedCategories,
+    draftMode: true,
+  });
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -106,7 +115,7 @@ export default function DraftsPage() {
           items={items}
           loading={loading}
           error={error}
-          isComboMode={isComboMode}
+          isCombo={isComboMode}
           draftCount={draftCount}
           currentPage={currentPage}
           totalPages={totalPages}

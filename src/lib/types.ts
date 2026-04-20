@@ -1,8 +1,9 @@
 export type Subrecipe = {
+  _id: string;
   name: string;
-  quantity: number;
-  units: string;
+  sizePack: string;
   notes: string;
+  isDraft: boolean;
 };
 
 export type Nutrition = {

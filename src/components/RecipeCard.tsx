@@ -2,10 +2,10 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
-import { Recipe } from "@/lib/types";
+import { Recipe, Subrecipe } from "@/lib/types";
 
 export type RecipeCardProps = {
-  item: Recipe;
+  item: Recipe | Subrecipe;
   imageUrl?: string;
   name: string;
   calories?: number;

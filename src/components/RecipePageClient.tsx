@@ -4,7 +4,7 @@ import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
 import CreateRecipePopUp from "@/components/CreateRecipePopUp";
-import { CategoryValue, FilterSelections } from "@/lib/types";
+import { CategoryValue, FilterSelections, Subrecipe } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
@@ -28,15 +28,15 @@ export default function RecipePageClient() {
   // automatic selection of combo category when page loads!
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Recipe | Combo | Subrecipe | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
 
-  const handleOpenItem = (item: Recipe | Combo) => {
+  const handleOpenItem = (item: Recipe | Combo | Subrecipe) => {
     setSelectedItem(item);
     setIsOpen(true);
-    setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
+    setActiveType(isCombo ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
   };
 
   async function getRecipe(id: string): Promise<Recipe> {
@@ -45,12 +45,13 @@ export default function RecipePageClient() {
     return res.json();
   }
 
-  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
-    search,
-    filters,
-    selectedCategories,
-    draftMode: false,
-  });
+  const { items, loading, error, isCombo, isSubrecipe, draftCount, currentPage, totalPages, setCurrentPage } =
+    useMealData({
+      search,
+      filters,
+      selectedCategories,
+      draftMode: false,
+    });
 
   useEffect(() => {
     if (!id || id === "") return;
@@ -74,7 +75,8 @@ export default function RecipePageClient() {
         items={items}
         loading={loading}
         error={error}
-        isComboMode={isComboMode}
+        isCombo={isCombo}
+        isSubrecipe={isSubrecipe}
         draftCount={draftCount}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -96,7 +98,7 @@ export default function RecipePageClient() {
           open={isOpen}
           onClose={setIsOpen}
           item={selectedItem}
-          isComboMode={isComboMode}
+          isComboMode={isCombo}
           changeMode={(e) => setMode(e)}
         />
       ) : (
