@@ -2,6 +2,7 @@
 
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
+import MobileFilterDisplay from "@/components/MobileFilterDisplay";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
 import CreateRecipePopUp from "@/components/CreateRecipePopUp";
 import { CategoryValue, FilterSelections } from "@/lib/types";
@@ -39,6 +40,22 @@ export default function RecipePageClient() {
     setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
   };
 
+  const handleMobileFilterChange = (sectionId: string, optionId: string) => {
+    setFilters((prev) => {
+      const next: FilterSelections = { ...prev };
+      const nextSet = new Set(next[sectionId] ?? []);
+
+      if (nextSet.has(optionId)) {
+        nextSet.delete(optionId);
+      } else {
+        nextSet.add(optionId);
+      }
+
+      next[sectionId] = nextSet;
+      return next;
+    });
+  };
+
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
     if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
@@ -68,26 +85,31 @@ export default function RecipePageClient() {
   }, []);
 
   return (
-    <main className="flex flex-col md:flex-row px-5 pt-5 gap-6 overflow-hidden">
-      <MealBrowser
-        setSearch={setSearch}
-        items={items}
-        loading={loading}
-        error={error}
-        isComboMode={isComboMode}
-        draftCount={draftCount}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        setCurrentPage={setCurrentPage}
-        draftMode={false}
-        selectedCategories={selectedCategories}
-        setSelectedCategories={setSelectedCategories}
-        onOpenItem={handleOpenItem}
-      />
+    <main className="flex flex-col md:flex-row px-4 md:px-5 pt-4 md:pt-5 gap-6 overflow-y-auto md:overflow-hidden min-h-screen md:min-h-0">
+      <div className="flex-1 min-w-0">
+        {/* Mobile Filter Display */}
+        <MobileFilterDisplay selections={filters} onFilterChange={handleMobileFilterChange} />
+
+        <MealBrowser
+          setSearch={setSearch}
+          items={items}
+          loading={loading}
+          error={error}
+          isComboMode={isComboMode}
+          draftCount={draftCount}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+          draftMode={false}
+          selectedCategories={selectedCategories}
+          setSelectedCategories={setSelectedCategories}
+          onOpenItem={handleOpenItem}
+        />
+      </div>
 
       <div className="hidden md:block w-px bg-dark-gray self-stretch" />
 
-      <div className="overflow-auto">
+      <div className="hidden md:block md:overflow-auto">
         <FilterMenu onFilterChange={setFilters} />
       </div>
 

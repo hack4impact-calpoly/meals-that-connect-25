@@ -4,18 +4,18 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import FilterTag from "./FilterTag";
 
-type FilterOption = {
+export type FilterOption = {
   id: string;
   label: string;
 };
 
-type FilterSection = {
+export type FilterSection = {
   id: string;
   label: string;
   options: FilterOption[];
 };
 
-type FilterSelections = Record<string, Set<string>>;
+export type FilterSelections = Record<string, Set<string>>;
 
 type FilterMenuProps = {
   onFilterChange?: (selections: FilterSelections) => void;
@@ -123,7 +123,7 @@ export default function FilterMenu({ onFilterChange }: FilterMenuProps) {
   }, [selections]);
 
   return (
-    <div className="w-72 border border-gray-300 bg-white px-6 py-5 font-montserrat">
+    <div className="w-72 border border-gray-300 bg-white px-6 py-5 font-montserrat md:block hidden">
       <div className="flex items-center gap-3">
         <SlidersHorizontal className="h-6 w-6 text-gray-700" />
         <p className="text-xl text-gray-900 font-semibold">Filters</p>

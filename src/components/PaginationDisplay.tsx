@@ -48,17 +48,17 @@ export default function PaginationDisplay({ currentPage, totalPages, onPageChang
   const rightDisabled = disabled || currentPage >= safeTotalPages;
 
   return (
-    <div className="flex items-center gap-2 text-dark-gray">
+    <div className="flex items-center gap-1 md:gap-2 text-dark-gray text-sm md:text-base">
       <button
         type="button"
         onClick={goToPrevious}
         disabled={leftDisabled}
-        className="h-10 w-10 flex items-center justify-center cursor-pointer enabled:hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-8 md:h-10 w-8 md:w-10 flex items-center justify-center cursor-pointer enabled:hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <div className="text-3xl leading-none text-gray-500">{`\u2039`}</div>
+        <div className="text-2xl md:text-3xl leading-none text-gray-500">{`\u2039`}</div>
       </button>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 md:gap-2">
         <input
           type="number"
           min={1}
@@ -72,18 +72,20 @@ export default function PaginationDisplay({ currentPage, totalPages, onPageChang
               commitInput();
             }
           }}
-          className="h-9 w-9 rounded-md border border-black-200 bg-white text-sm leading-none font-normal text-center text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-60"
+          className="h-8 md:h-9 w-8 md:w-9 rounded-md border border-black-200 bg-white text-xs md:text-sm leading-none font-normal text-center text-black outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none disabled:opacity-60"
         />
-        <div className="text-m font-normal leading-none text-black">of {safeTotalPages}</div>
+        <div className="text-xs md:text-m font-normal leading-none text-black whitespace-nowrap">
+          of {safeTotalPages}
+        </div>
       </div>
 
       <button
         type="button"
         onClick={goToNext}
         disabled={rightDisabled}
-        className="h-10 w-10 flex items-center justify-center cursor-pointer enabled:hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-8 md:h-10 w-8 md:w-10 flex items-center justify-center cursor-pointer enabled:hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <div className="text-3xl leading-none text-gray-500">{`\u203A`}</div>
+        <div className="text-2xl md:text-3xl leading-none text-gray-500">{`\u203A`}</div>
       </button>
     </div>
   );

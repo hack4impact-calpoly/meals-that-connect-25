@@ -37,7 +37,7 @@ export default function CardGrid({
 
   if (isComboMode) {
     return (
-      <div className="flex flex-wrap gap-6">
+      <div className="flex flex-wrap gap-3 md:gap-6">
         {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
 
         {(items as Combo[]).map((combo) => (
@@ -63,7 +63,7 @@ export default function CardGrid({
   // ---------------- Recipe Layout ----------------
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 md:gap-4 md:grid-cols-2">
       {!draftMode && <DraftEntryCard variant="recipe" numDrafts={draftCount} />}
 
       {(items as Recipe[]).map((recipe) => (

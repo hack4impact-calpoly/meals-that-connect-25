@@ -87,15 +87,19 @@ export default function MealBrowser({
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="flex gap-5 items-center">
+    <div className="flex flex-1 flex-col gap-3 md:gap-4">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start md:items-center">
         {topLeftChildren}
-        <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+        <div className="flex gap-3 w-full md:w-auto items-center">
+          <div className="flex-1 md:flex-none">
+            <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+          </div>
+          <AddNewRecipeButton />
+        </div>
         {topRightChildren}
-        <AddNewRecipeButton />
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2 md:gap-3 md:flex-row md:items-center md:justify-between">
         <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
         <PaginationDisplay
           currentPage={currentPage}
