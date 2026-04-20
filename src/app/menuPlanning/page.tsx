@@ -8,6 +8,15 @@ import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { first } from "firebase/firestore/pipelines";
+import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
+import { Label } from "@headlessui/react";
+
+interface CalendarDay {
+  _id: string;
+  entrees: Recipe[];
+  fruits: Recipe[];
+  sides: Recipe[];
+}
 
 const today = new Date();
 
@@ -53,7 +62,6 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
     return Array.from({ length: 35 }, (_, i) => {
       const date = new Date(startDay);
       date.setDate(startDay.getDate() + i);
-      console.log(date);
       return date;
     });
   }
@@ -64,7 +72,114 @@ export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
+
   const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView); // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
+  const downloadMonthlyMenu = async () => {
+    let currentMonth: number;
+    let currentYear: number;
+    if (calendarView === "Day") {
+      currentMonth = viewDates[0].getMonth();
+      currentYear = viewDates[0].getFullYear();
+    } else if (calendarView === "Week") {
+      currentMonth = viewDates[0].getMonth();
+      currentYear = viewDates[0].getFullYear();
+    } else {
+      currentMonth = viewDates[10].getMonth();
+      currentYear = viewDates[10].getFullYear();
+    }
+
+    try {
+      const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth + 1}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const dates = await res.json();
+
+      const data: IContent[] = [];
+
+      dates.forEach((date: CalendarDay) => {
+        const formattedDate = `${date._id.slice(0, 4)}-${date._id.slice(4, 6)}-${date._id.slice(6, 8)}`;
+        const allItems = [...(date.entrees || []), ...(date.fruits || []), ...(date.sides || [])];
+
+        // Calculate totals
+        const totals = allItems.reduce(
+          (acc, item) => {
+            acc.calorie += item.nutritional_info.calories || 0;
+            acc.protein += item.nutritional_info.protein || 0;
+            acc.fat += item.nutritional_info.fat || 0;
+            acc.carbs += item.nutritional_info.carbs || 0;
+            acc.fiber += item.nutritional_info.fiber || 0;
+            acc.sodium += item.nutritional_info.sodium || 0;
+            return acc;
+          },
+          {
+            name: formattedDate,
+            serving: "",
+            calorie: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            fiber: 0,
+            sodium: 0,
+          },
+        );
+        data.push(totals);
+
+        // Push individual items
+        const pushItems = (items: Recipe[], type: string) => {
+          items?.forEach((item) => {
+            data.push({
+              name: item.name,
+              serving: item.serving,
+              calorie: item.nutritional_info.calories,
+              protein: item.nutritional_info.protein,
+              fat: item.nutritional_info.fat,
+              carbs: item.nutritional_info.carbs,
+              fiber: item.nutritional_info.fiber,
+              sodium: item.nutritional_info.sodium,
+            });
+          });
+        };
+        pushItems(date.entrees, "Entree");
+        pushItems(date.fruits, "Fruit");
+        pushItems(date.sides, "Side");
+
+        // spacing
+        data.push({
+          name: "",
+          serving: "",
+          calorie: "",
+          protein: "",
+          fat: "",
+          carbs: "",
+          fiber: "",
+          sodium: "",
+        });
+      });
+
+      const sheetData: IJsonSheet[] = [
+        {
+          sheet: "Menu",
+          columns: [
+            { label: "Item Name", value: "name" },
+            { label: "Serving", value: "serving" },
+            { label: "Cals (kcal)", value: "calorie" },
+            { label: "Prot (g)", value: "protein" },
+            { label: "Fat (g)", value: "fat" },
+            { label: "Carbs (g)", value: "carbs" },
+            { label: "Fiber (g)", value: "fiber" },
+            { label: "Sodium (mg)", value: "sodium" },
+          ],
+          content: data,
+        },
+      ];
+
+      const settings = { fileName: `${currentYear}_${(currentMonth + 1).toString().padStart(2, "0")}_MTC_Menu.xlsx` };
+      xlsx(sheetData, settings);
+    } catch (error) {
+      console.error("Error downloading monthly menu:", error);
+    }
+  };
 
   useEffect(() => {
     async function fetchRecipes() {
@@ -72,7 +187,6 @@ export default function MenuPlanning() {
         const res = await fetch("/api/recipes");
         if (!res.ok) throw new Error("Failed to fetch recipes");
         const data = await res.json();
-        console.log(data);
         setRecipes(data.data);
       } catch (error) {
         console.error(error);
@@ -80,6 +194,10 @@ export default function MenuPlanning() {
     }
     fetchRecipes();
   }, []);
+
+  useEffect(() => {
+    setDatesOffset(0);
+  }, [calendarView]);
 
   return (
     <main className="flex flex-row">
@@ -127,7 +245,13 @@ export default function MenuPlanning() {
                 </button>
               </div>
               <span className="bg-radish-900 rounded-md p-2 ml-2">
-                <ArrowDownToLine className="cursor-pointer" color="white" size={20} strokeWidth={2.5} />
+                <ArrowDownToLine
+                  className="cursor-pointer"
+                  color="white"
+                  size={20}
+                  strokeWidth={2.5}
+                  onClick={downloadMonthlyMenu}
+                />
               </span>
             </div>
           </div>

@@ -13,4 +13,12 @@ export interface Recipe {
   notes: string;
   lastVerified: Date;
   verifiedBy: string;
+  nutritional_info: {
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber: number;
+    sodium: number;
+  };
 }

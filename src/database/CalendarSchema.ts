@@ -4,9 +4,9 @@ import RecipeReference from "./RecipeReferenceSchema";
 const CalendarSchema = new Schema(
   {
     _id: { type: String, required: true }, // YYYYMMDD
-    entrees: { type: [RecipeReference.schema], required: false },
-    fruits: { type: [RecipeReference.schema], required: false },
-    sides: { type: [RecipeReference.schema], required: false },
+    entrees: [{ type: String, ref: "Recipe", required: false }],
+    fruits: [{ type: String, ref: "Recipe", required: false }],
+    sides: [{ type: String, ref: "Recipe", required: false }],
   },
   {
     timestamps: true,
