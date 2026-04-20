@@ -37,11 +37,7 @@ export default function DraggableRecipeCard({
   fruits = [],
   disabled = false,
 }: DraggableRecipeCardProps) {
-  const normalizedTags = Array.isArray(tags)
-    ? tags.map((tag) => tag?.toString().trim()).filter(Boolean)
-    : tags
-      ? [tags.toString().trim()]
-      : ["Entree"];
+  const normalizedTags = (tags ?? ["Entree"]).map((tag) => tag?.toString().trim()).filter(Boolean);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `recipe-${recipeId}`,

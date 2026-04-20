@@ -47,54 +47,54 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  async function fetchWeekMeals() {
-    setIsLoading(true);
-
-    try {
-      const weekMeals = await Promise.all(
-        weekDates.map(async (date) => {
-          const response = await fetch(`/api/calendar/${formatCalendarDayId(date)}`);
-
-          if (response.status === 404) {
-            return { meals: [], showNutritionInfoNotMet: true };
-          }
-
-          if (!response.ok) {
-            throw new Error(`Failed to fetch calendar day ${formatCalendarDayId(date)}`);
-          }
-
-          const calendarDay: CalendarDayResponse = await response.json();
-
-          return {
-            meals: [
-              ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
-              ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
-              ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
-            ],
-            showNutritionInfoNotMet: false,
-          };
-        }),
-      );
-
-      setWeekViewMeals(weekMeals);
-    } catch (error) {
-      console.error("Error fetching week meals:", error);
-      setWeekViewMeals(weekDates.map(() => ({ meals: [], showNutritionInfoNotMet: false })));
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   useEffect(() => {
     let isMounted = true;
 
-    async function fetch() {
-      if (isMounted) {
-        await fetchWeekMeals();
+    async function fetchWeekMeals() {
+      setIsLoading(true);
+
+      try {
+        const weekMeals = await Promise.all(
+          weekDates.map(async (date) => {
+            const response = await fetch(`/api/calendar/${formatCalendarDayId(date)}`);
+
+            if (response.status === 404) {
+              return { meals: [], showNutritionInfoNotMet: true };
+            }
+
+            if (!response.ok) {
+              throw new Error(`Failed to fetch calendar day ${formatCalendarDayId(date)}`);
+            }
+
+            const calendarDay: CalendarDayResponse = await response.json();
+
+            return {
+              meals: [
+                ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
+                ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
+                ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
+              ],
+              showNutritionInfoNotMet: false,
+            };
+          }),
+        );
+
+        if (isMounted) {
+          setWeekViewMeals(weekMeals);
+        }
+      } catch (error) {
+        console.error("Error fetching week meals:", error);
+        if (isMounted) {
+          setWeekViewMeals(weekDates.map(() => ({ meals: [], showNutritionInfoNotMet: false })));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
-    fetch();
+    fetchWeekMeals();
 
     return () => {
       isMounted = false;
