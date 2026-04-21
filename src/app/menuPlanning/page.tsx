@@ -22,6 +22,35 @@ interface CalendarDay {
 }
 
 const today = new Date();
+const SAMPLE_RECIPES: Recipe[] = [
+  {
+    item: null,
+    _id: "oo",
+    name: "Chicken Tikka Masala",
+    serving: 150,
+    filters: ["Entree"],
+    isDraft: false,
+    nutritional_info: { calories: 225, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
+  },
+  {
+    item: null,
+    _id: "sample-mango-cup",
+    name: "Mango Cup",
+    serving: 100,
+    filters: ["Fruit"],
+    isDraft: false,
+    nutritional_info: { calories: 100, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
+  },
+  {
+    item: null,
+    _id: "sample-brown-rice",
+    name: "Brown Rice",
+    serving: 150,
+    filters: ["Sides"],
+    isDraft: false,
+    nutritional_info: { calories: 200, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
+  },
+];
 
 // Dummy recipe data for Day view (mock until backend integration)
 const DUMMY_DAY_RECIPES: Array<{
@@ -326,13 +355,13 @@ export default function MenuPlanning() {
             <div className="space-y-2">
               <div>Month view coming soon!</div>
               <div className="w-40">
-                <RecipeMonthlyCard name="Chicken Tikka Masala" tags={["Entree"]} />
+                <RecipeMonthlyCard item={SAMPLE_RECIPES[0]} name="Chicken Tikka Masala" tags={["Entree"]} />
               </div>
               <div className="w-40">
-                <RecipeMonthlyCard name="Mango Cup" tags={["Fruit"]} />
+                <RecipeMonthlyCard item={SAMPLE_RECIPES[1]} name="Mango Cup" tags={["Fruit"]} />
               </div>
               <div className="w-40">
-                <RecipeMonthlyCard name="Brown Rice" tags={["Sides"]} />
+                <RecipeMonthlyCard item={SAMPLE_RECIPES[2]} name="Brown Rice" tags={["Sides"]} />
               </div>
               <WarningQuotaMonthly />
             </div>
