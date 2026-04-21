@@ -306,29 +306,6 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* subrecipes (in entree/veg/grain/fruits only) */}
-            {"subrecipes" in item && item.subrecipes && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <CookingPot size={20} /> Ingredients
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {subrecipeMap.map((f, i) => (
-                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
-                      {f.name}
-                      <button
-                        onClick={() => window.open(`/recipe?id=${f.id}`)}
-                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>{" "}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* filters */}
             {"filters" in item && item.filters && (
               <div className="flex mb-4">
@@ -393,6 +370,30 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                   <Plus />
                 </button>
               </div>
+            )}
+
+            {/* subrecipes (in entree/veg/grain/fruits only) */}
+            {"subrecipes" in item && item.subrecipes && item.subrecipes.length > 0 && (
+              <>
+                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
+                <div className="flex mb-4">
+                  <h3 className="text-xl mb-4 font-semibold">Ingredients</h3>
+
+                  <div className="flex flex-wrap gap-2">
+                    {subrecipeMap.map((f, i) => (
+                      <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
+                        {f.name}
+                        <button
+                          onClick={() => window.open(`/subrecipe?id=${f.id}`)}
+                          className="p-1 rounded hover:bg-brown/80 cursor-pointer"
+                        >
+                          <ArrowUpRight size={20} />
+                        </button>{" "}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
 
             {/* instructions */}
