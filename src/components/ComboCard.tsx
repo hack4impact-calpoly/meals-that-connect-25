@@ -9,8 +9,7 @@ type ComboCardProps = {
   name: string;
   imageUrl?: string;
   entrees: string[];
-  vegetables: string[];
-  grains: string[];
+  sides: string[];
   fruits: string[];
   serving: number;
   isDraft: boolean;
@@ -24,8 +23,7 @@ export default function ComboCard({
   name,
   imageUrl,
   entrees,
-  vegetables,
-  grains,
+  sides,
   fruits,
   serving,
   isDraft = true,
@@ -35,8 +33,7 @@ export default function ComboCard({
 }: ComboCardProps) {
   const [editMode, setEditMode] = useState(false);
   const [entreeMap, setEntreeMap] = useState<string[]>([]);
-  const [vegetableMap, setVegetableMap] = useState<string[]>([]);
-  const [grainMap, setGrainMap] = useState<string[]>([]);
+  const [sideMap, setSideMap] = useState<string[]>([]);
   const [fruitMap, setFruitMap] = useState<string[]>([]);
 
   async function getRecipe(id: string): Promise<Recipe> {
@@ -47,16 +44,14 @@ export default function ComboCard({
 
   useEffect(() => {
     const loadAll = async () => {
-      const [entreeNames, vegetableNames, grainNames, fruitNames] = await Promise.all([
+      const [entreeNames, sideNames, fruitNames] = await Promise.all([
         Promise.all(entrees.map(async (e) => (await getRecipe(e)).name)),
-        Promise.all(vegetables.map(async (s) => (await getRecipe(s)).name)),
-        Promise.all(grains.map(async (s) => (await getRecipe(s)).name)),
+        Promise.all(sides.map(async (s) => (await getRecipe(s)).name)),
         Promise.all(fruits.map(async (f) => (await getRecipe(f)).name)),
       ]);
 
       setEntreeMap(entreeNames);
-      setVegetableMap(vegetableNames);
-      setGrainMap(grainNames);
+      setSideMap(sideNames);
       setFruitMap(fruitNames);
     };
 
@@ -130,18 +125,10 @@ export default function ComboCard({
                 {i}
               </span>
             ))}
-            {vegetableMap.map((i) => (
+            {sideMap.map((i) => (
               <span
                 key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-veg-500 text-veg-900`}
-              >
-                {i}
-              </span>
-            ))}
-            {grainMap.map((i) => (
-              <span
-                key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-veg-500 text-veg-900`}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 text-xs font-medium font-montserrat bg-sides-500 text-sides-900`}
               >
                 {i}
               </span>

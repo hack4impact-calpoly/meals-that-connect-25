@@ -69,6 +69,16 @@ export const FILTER_SECTIONS: FilterSection[] = [
       { id: "low-sodium", label: "Low Sodium" },
     ],
   },
+  {
+    id: "serving",
+    label: "Serving Sizes",
+    options: [
+      { id: "single-serving", label: "1 Serving" },
+      { id: "small-serving", label: "2-3 Servings" },
+      { id: "family-serving", label: "4-6 Servings" },
+      { id: "party-serving", label: "7+ Servings" },
+    ],
+  },
 ];
 
 function emptySelections(): FilterSelections {

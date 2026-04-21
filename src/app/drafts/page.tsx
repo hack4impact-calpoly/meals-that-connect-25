@@ -30,7 +30,7 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const { items, loading, error, isCombo, isSubrecipe, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
+  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
       filters: EMPTY_FILTERS,
@@ -42,7 +42,7 @@ export default function DraftsPage() {
     setSelectedIds(new Set());
     setSelectedNames({});
     setBusy(null);
-  }, [isCombo]);
+  }, [isComboMode]);
 
   const toggleSelect = (id: string, name: string) => {
     setSelectedIds((prev) => {
@@ -106,8 +106,7 @@ export default function DraftsPage() {
           items={items}
           loading={loading}
           error={error}
-          isCombo={isCombo}
-          isSubrecipe={isSubrecipe}
+          isComboMode={isComboMode}
           draftCount={draftCount}
           currentPage={currentPage}
           totalPages={totalPages}

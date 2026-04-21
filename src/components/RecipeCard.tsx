@@ -2,14 +2,14 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
-import { Recipe, Subrecipe } from "@/lib/types";
+import { Recipe } from "@/lib/types";
 
 export type RecipeCardProps = {
-  item: Recipe | Subrecipe;
+  item: Recipe;
   imageUrl?: string;
   name: string;
   calories?: number;
-  notes: string;
+  servingSize: string;
   tags?: string[];
   isDraft?: boolean;
   isSelected?: boolean;
@@ -18,8 +18,7 @@ export type RecipeCardProps = {
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
-  Vegetable: "bg-veg-500 text-veg-900",
-  Grain: "bg-veg-500 text-veg-900",
+  Side: "bg-sides-500 text-sides-900",
   Fruit: "bg-fruit-500 text-fruit-900",
   Entree: "bg-entree-900 text-entree-500",
   Entrée: "bg-entree-900 text-entree-500",
@@ -31,7 +30,7 @@ export default function RecipeCard({
   imageUrl,
   name,
   calories,
-  notes,
+  servingSize,
   tags = [],
   isDraft = false,
   isSelected,
@@ -41,9 +40,9 @@ export default function RecipeCard({
   const [editMode, setEditMode] = useState(false);
   const caloriesText = calories != null ? `${calories} cal` : null;
 
-  const notesText = notes != null ? `${notes}` : null;
+  const servingText = servingSize != null ? `${servingSize}` : null;
 
-  const metaText = caloriesText && notesText ? `${caloriesText} / ${notesText}` : caloriesText || notesText;
+  const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
 
   const primaryTag = tags[0];
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
@@ -61,7 +60,7 @@ export default function RecipeCard({
         <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
           {name}
         </h3>
-        {metaText ? <p className="text-base font-medium font-montserrat truncate">{metaText}</p> : null}
+        {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
       </div>
 
       {primaryTag ? (

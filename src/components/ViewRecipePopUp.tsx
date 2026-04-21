@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { Recipe, Combo, RecipeReference, Subrecipe } from "@/lib/types";
+import { Recipe, Combo, RecipeReference } from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
@@ -17,8 +17,6 @@ import {
   Minus,
   Plus,
   ArrowUpRight,
-  Wheat,
-  CookingPot,
 } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
@@ -26,15 +24,16 @@ import NutritionalInfo from "./NutrionalInfo";
 type Props = {
   open: boolean;
   onClose: (v: boolean) => void;
-  item: Recipe | Combo | Subrecipe | null;
+  item: Recipe | Combo | null;
   isComboMode: boolean;
   changeMode: (mode: "view" | "edit") => void;
 };
 
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
-  const [servings, setServings] = useState(item && "serving" in item ? item.serving : 1);
-  const originalServings = item && "serving" in item ? item.serving : 1;
+  const [servings, setServings] = useState(item?.serving || 1);
+  const originalServings = item?.serving || 1;
+
   const [calories, setCalories] = useState(0);
   const [protein, setProtein] = useState(0);
   const [fat, setFat] = useState(0);
@@ -43,17 +42,11 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   const [sodium, setSodium] = useState(0);
 
   const [entreeMap, setEntreeMap] = useState<RecipeReference[]>([]);
-  const [vegMap, setVegMap] = useState<RecipeReference[]>([]);
-  const [grainMap, setGrainMap] = useState<RecipeReference[]>([]);
+  const [sideMap, setSideMap] = useState<RecipeReference[]>([]);
   const [fruitMap, setFruitMap] = useState<RecipeReference[]>([]);
-  const [subrecipeMap, setSubrecipeMap] = useState<RecipeReference[]>([]);
 
-  const isRecipe = (item: Recipe | Combo | Subrecipe): item is Recipe => {
-    return "subrecipes" in item;
-  };
-
-  const isSubrecipe = (item: Recipe | Combo | Subrecipe): item is Subrecipe => {
-    return "quantity" in item;
+  const isRecipe = (item: Recipe | Combo): item is Recipe => {
+    return "ingredients" in item;
   };
 
   async function getRecipe(id: string): Promise<Recipe> {
@@ -63,11 +56,10 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   }
 
   useEffect(() => {
-    // get data on every entree/veg/grain/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
-    // combos!
-    if (item && !isRecipe(item) && !isSubrecipe(item)) {
+    // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
+    if (item && isRecipe(item) === false) {
       const loadAll = async () => {
-        const [eM, vN, gN, fN] = await Promise.all([
+        const [eM, sN, fN] = await Promise.all([
           Promise.all(
             (item.entrees ?? []).map(async (e) => {
               const r = await getRecipe(e);
@@ -75,13 +67,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             }),
           ),
           Promise.all(
-            (item.vegetables ?? []).map(async (s) => {
-              const r = await getRecipe(s);
-              return { id: r._id, name: r.name };
-            }),
-          ),
-          Promise.all(
-            (item.grains ?? []).map(async (s) => {
+            (item.sides ?? []).map(async (s) => {
               const r = await getRecipe(s);
               return { id: r._id, name: r.name };
             }),
@@ -94,8 +80,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
           ),
         ]);
 
-        setVegMap(vN);
-        setGrainMap(gN);
+        setSideMap(sN);
         setFruitMap(fN);
         setEntreeMap(eM);
       };
@@ -114,18 +99,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
         });
       });
 
-      item.vegetables?.forEach((s) => {
-        getRecipe(s).then((recipe) => {
-          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
-          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
-          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
-          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
-          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
-          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
-        });
-      });
-
-      item.grains?.forEach((s) => {
+      item.sides?.forEach((s) => {
         getRecipe(s).then((recipe) => {
           setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
           setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
@@ -146,7 +120,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
           setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
         });
       });
-    } else if (item && !isSubrecipe(item)) {
+    } else if (item) {
       setCalories(item.nutritional_info.calories || 0);
       setProtein(item.nutritional_info.protein || 0);
       setFat(item.nutritional_info.fat || 0);
@@ -155,7 +129,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
       setSodium(item.nutritional_info.sodium || 0);
     }
 
-    if (open && item && !isSubrecipe(item)) {
+    if (open && item?.serving) {
       setServings(item.serving);
     }
   }, [open, item]);
@@ -237,38 +211,15 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* veg (combo) */}
-            {"vegetables" in item && item.vegetables && (
+            {/* sides (combo) */}
+            {"sides" in item && item.sides && (
               <div className="flex mb-4">
                 <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Carrot /> Vegetables
+                  <Carrot /> Sides
                 </h3>
 
                 <div className="flex flex-wrap gap-2">
-                  {vegMap.map((s, i) => (
-                    <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
-                      {s.name}
-                      <button
-                        onClick={() => window.open(`/recipe?id=${s.id}`)}
-                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* grain (combo) */}
-            {"grains" in item && item.grains && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Wheat /> Grains
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {grainMap.map((s, i) => (
+                  {sideMap.map((s, i) => (
                     <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
                       {s.name}
                       <button
@@ -372,26 +323,21 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
             )}
 
-            {/* subrecipes (in entree/veg/grain/fruits only) */}
-            {"subrecipes" in item && item.subrecipes && item.subrecipes.length > 0 && (
+            {/* ingredients (recipe) */}
+            {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just sides + fruit?) */}
+            {"ingredients" in item && item.ingredients && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-                <div className="flex mb-4">
+                <div className="mb-4">
                   <h3 className="text-xl mb-4 font-semibold">Ingredients</h3>
 
-                  <div className="flex flex-wrap gap-2">
-                    {subrecipeMap.map((f, i) => (
-                      <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
-                        {f.name}
-                        <button
-                          onClick={() => window.open(`/subrecipe?id=${f.id}`)}
-                          className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                        >
-                          <ArrowUpRight size={20} />
-                        </button>{" "}
-                      </div>
+                  <ul className="list-disc pl-5">
+                    {item.ingredients.map((ing, i) => (
+                      <li key={i}>
+                        {ing.name}: {(ing.quantity / originalServings) * servings} {ing.units}
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               </>
             )}

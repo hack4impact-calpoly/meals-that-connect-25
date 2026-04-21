@@ -7,12 +7,12 @@ import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe, Subrecipe } from "@/lib/types";
+import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 
 interface RecipeDatabaseProps {
-  items: Recipe[] | Combo[] | Subrecipe[];
+  items: Recipe[] | Combo[];
   loading: boolean;
   error: string | null;
   onSearch: (value: string) => void;
@@ -28,10 +28,8 @@ interface RecipeDatabaseProps {
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "Combo", label: "Combos" },
   { value: "Entree", label: "Entrées" },
-  { value: "Vegetable", label: "Vegetable" },
-  { value: "Grain", label: "Grain" },
+  { value: "Side", label: "Sides" },
   { value: "Fruit", label: "Fruits" },
-  { value: "Subrecipe", label: "Subrecipes" },
 ];
 
 const sortOptions: Array<{ value: SortOption; label: string }> = [
