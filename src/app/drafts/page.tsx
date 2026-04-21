@@ -30,12 +30,10 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const { items, loading, error, isCombo: isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
+  const { items, loading, error, isCombo, isSubrecipe, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
-      filters,
+      filters: EMPTY_FILTERS,
       selectedCategories,
       draftMode: true,
     });
@@ -44,7 +42,7 @@ export default function DraftsPage() {
     setSelectedIds(new Set());
     setSelectedNames({});
     setBusy(null);
-  }, [isComboMode]);
+  }, [isCombo]);
 
   const toggleSelect = (id: string, name: string) => {
     setSelectedIds((prev) => {
@@ -108,8 +106,8 @@ export default function DraftsPage() {
           items={items}
           loading={loading}
           error={error}
-          isCombo={isComboMode}
-          isSubrecipe={false}
+          isCombo={isCombo}
+          isSubrecipe={isSubrecipe}
           draftCount={draftCount}
           currentPage={currentPage}
           totalPages={totalPages}
@@ -127,34 +125,8 @@ export default function DraftsPage() {
               <ArrowLeft className="mr-1 mt-0.5 inline" size={20} /> Back
             </button>
           }
-          topRightChildren={
-            <button
-              type="button"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-medium-gray bg-white text-pepper md:hidden"
-              aria-expanded={mobileFiltersOpen}
-              aria-label="Open filters"
-              onClick={() => setMobileFiltersOpen(true)}
-            >
-              <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
-            </button>
-          }
+          topRightChildren={<></>}
         />
-
-        <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
-
-        {mobileFiltersOpen ? (
-          <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
-            <FilterMenu
-              mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
-              initialSelections={filters}
-              onFilterChange={(s) => setFilters(cloneFilterSelections(s))}
-            />
-          </div>
-        ) : (
-          <div className="hidden overflow-auto md:block">
-            <FilterMenu initialSelections={filters} onFilterChange={(s) => setFilters(cloneFilterSelections(s))} />
-          </div>
-        )}
       </div>
 
       {/*TODO: Style buttons and whatnot */}
