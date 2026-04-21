@@ -10,12 +10,13 @@ interface MealItem {
   name: string;
   calories: number;
   serving: string;
-  tag: "Entree" | "Sides" | "Fruit" | "Combo";
+  tag: "Entree" | "Vegetable" | "Grain" | "Fruit" | "Combo";
 }
 
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-jicama text-radish-900",
-  Sides: "bg-lime text-black",
+  Vegetable: "bg-lime text-black",
+  Grain: "bg-lime text-black",
   Fruit: "bg-fruit-900 text-white",
   Entree: "bg-entree-900 text-white",
 };
@@ -24,24 +25,24 @@ const TAG_STYLES: Record<string, string> = {
 const MOCK_MEALS: Record<number, MealItem[]> = {
   1: [
     { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
-    { name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" },
+    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Vegetable" },
+    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Grain" },
+    { name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Grain" },
   ],
   2: [
     { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
+    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Vegetable" },
+    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Grain" },
     { name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" },
   ],
   3: [
     { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
+    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Vegetable" },
   ],
   4: [{ name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" }],
   5: [
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
+    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Grain" },
+    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Fruit" },
   ],
 };
 

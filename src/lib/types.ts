@@ -1,7 +1,9 @@
-export type Ingredient = {
+export type Subrecipe = {
+  _id: string;
   name: string;
-  quantity: number;
-  units: string;
+  sizePack: string;
+  notes: string;
+  isDraft: boolean;
 };
 
 export type Nutrition = {
@@ -17,10 +19,11 @@ export type Recipe = {
   item: any;
   _id: string;
   name: string;
+  type: string;
   serving: number;
-  filters: string[]; // never empty bc it will automatically contain Entree/Side/Fruit
+  filters: string[];
   allergens?: string[];
-  ingredients?: Ingredient[];
+  subrecipes?: string[];
   instructions?: string;
   notes?: string;
   imageUrl?: string;
@@ -37,7 +40,8 @@ export type Combo = {
   name: string;
   serving: number;
   entrees?: string[];
-  sides?: string[];
+  vegetables?: string[];
+  grains?: string[];
   fruits?: string[];
   filters: string[]; // never empty bc it will automatically contain Combo
   notes?: string;
@@ -57,5 +61,5 @@ export const EMPTY_FILTERS: FilterSelections = {
 };
 
 export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
-export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
+export type CategoryValue = "Entree" | "Vegetable" | "Grain" | "Fruit" | "Combo" | "Subrecipe";
 export type FilterSelections = Record<string, Set<string>>;

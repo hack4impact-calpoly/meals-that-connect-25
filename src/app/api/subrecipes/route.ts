@@ -1,5 +1,5 @@
-import connectDB, { postRecipe } from "@/database/db";
-import Recipe from "@/database/RecipeSchema";
+import connectDB, { postSubrecipe } from "@/database/db";
+import Subrecipe from "@/database/SubrecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -85,10 +85,10 @@ export async function GET(req: NextRequest) {
         break;
     }
 
-    const totalCount = await Recipe.countDocuments(filter);
+    const totalCount = await Subrecipe.countDocuments(filter);
     console.log(`Filter: ${JSON.stringify(filter)}, Total Count: ${totalCount}`);
 
-    let query = Recipe.find(filter)
+    let query = Subrecipe.find(filter)
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
@@ -97,11 +97,11 @@ export async function GET(req: NextRequest) {
       query = query.collation({ locale: "en", strength: 2 });
     }
 
-    const recipes = await query;
+    const subrecipes = await query;
 
     return NextResponse.json(
       {
-        data: recipes,
+        data: subrecipes,
         page,
         limit,
         totalPages: Math.ceil(totalCount / limit),
@@ -110,21 +110,21 @@ export async function GET(req: NextRequest) {
       { status: 200 },
     );
   } catch (err) {
-    console.error("Error fetching recipes:", err);
+    console.error("Error fetching subrecipes:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const recipeData = await req.json();
-    const response = await postRecipe(recipeData);
+    const subrecipeData = await req.json();
+    const response = await postSubrecipe(subrecipeData);
     return NextResponse.json(response, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
-    console.error("Error creating recipe:", err);
+    console.error("Error creating subrecipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

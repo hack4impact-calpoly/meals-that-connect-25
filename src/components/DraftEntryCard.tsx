@@ -4,12 +4,13 @@ import { useRouter } from "next/navigation";
 import { StickyNote } from "lucide-react";
 
 type Props = {
-  variant: "recipe" | "Combo";
+  variant: "recipe" | "Combo" | "subrecipe";
   numDrafts: number;
 };
 
 export default function DraftEntryCard({ variant, numDrafts }: Props) {
   const router = useRouter();
+  const title = variant === "recipe" ? "Recipes" : "Subrecipes";
 
   const handleClick = () => {
     router.push("/drafts");
@@ -39,7 +40,7 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
     );
   }
 
-  // Recipe-style
+  // Subrecipe/Recipe-style
   return (
     <div
       onClick={handleClick}
@@ -50,7 +51,7 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
         <span className="flex text-white text-lg font-semibold">View Drafts</span>
         <span className="flex items-center text-white">
           {" "}
-          {numDrafts} Recipes <StickyNote className="mt-0.5" size={20} fill="white" color="#48494b" />{" "}
+          {numDrafts} {title} <StickyNote className="mt-0.5" size={20} fill="white" color="#48494b" />{" "}
         </span>
       </div>
     </div>

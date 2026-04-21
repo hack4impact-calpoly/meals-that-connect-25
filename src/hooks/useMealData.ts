@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { buildFilterTags } from "@/lib/helpers";
-import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
+import { CategoryValue, Combo, FilterSelections, Recipe, SortOption, Subrecipe } from "@/lib/types";
 
 type Params = {
   search: string;
@@ -11,10 +11,11 @@ type Params = {
 };
 
 type Return = {
-  items: Recipe[] | Combo[];
+  items: Recipe[] | Combo[] | Subrecipe[];
   loading: boolean;
   error: string | null;
-  isComboMode: boolean;
+  isCombo: boolean;
+  isSubrecipe: boolean;
   draftCount: number;
   currentPage: number;
   totalPages: number;
@@ -32,6 +33,7 @@ export function useMealData({
   sortBy = "createdDate",
 }: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [subrecipes, setSubrecipes] = useState<Subrecipe[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,8 @@ export function useMealData({
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const isComboMode = selectedCategories.has("Combo");
+  const isCombo = selectedCategories.has("Combo");
+  const isSubrecipe = selectedCategories.has("Subrecipe");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -52,7 +55,7 @@ export function useMealData({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy]);
+  }, [debouncedSearch, filters, selectedCategories, isCombo, isSubrecipe, draftMode, sortBy]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -63,7 +66,7 @@ export function useMealData({
 
       try {
         const trimmed = debouncedSearch.trim();
-        const base = isComboMode ? "/api/combos" : "/api/recipes";
+        const base = isCombo ? "/api/combos" : isSubrecipe ? "/api/subrecipes" : "/api/recipes";
 
         const params = new URLSearchParams();
 
@@ -84,7 +87,8 @@ export function useMealData({
           });
         }
 
-        if (!isComboMode) {
+        // recipes and subrecipes only
+        if (!isCombo && !isSubrecipe) {
           const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
           categoryParams.forEach((category) => params.append("categories", category));
         }
@@ -113,8 +117,10 @@ export function useMealData({
           return;
         }
 
-        if (isComboMode) {
+        if (isCombo) {
           setCombos(data);
+        } else if (isSubrecipe) {
+          setSubrecipes(data);
         } else {
           setRecipes(data);
         }
@@ -144,15 +150,16 @@ export function useMealData({
 
     load();
     return () => controller.abort();
-  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy, refreshKey]);
+  }, [currentPage, debouncedSearch, filters, selectedCategories, isCombo, isSubrecipe, draftMode, sortBy, refreshKey]);
 
-  const items = isComboMode ? combos : recipes;
+  const items = isCombo ? combos : isSubrecipe ? subrecipes : recipes;
 
   return {
     items,
     loading,
     error,
-    isComboMode,
+    isCombo,
+    isSubrecipe,
     draftCount,
     currentPage,
     totalPages,
