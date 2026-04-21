@@ -1,18 +1,6 @@
+import connectDB, { postSubrecipe } from "@/database/db";
+import Subrecipe from "@/database/SubrecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
-import connectDB from "@/database/db";
-import Combo from "@/database/ComboSchema";
-
-type ServingRange = {
-  min: number;
-  max?: number;
-};
-
-const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
-  "single-serving": { min: 1, max: 1 },
-  "small-serving": { min: 2, max: 3 },
-  "family-serving": { min: 4, max: 6 },
-  "party-serving": { min: 7 },
-};
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,6 +19,11 @@ export async function GET(req: NextRequest) {
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
 
+    const categoryParams = searchParams
+      .getAll("categories")
+      .map((c) => c.trim().toLowerCase())
+      .filter(Boolean);
+
     const servingParams = searchParams
       .getAll("servings")
       .map((s) => s.trim().toLowerCase())
@@ -42,20 +35,31 @@ export async function GET(req: NextRequest) {
       filter.name = { $regex: name, $options: "i" };
     }
 
+    const andClauses: any[] = [];
+
     if (tagParams.length > 0) {
-      filter.filters = {
-        $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-      };
+      andClauses.push({
+        filters: {
+          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+        },
+        allergens: {
+          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+        },
+      });
     }
 
-    const servingRanges = servingParams
-      .map((serving) => SERVING_FILTER_RANGES[serving])
-      .filter((range): range is ServingRange => Boolean(range));
+    if (categoryParams.length > 0) {
+      andClauses.push({
+        $or: categoryParams.map((category) => ({
+          type: { $regex: category, $options: "i" },
+        })),
+      });
+    }
 
-    if (servingRanges.length > 0) {
-      filter.$or = servingRanges.map((range) =>
-        range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
-      );
+    if (andClauses.length > 1) {
+      filter.$and = andClauses;
+    } else if (andClauses.length === 1) {
+      Object.assign(filter, andClauses[0]);
     }
 
     if (isDraftParam === "true") {
@@ -81,9 +85,10 @@ export async function GET(req: NextRequest) {
         break;
     }
 
-    const totalCount = await Combo.countDocuments(filter);
+    const totalCount = await Subrecipe.countDocuments(filter);
+    console.log(`Filter: ${JSON.stringify(filter)}, Total Count: ${totalCount}`);
 
-    let query = Combo.find(filter)
+    let query = Subrecipe.find(filter)
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
@@ -92,11 +97,11 @@ export async function GET(req: NextRequest) {
       query = query.collation({ locale: "en", strength: 2 });
     }
 
-    const combos = await query;
+    const subrecipes = await query;
 
     return NextResponse.json(
       {
-        data: combos,
+        data: subrecipes,
         page,
         limit,
         totalPages: Math.ceil(totalCount / limit),
@@ -105,25 +110,21 @@ export async function GET(req: NextRequest) {
       { status: 200 },
     );
   } catch (err) {
-    console.error("Error fetching combos:", err);
+    console.error("Error fetching subrecipes:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const comboData = await req.json();
-    await connectDB();
-    console.log(comboData, "COMBO DATA!");
-    const combo = new Combo(comboData);
-    await combo.save();
-
-    return NextResponse.json(combo, { status: 201 });
+    const subrecipeData = await req.json();
+    const response = await postSubrecipe(subrecipeData);
+    return NextResponse.json(response, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
-      return NextResponse.json({ error: "invalid data" }, { status: 400 });
+      return NextResponse.json({ error: err.message }, { status: 400 });
     }
-    console.error("Error creating combo:", err);
+    console.error("Error creating subrecipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

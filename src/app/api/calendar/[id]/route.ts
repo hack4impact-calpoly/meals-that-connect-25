@@ -12,7 +12,13 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     await connectDB();
 
-    const calendarDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
+    const calendarDay = await Calendar.findById(id)
+      .populate("entrees")
+      .populate("fruits")
+      .populate("grains")
+      .populate("vegetables")
+      .populate("subrecipes")
+      .exec();
 
     if (!calendarDay) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });

@@ -30,8 +30,8 @@
   --color-combo-900: var(--color-radish-900);
   --color-combo-500: var(--color-jicama);
 
-  --color-sides-900: var(--color-pepper);
-  --color-sides-500: var(--color-lime);
+  --color-veg-900: var(--color-pepper);
+  --color-veg-500: var(--color-lime);
 
   --color-fruit-900: #ffffff;
   --color-fruit-500: #ea7105;

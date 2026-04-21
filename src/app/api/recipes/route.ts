@@ -2,18 +2,6 @@ import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { NextRequest, NextResponse } from "next/server";
 
-type ServingRange = {
-  min: number;
-  max?: number;
-};
-
-const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
-  "single-serving": { min: 1, max: 1 },
-  "small-serving": { min: 2, max: 3 },
-  "family-serving": { min: 4, max: 6 },
-  "party-serving": { min: 7 },
-};
-
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -63,20 +51,8 @@ export async function GET(req: NextRequest) {
     if (categoryParams.length > 0) {
       andClauses.push({
         $or: categoryParams.map((category) => ({
-          filters: { $elemMatch: { $regex: category, $options: "i" } },
+          type: { $regex: category, $options: "i" },
         })),
-      });
-    }
-
-    const servingRanges = servingParams
-      .map((serving) => SERVING_FILTER_RANGES[serving])
-      .filter((range): range is ServingRange => Boolean(range));
-
-    if (servingRanges.length > 0) {
-      andClauses.push({
-        $or: servingRanges.map((range) =>
-          range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
-        ),
       });
     }
 
