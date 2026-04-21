@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
-import { Plus, Utensils, Soup, Apple, Carrot, Wheat, CookingPot } from "lucide-react";
+import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
 import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 
 /* Dropdown options for creating a new recipe. Add/remove entries here to change
@@ -10,10 +10,8 @@ import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 const RECIPE_TYPES: CreateRecipeType[] = [
   { id: "Combo", label: "Add Combo", icon: Utensils },
   { id: "Entree", label: "Add Entrée", icon: Soup },
-  { id: "Vegetable", label: "Add Vegetable", icon: Carrot },
-  { id: "Grain", label: "Add Grain", icon: Wheat },
+  { id: "Side", label: "Add Side", icon: Carrot },
   { id: "Fruit", label: "Add Fruit", icon: Apple },
-  { id: "Subrecipe", label: "Add Subrecipe", icon: CookingPot },
 ];
 
 function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {
@@ -53,7 +51,7 @@ export default function AddNewRecipeButton() {
 
         <MenuItems
           transition
-          className="overflow-y-auto absolute -right-2 z-50 mt-1 origin-top-right
+          className="absolute -right-2 z-50 mt-1 origin-top-right
                     data-closed:scale-95 data-closed:opacity-0
                     rounded-lg bg-white drop-shadow-sm drop-shadow-black/50
                     data-enter:duration-100 data-leave:duration-75

@@ -2,12 +2,11 @@ import mongoose, { Schema } from "mongoose";
 
 const ComboSchema = new Schema(
   {
-    _id: { type: String, required: true, unique: true },
+    _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
     serving: { type: Number, required: true },
     entrees: { type: [String], ref: "Recipe", required: false },
-    vegetables: { type: [String], ref: "Recipe", required: false },
-    grains: { type: [String], ref: "Recipe", required: false },
+    sides: { type: [String], ref: "Recipe", required: false },
     fruits: { type: [String], ref: "Recipe", required: false },
     filters: { type: [String], required: false },
     notes: { type: String, required: false },
