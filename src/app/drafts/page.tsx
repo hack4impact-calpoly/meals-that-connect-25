@@ -30,10 +30,12 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
-      filters: EMPTY_FILTERS,
+      filters,
       selectedCategories,
       draftMode: true,
     });
@@ -124,8 +126,34 @@ export default function DraftsPage() {
               <ArrowLeft className="mr-1 mt-0.5 inline" size={20} /> Back
             </button>
           }
-          topRightChildren={<></>}
+          topRightChildren={
+            <button
+              type="button"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-medium-gray bg-white text-pepper md:hidden"
+              aria-expanded={mobileFiltersOpen}
+              aria-label="Open filters"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
+            </button>
+          }
         />
+
+        <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
+
+        {mobileFiltersOpen ? (
+          <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
+            <FilterMenu
+              mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
+              initialSelections={filters}
+              onFilterChange={(s) => setFilters(cloneFilterSelections(s))}
+            />
+          </div>
+        ) : (
+          <div className="hidden overflow-auto md:block">
+            <FilterMenu initialSelections={filters} onFilterChange={(s) => setFilters(cloneFilterSelections(s))} />
+          </div>
+        )}
       </div>
 
       {/*TODO: Style buttons and whatnot */}

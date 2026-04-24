@@ -33,13 +33,6 @@ export default function RecipePageClient() {
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
 
-  const handleOpenItem = (item: Recipe | Combo) => {
-    setSelectedItem(item);
-    setIsOpen(true);
-    setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
-  };
-
-
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
     if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
@@ -52,6 +45,12 @@ export default function RecipePageClient() {
     selectedCategories,
     draftMode: false,
   });
+
+  const handleOpenItem = (item: Recipe | Combo) => {
+    setSelectedItem(item);
+    setIsOpen(true);
+    setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
+  };
 
   useEffect(() => {
     if (!id || id === "") return;
