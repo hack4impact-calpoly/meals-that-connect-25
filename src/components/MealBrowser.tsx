@@ -5,15 +5,14 @@ import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe, Subrecipe } from "@/lib/types";
+import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 type Props = {
   setSearch: (s: string) => void;
-  items: Recipe[] | Combo[] | Subrecipe[];
+  items: Recipe[] | Combo[];
   loading: boolean;
   error: string | null;
-  isCombo: boolean;
-  isSubrecipe: boolean;
+  isComboMode: boolean;
   draftCount: number;
   currentPage: number;
   totalPages: number;
@@ -25,7 +24,7 @@ type Props = {
 
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
-  onOpenItem?: (item: Recipe | Combo | Subrecipe) => void;
+  onOpenItem?: (item: Recipe | Combo) => void;
 
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
@@ -34,10 +33,8 @@ type Props = {
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "Combo", label: "Combos" },
   { value: "Entree", label: "Entrées" },
-  { value: "Vegetable", label: "Vegetables" },
-  { value: "Grain", label: "Grains" },
+  { value: "Side", label: "Sides" },
   { value: "Fruit", label: "Fruits" },
-  { value: "Subrecipe", label: "Subrecipes" },
 ];
 
 export default function MealBrowser({
@@ -45,8 +42,7 @@ export default function MealBrowser({
   items,
   loading,
   error,
-  isCombo: isCombo,
-  isSubrecipe: isSubrecipe,
+  isComboMode,
   draftCount,
   currentPage,
   totalPages,
@@ -77,14 +73,13 @@ export default function MealBrowser({
       }
 
       // automatic setting to combo category if nothing else is selected
-      const hasNonCombo =
-        next.has("Entree") || next.has("Vegetable") || next.has("Grain") || next.has("Subrecipe") || next.has("Fruit");
+      const hasNonCombo = next.has("Entree") || next.has("Side") || next.has("Fruit");
 
       if (!hasNonCombo) {
         return new Set<CategoryValue>(["Combo"]);
       }
 
-      // if selecting entree/veg/grain/fruit, then remove combo option
+      // if selecting entree/side/fruit, then remove combo option
       next.delete("Combo");
 
       return next;
@@ -114,8 +109,7 @@ export default function MealBrowser({
         <CardGrid
           loading={loading}
           error={error}
-          isCombo={isCombo}
-          isSubrecipe={isSubrecipe}
+          isComboMode={isComboMode}
           items={items}
           draftMode={draftMode}
           draftCount={draftCount}

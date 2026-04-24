@@ -1,11 +1,12 @@
 import mongoose, { Schema } from "mongoose";
+import Ingredient from "./IngredientSchema";
 import Nutrition from "./NutritionSchema";
 
 const RecipeSchema = new Schema(
   {
-    _id: { type: String, required: true, unique: true },
+    _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
-    type: { type: String, required: true },
+
     serving: {
       type: Number,
       required: true,
@@ -14,19 +15,10 @@ const RecipeSchema = new Schema(
     allergens: { type: [String], required: false },
     filters: { type: [String], required: false },
 
-    subrecipes: [
-      {
-        subrecipeID: {
-          type: String,
-          ref: "Subrecipe",
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-        },
-      },
-    ],
+    ingredients: {
+      type: [Ingredient.schema],
+      required: false,
+    },
 
     instructions: { type: String, required: false },
     notes: { type: String, required: false },
