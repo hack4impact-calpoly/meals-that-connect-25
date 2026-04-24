@@ -2,21 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
-import { CategoryValue, FilterSelections } from "@/lib/types";
+import FilterMenu from "@/components/FilterMenu";
+import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Trash2, CircleX, CircleCheck } from "lucide-react";
+import { ArrowLeft, Trash2, CircleX, CircleCheck, Menu } from "lucide-react";
 
-// TODO: same for recipes
 import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 import { useMealData } from "@/hooks/useMealData";
 
-const EMPTY_FILTERS: FilterSelections = {
-  allergens: new Set(),
-  proteins: new Set(),
-  vitamins: new Set(),
-  dietary: new Set(),
-  serving: new Set(),
-};
+function cloneFilterSelections(f: FilterSelections): FilterSelections {
+  const out: FilterSelections = {};
+  for (const key of Object.keys(f)) {
+    out[key] = new Set(f[key]);
+  }
+  return out;
+}
 
 export default function DraftsPage() {
   const router = useRouter();
@@ -30,10 +30,12 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
-      filters: EMPTY_FILTERS,
+      filters,
       selectedCategories,
       draftMode: true,
     });
@@ -99,8 +101,8 @@ export default function DraftsPage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col pt-5 overflow-hidden">
-      <div className="flex flex-1 px-5 min-h-0">
+    <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-5 md:flex-row">
         <MealBrowser
           setSearch={setSearch}
           items={items}
@@ -119,12 +121,39 @@ export default function DraftsPage() {
           topLeftChildren={
             <button
               onClick={() => router.push("/recipe")}
-              className="flex items-center h-11 rounded-md bg-medium-gray border border-gray-300 px-3 py-1 text-sm font-semibold hover:bg-gray-100 transition cursor-pointer"
+              className="flex h-11 cursor-pointer items-center rounded-md border border-gray-300 bg-medium-gray px-3 py-1 text-sm font-semibold transition hover:bg-gray-100"
             >
-              <ArrowLeft className="inline mt-0.5 mr-1" size={20} /> Back
+              <ArrowLeft className="mr-1 mt-0.5 inline" size={20} /> Back
+            </button>
+          }
+          topRightChildren={
+            <button
+              type="button"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-medium-gray bg-white text-pepper md:hidden"
+              aria-expanded={mobileFiltersOpen}
+              aria-label="Open filters"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
             </button>
           }
         />
+
+        <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
+
+        {mobileFiltersOpen ? (
+          <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
+            <FilterMenu
+              mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
+              initialSelections={filters}
+              onFilterChange={(s) => setFilters(cloneFilterSelections(s))}
+            />
+          </div>
+        ) : (
+          <div className="hidden overflow-auto md:block">
+            <FilterMenu initialSelections={filters} onFilterChange={(s) => setFilters(cloneFilterSelections(s))} />
+          </div>
+        )}
       </div>
 
       {/*TODO: Style buttons and whatnot */}
