@@ -14,15 +14,30 @@ export type UserPerms = {
 
 const ROLES = ["Admin", "Dining Site Staff", "Kitchen Staff"];
 
-export default function IndividualPermission({ user, editing = false }: { user: UserPerms; editing?: boolean }) {
-  const [selected, setSelected] = useState(false);
+export default function IndividualPermission({
+  user,
+  editing = false,
+  isSelected,
+  onSelect,
+}: {
+  user: UserPerms;
+  editing?: boolean;
+  isSelected: boolean;
+  onSelect: (user: UserPerms) => void;
+}) {
   const [role, setRole] = useState(user.role);
   const [recipe, setRecipe] = useState(user.recipe);
   const [menuPlanning, setMenuPlanning] = useState(user.menuPlanning);
+
+  const handleRowClick = () => {
+    if (editing) onSelect(user);
+  };
+
   return (
     <div
+      onClick={handleRowClick}
       className={`grid grid-cols-subgrid col-span-6 items-center rounded-lg border-2 bg-white pl-8 pr-6 py-5 shadow-sm transition-colors font-montserrat ${
-        selected ? "border-radish-900" : "border-gray-200"
+        isSelected ? "border-radish-900" : "border-gray-200"
       }`}
     >
       {/* Avatar */}
@@ -80,8 +95,12 @@ export default function IndividualPermission({ user, editing = false }: { user: 
         <div className="justify-self-center">
           <input
             type="checkbox"
-            checked={selected}
-            onChange={(e) => setSelected(e.target.checked)}
+            checked={isSelected}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSelect(user);
+            }}
+            onClick={(e) => e.stopPropagation()}
             className="h-5 w-5 rounded cursor-pointer accent-radish-900"
           />
         </div>

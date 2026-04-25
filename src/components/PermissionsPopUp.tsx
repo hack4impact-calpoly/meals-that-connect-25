@@ -1,15 +1,16 @@
 "use client";
 
+import { UserPerms } from "./IndividualPermission";
 import { useState } from "react";
 import DeleteUserButton from "./DeleteUserButton";
 import DeleteUserTag from "./DeleteUserTag";
 
-export default function PermissionsPopUp() {
-  const [selectedUsers, setSelectedUsers] = useState([
-    { _id: "1", name: "sophia change" },
-    { _id: "2", name: "bryan lai" },
-  ]);
+type Props = {
+  selectedUsers: UserPerms[];
+  setSelectedUsers: React.Dispatch<React.SetStateAction<UserPerms[]>>;
+};
 
+export default function PermissionsPopUp({ selectedUsers, setSelectedUsers }: Props) {
   const removeUser = (id: string) => {
     const updatedList = selectedUsers.filter((user) => user._id !== id);
     setSelectedUsers(updatedList);

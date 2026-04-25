@@ -1,6 +1,13 @@
 import IndividualPermission, { UserPerms } from "./IndividualPermission";
 
-export default function PermissionsDisplay({ users, editing = false }: { users: UserPerms[]; editing?: boolean }) {
+type Props = {
+  users: UserPerms[];
+  editing?: boolean;
+  onSelect: (user: UserPerms) => void;
+  selectedIds: string[];
+};
+
+export default function PermissionsDisplay({ users, editing = false, onSelect, selectedIds }: Props) {
   return (
     <div className="grid grid-cols-[auto_1.5fr_1fr_1fr_1fr_auto] gap-x-4 gap-y-3 pt-2 text-black font-montserrat">
       {/* Header */}
@@ -12,7 +19,13 @@ export default function PermissionsDisplay({ users, editing = false }: { users: 
       </div>
       {/* Rows */}
       {users.map((u) => (
-        <IndividualPermission key={u._id} user={u} editing={editing} />
+        <IndividualPermission
+          key={u._id}
+          user={u}
+          editing={editing}
+          onSelect={() => onSelect(u)}
+          isSelected={selectedIds.includes(u._id)}
+        />
       ))}
     </div>
   );
