@@ -8,9 +8,10 @@ import DeleteUserTag from "./DeleteUserTag";
 type Props = {
   selectedUsers: UserPerms[];
   setSelectedUsers: React.Dispatch<React.SetStateAction<UserPerms[]>>;
+  onBulkDelete: () => void;
 };
 
-export default function PermissionsPopUp({ selectedUsers, setSelectedUsers }: Props) {
+export default function PermissionsPopUp({ selectedUsers, setSelectedUsers, onBulkDelete }: Props) {
   const removeUser = (id: string) => {
     const updatedList = selectedUsers.filter((user) => user._id !== id);
     setSelectedUsers(updatedList);
@@ -23,7 +24,7 @@ export default function PermissionsPopUp({ selectedUsers, setSelectedUsers }: Pr
           <DeleteUserTag key={u._id} user={u} onDelete={() => removeUser(u._id)} />
         ))}
       </div>
-      <DeleteUserButton />
+      <DeleteUserButton onClick={onBulkDelete} />
     </div>
   );
 }

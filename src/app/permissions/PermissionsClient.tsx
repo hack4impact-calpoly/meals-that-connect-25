@@ -12,8 +12,8 @@ type Props = {
 };
 
 export default function PermissionsClient({ allUsers }: Props) {
+  const [usersList, setUsersList] = useState<UserPerms[]>(allUsers);
   const [selectedUsers, setSelectedUsers] = useState<UserPerms[]>([]);
-
   const [isEditing, setIsEditing] = useState(false);
 
   const toggleUserSelection = (user: UserPerms) => {
@@ -25,6 +25,15 @@ export default function PermissionsClient({ allUsers }: Props) {
         return [...prev, user];
       }
     });
+  };
+
+  const handleBulkDelete = () => {
+    const selectedIds = selectedUsers.map((u) => u._id);
+    const updatedList = usersList.filter((user) => !selectedIds.includes(user._id));
+
+    setUsersList(updatedList);
+    setSelectedUsers([]);
+    setIsEditing(false);
   };
 
   return (
@@ -42,14 +51,20 @@ export default function PermissionsClient({ allUsers }: Props) {
 
         <div>
           <PermissionsDisplay
-            users={allUsers}
+            users={usersList}
             editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}
           />
         </div>
       </div>
-      {isEditing && <PermissionsPopUp selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />}
+      {isEditing && (
+        <PermissionsPopUp
+          selectedUsers={selectedUsers}
+          setSelectedUsers={setSelectedUsers}
+          onBulkDelete={handleBulkDelete}
+        />
+      )}
     </main>
   );
 }
