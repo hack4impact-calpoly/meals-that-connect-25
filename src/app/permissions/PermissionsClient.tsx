@@ -14,6 +14,8 @@ type Props = {
 export default function PermissionsClient({ allUsers }: Props) {
   const [selectedUsers, setSelectedUsers] = useState<UserPerms[]>([]);
 
+  const [isEditing, setIsEditing] = useState(false);
+
   const toggleUserSelection = (user: UserPerms) => {
     setSelectedUsers((prev) => {
       const isAlreadySelected = prev.find((u) => u._id === user._id);
@@ -30,7 +32,7 @@ export default function PermissionsClient({ allUsers }: Props) {
       <div className="flex flex-col py-5 gap-4 px-10">
         <div className="flex justify-between items-center">
           <h1 className="text-xl font-semibold">Manage Permissions</h1>
-          <EditPermissionsButton />
+          <EditPermissionsButton isEditing={isEditing} onClick={() => setIsEditing(!isEditing)} />
         </div>
 
         <div className="flex justify-between">
@@ -41,14 +43,13 @@ export default function PermissionsClient({ allUsers }: Props) {
         <div>
           <PermissionsDisplay
             users={allUsers}
-            editing={true}
+            editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}
           />
         </div>
       </div>
-
-      <PermissionsPopUp selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />
+      {isEditing && <PermissionsPopUp selectedUsers={selectedUsers} setSelectedUsers={setSelectedUsers} />}
     </main>
   );
 }
