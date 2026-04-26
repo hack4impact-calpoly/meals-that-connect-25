@@ -125,75 +125,81 @@ export default function Navbar() {
       )}
 
       {/* Hamburger Icon for mobile */}
-      <button className="md:hidden ml-auto" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
+      <button className="md:hidden ml-auto" onClick={() => setDrawerOpen(true)}>
         <Menu size={28} />
       </button>
 
       {/* Mobile Menu Drawer */}
-      {drawerOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-black opacity-30" onClick={() => setDrawerOpen(false)} />
+      <div className="fixed inset-0 z-50 flex pointer-events-none">
+        {/* Overlay */}
+        {drawerOpen && (
+          <div
+            className={`fixed inset-0 bg-black opacity-30 ${drawerOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+            onClick={() => setDrawerOpen(false)}
+          />
+        )}
 
-          {/* Drawer */}
-          <div className="ml-auto w-50 bg-white h-full shadow-lg p-6 relative z-50 flex flex-col">
-            <button className="absolute top-4 right-4" onClick={() => setDrawerOpen(false)} aria-label="Close menu">
-              <X size={28} />
-            </button>
-            <nav className="flex flex-col gap-6 mt-12">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={`font-medium ${pathname === link.href ? "text-radish-900" : "text-pepper"}`}
-                  onClick={() => setDrawerOpen(false)}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
+        {/* Drawer */}
+        <div
+          className={`ml-auto w-50 bg-white h-full shadow-lg p-6 relative z-50 flex flex-col transition-transform duration-300 ease-in-out
+            ${drawerOpen ? "translate-x-0 pointer-events-auto" : "translate-x-full pointer-events-none"}`}
+        >
+          <button className="absolute top-4 right-4" onClick={() => setDrawerOpen(false)}>
+            <X size={28} />
+          </button>
+          <nav className="flex flex-col gap-6 mt-12">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`font-medium ${pathname === link.href ? "text-radish-900" : "text-pepper"}`}
+                onClick={() => setDrawerOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
 
-            {isSignedIn && (
-              <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
-                <button
-                  onClick={() => setMobileDropdownOpen((prev) => !prev)}
-                  className="flex items-center gap-2 rounded-lg border border-medium-gray px-2 py-2 hover:bg-light-gray transition-colors"
-                >
-                  {user?.imageUrl ? (
-                    <Image
-                      src={user.imageUrl}
-                      alt="Profile"
-                      width={30}
-                      height={30}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="h-10 w-10 rounded-full bg-medium-gray" />
-                  )}
-                  <div className="flex flex-col text-left">
-                    <span className="font-medium text-xs text-pepper">{displayName}</span>
-                    <span className="text-[0.625rem] text-radish-900">{role ?? "..."}</span>
-                  </div>
-                </button>
-                {mobileDropdownOpen && (
-                  <div className="absolute bottom-20 mt-2 w-20 rounded-lg border border-medium-gray bg-white shadow-md z-50">
-                    <button
-                      onClick={() => {
-                        signOut({ redirectUrl: "/sign-in" });
-                        setDrawerOpen(false);
-                        setMobileDropdownOpen(false);
-                      }}
-                      className="w-full rounded-lg px-3 py-2 text-xs font-medium text-pepper hover:bg-light-gray transition-colors"
-                    >
-                      Log out
-                    </button>
-                  </div>
+          {isSignedIn && (
+            <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
+              <button
+                onClick={() => setMobileDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2 rounded-lg border border-medium-gray px-2 py-2 hover:bg-light-gray transition-colors"
+              >
+                {user?.imageUrl ? (
+                  <Image
+                    src={user.imageUrl}
+                    alt="Profile"
+                    width={30}
+                    height={30}
+                    className="rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-medium-gray" />
                 )}
-              </div>
-            )}
-          </div>
+                <div className="flex flex-col text-left">
+                  <span className="font-medium text-xs text-pepper">{displayName}</span>
+                  <span className="text-[0.625rem] text-radish-900">{role ?? "..."}</span>
+                </div>
+              </button>
+              {mobileDropdownOpen && (
+                <div className="absolute bottom-20 mt-2 w-20 rounded-lg border border-medium-gray bg-white shadow-md z-50">
+                  <button
+                    onClick={() => {
+                      signOut({ redirectUrl: "/sign-in" });
+                      setDrawerOpen(false);
+                      setMobileDropdownOpen(false);
+                    }}
+                    className="w-full rounded-lg px-3 py-2 text-xs font-medium text-pepper hover:bg-light-gray transition-colors"
+                  >
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </nav>
   );
 }
