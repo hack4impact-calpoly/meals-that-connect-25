@@ -28,6 +28,8 @@ type Props = {
 
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
+
+  userRole?: string;
 };
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
@@ -55,6 +57,7 @@ export default function MealBrowser({
   selectedIds,
   onToggleSelect,
   onOpenItem,
+  userRole,
 }: Props) {
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
@@ -92,7 +95,8 @@ export default function MealBrowser({
         {topLeftChildren}
         <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
         {topRightChildren}
-        <AddNewRecipeButton />
+        {userRole === "Admin" && <AddNewRecipeButton />}
+        {/* <AddNewRecipeButton /> */}
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -116,6 +120,7 @@ export default function MealBrowser({
           selectedIds={selectedIds}
           onToggleSelect={onToggleSelect}
           onOpenItem={onOpenItem}
+          userRole={userRole}
         />
       </div>
     </div>

@@ -15,6 +15,7 @@ export type RecipeCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
+  userRole?: string;
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
@@ -36,6 +37,7 @@ export default function RecipeCard({
   isSelected,
   onSelect,
   onOpen,
+  userRole,
 }: RecipeCardProps) {
   const [editMode, setEditMode] = useState(false);
   const caloriesText = calories != null ? `${calories} cal` : null;
@@ -71,7 +73,9 @@ export default function RecipeCard({
         </span>
       ) : null}
 
-      {isDraft && <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />}
+      {isDraft && userRole === "Admin" && (
+        <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />
+      )}
 
       {editMode === true && (
         <CreateRecipePopUp
@@ -83,7 +87,7 @@ export default function RecipeCard({
         />
       )}
 
-      {isDraft && onSelect && (
+      {isDraft && onSelect && userRole === "Admin" && (
         <input
           type="checkbox"
           checked={!!isSelected}

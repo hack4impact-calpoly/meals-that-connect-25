@@ -12,6 +12,10 @@ import { CreateRecipeType } from "@/components/CreateRecipePopUp";
 import { Menu, Utensils } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+type RecipePageClientProps = {
+  userRole: string;
+};
+
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
   const out: FilterSelections = {};
   for (const key of Object.keys(f)) {
@@ -20,7 +24,7 @@ function cloneFilterSelections(f: FilterSelections): FilterSelections {
   return out;
 }
 
-export default function RecipePageClient() {
+export default function RecipePageClient({ userRole }: RecipePageClientProps) {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -94,6 +98,7 @@ export default function RecipePageClient() {
             <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
           </button>
         }
+        userRole={userRole}
       />
 
       <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
@@ -119,6 +124,7 @@ export default function RecipePageClient() {
           item={selectedItem}
           isComboMode={isComboMode}
           changeMode={(e) => setMode(e)}
+          userRole={userRole}
         />
       ) : (
         <CreateRecipePopUp

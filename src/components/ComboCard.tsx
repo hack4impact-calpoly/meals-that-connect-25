@@ -16,6 +16,7 @@ type ComboCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
+  userRole?: string;
 };
 
 export default function ComboCard({
@@ -30,6 +31,7 @@ export default function ComboCard({
   isSelected,
   onSelect,
   onOpen,
+  userRole,
 }: ComboCardProps) {
   const [editMode, setEditMode] = useState(false);
   const [entreeMap, setEntreeMap] = useState<string[]>([]);
@@ -78,14 +80,14 @@ export default function ComboCard({
           />
         )}
 
-        {isDraft && (
+        {isDraft && userRole === "Admin" && (
           <Pencil
             className="absolute top-35 right-4 z-20 h-5 w-5 rounded-xs accent-radish-900 cursor-pointer"
             onClick={() => setEditMode((prev) => !prev)}
           />
         )}
 
-        {isDraft && onSelect && (
+        {isDraft && onSelect && userRole === "Admin" && (
           <input
             type="checkbox"
             checked={!!isSelected}

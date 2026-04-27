@@ -27,9 +27,10 @@ type Props = {
   item: Recipe | Combo | null;
   isComboMode: boolean;
   changeMode: (mode: "view" | "edit") => void;
+  userRole: string;
 };
 
-export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
+export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode, userRole }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
   const originalServings = item?.serving || 1;
@@ -168,7 +169,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 />
               </div>
               <div className="flex flex-row gap-4">
-                <Pencil className="cursor-pointer" onClick={applyEditMode} />
+                {userRole === "Admin" && <Pencil className="cursor-pointer" onClick={applyEditMode} />}
                 <Ellipsis className="cursor-pointer" />
               </div>
             </div>
