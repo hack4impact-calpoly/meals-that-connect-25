@@ -1,14 +1,18 @@
-import { CategoryValue } from "@/lib/types";
+import { CategoryValue, RoleValue } from "@/lib/types";
 
-export default function CategoryToggle({
+type Option<T> = { value: T; label: string };
+
+interface CategoryToggleProps<T> {
+  options: Array<Option<T>>;
+  selectedCategories: Set<T>;
+  onToggle: (category: T) => void;
+}
+
+export default function CategoryToggle<T extends string>({
   options,
   selectedCategories,
   onToggle,
-}: {
-  options: Array<{ value: CategoryValue; label: string }>;
-  selectedCategories: Set<CategoryValue>;
-  onToggle: (category: CategoryValue) => void;
-}) {
+}: CategoryToggleProps<T>) {
   const baseClass =
     "inline-flex items-center rounded-full border border-radish-900 px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-radish-900";
   const unselectedClass = "bg-white text-radish-900 hover:bg-radish-100";

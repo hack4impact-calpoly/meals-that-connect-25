@@ -94,7 +94,11 @@ export default function RecipeDatabase({
       </div>
 
       <div className="my-4">
-        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={onToggleCategory} />
+        <CategoryToggle<CategoryValue>
+          options={categoryOptions}
+          selectedCategories={selectedCategories}
+          onToggle={onToggleCategory}
+        />
       </div>
 
       {loading && <div>Loading...</div>}

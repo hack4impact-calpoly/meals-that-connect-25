@@ -100,7 +100,11 @@ export default function MealBrowser({
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
+        <CategoryToggle<CategoryValue>
+          options={categoryOptions}
+          selectedCategories={selectedCategories}
+          onToggle={toggleCategory}
+        />
         <PaginationDisplay
           currentPage={currentPage}
           totalPages={totalPages}
