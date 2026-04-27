@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import dbConnect from "@/database/db";
 import User from "@/database/UserSchema";
-import PermissionsClient from "@/components/PermissionsClient";
+import PermissionsClient from "./PermissionsClient";
 
 export default async function Permissions() {
   const { userId } = await auth();
@@ -39,9 +39,5 @@ export default async function Permissions() {
     },
   ];
 
-  return (
-    <main>
-      <PermissionsClient users={users} />
-    </main>
-  );
+  return <PermissionsClient allUsers={users} />;
 }
