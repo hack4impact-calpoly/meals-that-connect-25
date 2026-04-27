@@ -44,12 +44,19 @@ function RecipeMenuItem({
 
 export default function SortPermissionsButton({
   align = "right",
+  onSortChange,
 }: {
   align?: "left" | "right";
-  onSortChange?: (filterId: string) => void;
+  onSortChange?: (filterId: CreateSortType) => void;
 }) {
   const [activeType, setActiveType] = useState<CreateSortType | null>(null);
   const isRight = align === "right";
+
+  const handleSelect = (type: CreateSortType) => {
+    setActiveType(type);
+    if (onSortChange) onSortChange(type);
+  };
+
   return (
     <>
       <Menu as="div" className="relative">
@@ -80,7 +87,7 @@ export default function SortPermissionsButton({
                 <RecipeMenuItem
                   key={type.id}
                   type={type}
-                  onSelect={setActiveType}
+                  onSelect={handleSelect}
                   isSelected={type.id === activeType?.id}
                 />
               </div>
