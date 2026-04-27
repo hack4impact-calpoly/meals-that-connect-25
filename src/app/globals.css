@@ -16,6 +16,8 @@
 
   --color-cucumber: #20a359;
 
+  --color-brown: #624002;
+
   --color-pepper: #48494b;
 
   --color-jicama: #f8ece0;
@@ -28,12 +30,12 @@
   --color-combo-900: var(--color-radish-900);
   --color-combo-500: var(--color-jicama);
 
-  --color-sides-900: var(--color-cucumber);
-  --color-sides-500: --alpha(var(--color-lime) / 40%);
+  --color-sides-900: var(--color-pepper);
+  --color-sides-500: var(--color-lime);
 
-  --color-fruit-900: #ea7105;
-  --color-fruit-500: #fdecbc;
+  --color-fruit-900: #ffffff;
+  --color-fruit-500: #ea7105;
 
-  --color-entree-900: var(--color-cucumber);
-  --color-entree-500: #e7efb7;
+  --color-entree-900: var(--color-brown);
+  --color-entree-500: #ffffff;
 }

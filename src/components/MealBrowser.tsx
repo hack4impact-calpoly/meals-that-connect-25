@@ -31,10 +31,10 @@ type Props = {
 };
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "combo", label: "Combos" },
-  { value: "entree", label: "Entrées" },
-  { value: "side", label: "Sides" },
-  { value: "fruit", label: "Fruits" },
+  { value: "Combo", label: "Combos" },
+  { value: "Entree", label: "Entrées" },
+  { value: "Side", label: "Sides" },
+  { value: "Fruit", label: "Fruits" },
 ];
 
 export default function MealBrowser({
@@ -58,17 +58,29 @@ export default function MealBrowser({
 }: Props) {
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
-      const next = new Set(prev);
+      const next = new Set<CategoryValue>(prev);
 
-      if (category === "combo") {
-        if (next.has("combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["combo"]);
+      // combo can't ever be de-selected
+      if (category === "Combo") {
+        return new Set<CategoryValue>(["Combo"]);
       }
 
-      if (next.has("combo")) next.delete("combo");
+      // toggle clicked category
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
 
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
+      // automatic setting to combo category if nothing else is selected
+      const hasNonCombo = next.has("Entree") || next.has("Side") || next.has("Fruit");
+
+      if (!hasNonCombo) {
+        return new Set<CategoryValue>(["Combo"]);
+      }
+
+      // if selecting entree/side/fruit, then remove combo option
+      next.delete("Combo");
 
       return next;
     });

@@ -24,15 +24,18 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
-      .getAll("tags")
+      .getAll("filters")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+
     const categoryParams = searchParams
       .getAll("categories")
       .map((c) => c.trim().toLowerCase())
       .filter(Boolean);
+
     const servingParams = searchParams
       .getAll("servings")
       .map((s) => s.trim().toLowerCase())
@@ -48,7 +51,10 @@ export async function GET(req: NextRequest) {
 
     if (tagParams.length > 0) {
       andClauses.push({
-        tags: {
+        filters: {
+          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
+        },
+        allergens: {
           $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
         },
       });
@@ -57,7 +63,7 @@ export async function GET(req: NextRequest) {
     if (categoryParams.length > 0) {
       andClauses.push({
         $or: categoryParams.map((category) => ({
-          tags: { $elemMatch: { $regex: category, $options: "i" } },
+          filters: { $elemMatch: { $regex: category, $options: "i" } },
         })),
       });
     }
@@ -86,11 +92,36 @@ export async function GET(req: NextRequest) {
       filter.isDraft = false;
     }
 
-    const totalCount = await Recipe.countDocuments(filter);
+    let sort: Record<string, 1 | -1> = { createdAt: -1 };
 
-    const recipes = await Recipe.find(filter)
+    switch (sortBy) {
+      case "lastUpdated":
+        sort = { updatedAt: -1 };
+        break;
+      case "createdDate":
+        sort = { createdAt: -1 };
+        break;
+      case "aToZ":
+        sort = { name: 1 };
+        break;
+      case "zToA":
+        sort = { name: -1 };
+        break;
+    }
+
+    const totalCount = await Recipe.countDocuments(filter);
+    console.log(`Filter: ${JSON.stringify(filter)}, Total Count: ${totalCount}`);
+
+    let query = Recipe.find(filter)
+      .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (sortBy === "aToZ" || sortBy === "zToA") {
+      query = query.collation({ locale: "en", strength: 2 });
+    }
+
+    const recipes = await query;
 
     return NextResponse.json(
       {

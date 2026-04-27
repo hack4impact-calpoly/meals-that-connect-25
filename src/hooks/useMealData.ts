@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { buildFilterTags } from "@/lib/helpers";
-import { CategoryValue, Combo, FilterSelections, Recipe } from "@/lib/types";
+import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
 
 type Params = {
   search: string;
   filters: FilterSelections;
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
+  sortBy?: SortOption;
 };
 
 type Return = {
@@ -21,9 +22,15 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 5;
 
-export function useMealData({ search, filters, selectedCategories, draftMode }: Params): Return {
+export function useMealData({
+  search,
+  filters,
+  selectedCategories,
+  draftMode,
+  sortBy = "createdDate",
+}: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [combos, setCombos] = useState<Combo[]>([]);
@@ -36,9 +43,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   const refresh = () => setRefreshKey((k) => k + 1);
 
-  const isComboMode = selectedCategories.has("combo");
-
-  /* ---------------- Debounce ---------------- */
+  const isComboMode = selectedCategories.has("Combo");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -47,9 +52,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode]);
-
-  /* ---------------- Fetch ---------------- */
+  }, [debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -64,8 +67,8 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
         const params = new URLSearchParams();
 
-        // Draft filtering
         params.append("isDraft", draftMode ? "true" : "false");
+        params.append("sortBy", sortBy);
 
         if (trimmed) {
           params.append("name", trimmed);
@@ -75,24 +78,32 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
             if (t.includes("serving")) {
               params.append("servings", t);
             } else {
-              params.append("tags", t);
+              params.append("filters", t);
+              params.append("allergens", t);
             }
           });
         }
 
         if (!isComboMode) {
-          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "combo");
+          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
           categoryParams.forEach((category) => params.append("categories", category));
         }
 
         const url = `${base}?${params.toString()}`;
 
-        const paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
+        // if in draft view, change PAGE_SIZE to PAGE_SIZE - 1
+        let paginatedUrl;
+        if (draftMode) {
+          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE - 1}`;
+        } else {
+          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
+        }
         const res = await fetch(paginatedUrl, { signal: controller.signal });
 
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`);
         }
+
         const { data, totalCount, totalPages: serverTotalPages } = await res.json();
         const safeTotalPages = Math.max(1, Number(serverTotalPages) || 0);
         setTotalPages(safeTotalPages);
@@ -108,7 +119,6 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
           setRecipes(data);
         }
 
-        // Drafts count fetch
         if (draftMode) {
           setDraftCount(totalCount);
         } else {
@@ -134,7 +144,7 @@ export function useMealData({ search, filters, selectedCategories, draftMode }: 
 
     load();
     return () => controller.abort();
-  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, refreshKey]);
+  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy, refreshKey]);
 
   const items = isComboMode ? combos : recipes;
 

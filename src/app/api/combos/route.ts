@@ -24,10 +24,13 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const sortBy = searchParams.get("sortBy") ?? "createdDate";
+
     const tagParams = searchParams
-      .getAll("tags")
+      .getAll("filters")
       .map((t) => t.trim().toLowerCase())
       .filter(Boolean);
+
     const servingParams = searchParams
       .getAll("servings")
       .map((s) => s.trim().toLowerCase())
@@ -61,11 +64,35 @@ export async function GET(req: NextRequest) {
       filter.isDraft = false;
     }
 
+    let sort: Record<string, 1 | -1> = { createdAt: -1 };
+
+    switch (sortBy) {
+      case "lastUpdated":
+        sort = { updatedAt: -1 };
+        break;
+      case "createdDate":
+        sort = { createdAt: -1 };
+        break;
+      case "aToZ":
+        sort = { name: 1 };
+        break;
+      case "zToA":
+        sort = { name: -1 };
+        break;
+    }
+
     const totalCount = await Combo.countDocuments(filter);
 
-    const combos = await Combo.find(filter)
+    let query = Combo.find(filter)
+      .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (sortBy === "aToZ" || sortBy === "zToA") {
+      query = query.collation({ locale: "en", strength: 2 });
+    }
+
+    const combos = await query;
 
     return NextResponse.json(
       {
@@ -87,7 +114,7 @@ export async function POST(req: NextRequest) {
   try {
     const comboData = await req.json();
     await connectDB();
-
+    console.log(comboData, "COMBO DATA!");
     const combo = new Combo(comboData);
     await combo.save();
 

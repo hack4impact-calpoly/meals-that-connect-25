@@ -2,35 +2,40 @@
 
 import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
-import { CategoryValue, FilterSelections } from "@/lib/types";
+import FilterMenu from "@/components/FilterMenu";
+import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
 import { useState, useEffect } from "react";
-import { ArrowLeft, Trash2, CircleX, CircleCheck } from "lucide-react";
+import { ArrowLeft, Trash2, CircleX, CircleCheck, Menu } from "lucide-react";
 
-// TODO: same for recipes
 import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 import { useMealData } from "@/hooks/useMealData";
 
-const EMPTY_FILTERS: FilterSelections = {
-  allergens: new Set(),
-  proteins: new Set(),
-  vitamins: new Set(),
-  dietary: new Set(),
-  serving: new Set(),
-};
+function cloneFilterSelections(f: FilterSelections): FilterSelections {
+  const out: FilterSelections = {};
+  for (const key of Object.keys(f)) {
+    out[key] = new Set(f[key]);
+  }
+  return out;
+}
 
 export default function DraftsPage() {
   const router = useRouter();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
 
   // TODO: make recipes also selectable, currently only ComboCard has selection button
   // figma doesn't have styles for selectable RecipeCard
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({
       search,
-      filters: EMPTY_FILTERS,
+      filters,
       selectedCategories,
       draftMode: true,
     });
@@ -38,6 +43,7 @@ export default function DraftsPage() {
   useEffect(() => {
     setSelectedIds(new Set());
     setSelectedNames({});
+    setBusy(null);
   }, [isComboMode]);
 
   const toggleSelect = (id: string, name: string) => {
@@ -69,7 +75,9 @@ export default function DraftsPage() {
   */
 
   const handleDelete = async () => {
-    if (selectedCategories.has("combo")) {
+    setShowDeleteModal(true);
+    setBusy("delete");
+    if (selectedCategories.has("Combo")) {
       await deleteCombos(Array.from(selectedIds));
     } else {
       await deleteRecipes(Array.from(selectedIds));
@@ -80,7 +88,9 @@ export default function DraftsPage() {
   };
 
   const handlePublish = async () => {
-    if (selectedCategories.has("combo")) {
+    setShowPublishModal(true);
+    setBusy("publish");
+    if (selectedCategories.has("Combo")) {
       await publishCombos(Array.from(selectedIds));
     } else {
       await publishRecipes(Array.from(selectedIds));
@@ -91,8 +101,8 @@ export default function DraftsPage() {
   };
 
   return (
-    <main className="flex flex-1 flex-col pt-5 overflow-hidden">
-      <div className="flex flex-1 px-5 min-h-0">
+    <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-5 md:flex-row">
         <MealBrowser
           setSearch={setSearch}
           items={items}
@@ -111,12 +121,39 @@ export default function DraftsPage() {
           topLeftChildren={
             <button
               onClick={() => router.push("/recipe")}
-              className="flex items-center h-11 rounded-md bg-medium-gray border border-gray-300 px-3 py-1 text-sm font-semibold hover:bg-gray-100 transition cursor-pointer"
+              className="flex h-11 cursor-pointer items-center rounded-md border border-gray-300 bg-medium-gray px-3 py-1 text-sm font-semibold transition hover:bg-gray-100"
             >
-              <ArrowLeft className="inline mt-0.5 mr-1" size={20} /> Back
+              <ArrowLeft className="mr-1 mt-0.5 inline" size={20} /> Back
+            </button>
+          }
+          topRightChildren={
+            <button
+              type="button"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-medium-gray bg-white text-pepper md:hidden"
+              aria-expanded={mobileFiltersOpen}
+              aria-label="Open filters"
+              onClick={() => setMobileFiltersOpen(true)}
+            >
+              <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
             </button>
           }
         />
+
+        <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
+
+        {mobileFiltersOpen ? (
+          <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
+            <FilterMenu
+              mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
+              initialSelections={filters}
+              onFilterChange={(s) => setFilters(cloneFilterSelections(s))}
+            />
+          </div>
+        ) : (
+          <div className="hidden overflow-auto md:block">
+            <FilterMenu initialSelections={filters} onFilterChange={(s) => setFilters(cloneFilterSelections(s))} />
+          </div>
+        )}
       </div>
 
       {/*TODO: Style buttons and whatnot */}
@@ -140,18 +177,96 @@ export default function DraftsPage() {
           <div className="flex gap-5">
             <button
               className="border border-radish-900 h-8 w-8 rounded-4xl mt-1.5 cursor-pointer"
-              onClick={handleDelete}
+              onClick={() => setShowDeleteModal(true)}
             >
               <Trash2 className="ml-1.5" size={18} color="#d8489a" />
             </button>
 
             <button
               className="flex border bg-radish-900 text-white font-semibold rounded-lg px-4 py-2 cursor-pointer"
-              onClick={handlePublish}
+              onClick={() => setShowPublishModal(true)}
             >
               Publish <CircleCheck className="ml-1 " size={25} color="#d8489a" fill="white" />
             </button>
           </div>
+
+          {showDeleteModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
+              <div className="relative p-4 w-full max-w-md">
+                <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center"
+                    onClick={() => setShowDeleteModal(false)}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Modal content */}
+                  <h3 className="text-lg font-semibold text-heading">Delete item?</h3>
+
+                  <p className="text-sm text-body mt-2">This action cannot be undone.</p>
+
+                  {/* Buttons */}
+                  <div className="flex justify-end gap-2 mt-5">
+                    <button
+                      className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray"
+                      onClick={() => setShowDeleteModal(false)}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      className="px-4 py-2 text-white hover:bg-radish-500 bg-radish-900 rounded-lg"
+                      onClick={handleDelete}
+                      disabled={busy === "delete"}
+                    >
+                      {busy === "delete" ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {showPublishModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
+              <div className="relative p-4 w-full max-w-md">
+                <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
+                  {/* Close button */}
+                  <button
+                    type="button"
+                    className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center"
+                    onClick={() => setShowPublishModal(false)}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Modal content */}
+                  <h3 className="text-lg font-semibold text-heading">Publish item?</h3>
+
+                  {/* Buttons */}
+                  <div className="flex justify-end gap-2 mt-5">
+                    <button
+                      className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray"
+                      onClick={() => setShowPublishModal(false)}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      className="px-4 py-2 text-white hover:bg-radish-500 bg-radish-900 rounded-lg"
+                      onClick={handlePublish}
+                      disabled={busy === "publish"}
+                    >
+                      {busy === "publish" ? "Saving..." : "Publish"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>

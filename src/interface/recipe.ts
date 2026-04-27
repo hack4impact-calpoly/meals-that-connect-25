@@ -7,12 +7,11 @@ export interface Recipe {
   _id?: string;
   id?: string;
   name: string;
-  serving?: number;
-  tags?: string[];
-  ingredients?: Ingredient[];
-  instructions?: string;
-  comments?: string;
-  lastVerified?: Date;
-  verifiedBy?: string;
-  isDraft?: boolean;
+  serving: number;
+  tags: string[];
+  ingredients: Ingredient[];
+  instructions: string;
+  notes: string;
+  lastVerified: Date;
+  verifiedBy: string;
 }

@@ -13,14 +13,28 @@ import {
   Save,
   Tag,
   Trash2,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
-import type { Recipe } from "@/lib/types";
+import type { Recipe, Combo, Ingredient, RecipeReference } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
+import Image from "next/image";
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
-type Props = { open: boolean; onClose: () => void; recipeType: CreateRecipeType | null };
+type Props = {
+  item: Recipe | Combo | null;
+  open: boolean;
+  onClose: () => void;
+  recipeType: CreateRecipeType | null;
+  editMode: boolean;
+};
+
+type InputPair = {
+  name: string;
+  quantity: number | "";
+  units: string;
+};
 
 function NutritionalInfo({
   label,
@@ -93,15 +107,30 @@ function DropdownField({
 }: {
   icon: LucideIcon;
   label: string;
-  options: string[];
+  options: { id: string; name: string }[];
   selectedValues: string[];
-  onSelect: (value: string) => void;
+  onSelect: (option: { id: string; name: string }) => void;
   placeholder: string;
 }) {
   const [isOpen, setIsOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // close automatically when outside container is clicked on
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
@@ -130,26 +159,28 @@ function DropdownField({
             ) : (
               options.map((option) => (
                 <button
-                  key={option}
+                  key={option.id}
                   type="button"
                   onClick={() => {
                     onSelect(option);
-                    setIsOpen(false);
                   }}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-montserrat text-left transition ${
-                    selectedValues.includes(option)
+                    selectedValues.includes(option.name)
                       ? "bg-pepper/10 text-pepper font-semibold"
                       : "text-pepper/70 hover:bg-pepper/5"
                   }`}
                 >
                   <input
                     type="checkbox"
-                    checked={selectedValues.includes(option)}
+                    checked={selectedValues.includes(option.name)}
                     onChange={() => {}}
                     className="h-4 w-4"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelect(option);
+                    }}
                   />
-                  {option}
+                  {option.name}
                 </button>
               ))
             )}
@@ -160,32 +191,40 @@ function DropdownField({
   );
 }
 
-export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) {
-  const Icon = recipeType?.icon;
+export default function CreateRecipePopUp({ item, open, onClose, recipeType, editMode }: Props) {
   const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
-  const isCombo = recipeType?.id === "combo";
-  const [selectedSides, setSelectedSides] = useState<string[]>([]);
-  const [selectedFruit, setSelectedFruit] = useState<string[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-  const [sideOptions, setSideOptions] = useState<string[]>([]);
-  const [fruitOptions, setFruitOptions] = useState<string[]>([]);
+  const isCombo = recipeType?.id === "Combo";
+  const [selectedSides, setSelectedSides] = useState<RecipeReference[]>([]);
+  const [selectedFruits, setSelectedFruit] = useState<RecipeReference[]>([]);
+  const [selectedEntrees, setSelectedEntree] = useState<RecipeReference[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<RecipeReference[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<RecipeReference[]>([]);
+  const [entreeOptions, setEntreeOptions] = useState<{ id: string; name: string }[]>([]);
+  const [sideOptions, setSideOptions] = useState<{ id: string; name: string }[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<{ id: string; name: string }[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
-    section.options.map((option) => option.label),
+    section.options.map((option) => ({
+      name: option.label,
+      id: option.label,
+    })),
   );
   const allergenOptions = FILTER_SECTIONS.filter((section) => section.id == "allergens").flatMap((section) =>
-    section.options.map((option) => option.label),
+    section.options.map((option) => ({
+      name: option.label,
+      id: option.label,
+    })),
   );
 
-  const [title, setTitle] = useState("");
+  const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [id, setId] = useState<string | null>(null);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
   const [notes, setNotes] = useState("");
   const [servings, setServings] = useState("1");
-  const [ingredientsText, setIngredientsText] = useState("");
   const [instructionsText, setInstructionsText] = useState("");
   const [nutrition, setNutrition] = useState({
     calories: "",
@@ -196,20 +235,144 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     sodium: "",
   });
 
+  const [ingredientInputs, setIngredientInputs] = useState<InputPair[]>([{ name: "", quantity: "", units: "" }]);
+
+  // handle ingredient name change
+  const handleIngredientChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+    updated[index].name = value;
+    setIngredientInputs(updated);
+  };
+
+  // handle quantity change
+  const handleQuantityChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+
+    // convert to number
+    updated[index].quantity = value === "" ? "" : Number(value);
+
+    setIngredientInputs(updated);
+  };
+
+  // handle units change
+  const handleUnitsChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+    updated[index].units = value;
+    setIngredientInputs(updated);
+  };
+
+  // adding new row
+  const addRow = () => {
+    setIngredientInputs([...ingredientInputs, { name: "", quantity: "", units: "" }]);
+  };
+
+  // removing row
+  const removeRow = (index: number) => {
+    const updated = ingredientInputs.filter((_, i) => i !== index);
+    setIngredientInputs(updated);
+  };
+
+  const isRecipe = (item: Recipe | Combo): item is Recipe => {
+    return "ingredients" in item;
+  };
+
+  async function getRecipe(id: string): Promise<Recipe> {
+    const res = await fetch(`/api/recipes/${id}`);
+    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+    return res.json();
+  }
+
   useEffect(() => {
     if (!open) return;
-    setTitle("");
-    setSelectedSides([]);
-    setSelectedFruit([]);
-    setSelectedFilters([]);
-    setSelectedAllergens([]);
-    setNotes("");
-    setServings("1");
-    setIngredientsText("");
-    setInstructionsText("");
-    setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
-    setId(null);
-    setBusy(null);
+
+    if (item == null) {
+      setName("");
+      setIngredientInputs([{ name: "", quantity: "", units: "" }]);
+      setSelectedSides([]);
+      setSelectedFruit([]);
+      setSelectedEntree([]);
+      setSelectedFilters([]);
+      setSelectedAllergens([]);
+      setNotes("");
+      setServings("1");
+      setInstructionsText("");
+      setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
+      setId(null);
+      setBusy(null);
+    } else {
+      setName(item.name);
+      setServings(item.serving.toString());
+      setSelectedAllergens(
+        (item.allergens ?? []).map((f) => ({
+          id: f.trim(),
+          name: f.trim(),
+        })),
+      );
+      setSelectedFilters(
+        (item.filters ?? []).map((f) => ({
+          id: f.trim(),
+          name: f.trim(),
+        })),
+      );
+      setInstructionsText(item.instructions ?? "");
+      setNotes(item.notes ?? "");
+      setImageUrl(item.imageUrl ?? "");
+
+      if (!item) return;
+
+      // if it's entree/side/fruit
+      if (!isCombo && isRecipe(item) === true) {
+        setIngredientInputs(
+          item.ingredients
+            ? item.ingredients.map((ingredient: Ingredient) => ({
+                name: ingredient.name,
+                quantity: ingredient.quantity,
+                units: ingredient.units,
+              }))
+            : [],
+        );
+
+        setNutrition({
+          calories: item.nutritional_info.calories.toString(),
+          protein: item.nutritional_info.protein.toString(),
+          fat: item.nutritional_info.fat.toString(),
+          carbs: item.nutritional_info.carbs.toString(),
+          fiber: item.nutritional_info.fiber.toString(),
+          sodium: item.nutritional_info.sodium.toString(),
+        });
+      } else if (isCombo && isRecipe(item) === false) {
+        const loadAll = async () => {
+          const [eM, sN, fN] = await Promise.all([
+            Promise.all(
+              (item.entrees ?? []).map(async (e) => {
+                const r = await getRecipe(e);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+            Promise.all(
+              (item.sides ?? []).map(async (s) => {
+                const r = await getRecipe(s);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+            Promise.all(
+              (item.fruits ?? []).map(async (f) => {
+                const r = await getRecipe(f);
+                return { id: r._id, name: r.name };
+              }),
+            ),
+          ]);
+
+          setSelectedSides(sN);
+          setSelectedFruit(fN);
+          setSelectedEntree(eM);
+        };
+        loadAll();
+      }
+
+      setId(item._id);
+      setBusy(null);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -221,7 +384,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
       setLoadingOptions(true);
 
       try {
-        const buildUrl = (category: "side" | "fruit") => {
+        const buildUrl = (category: "entree" | "side" | "fruit") => {
           const params = new URLSearchParams({
             categories: category,
             isDraft: "false",
@@ -232,30 +395,34 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           return `/api/recipes?${params.toString()}`;
         };
 
-        const [sideRes, fruitRes] = await Promise.all([
+        const [entreeRes, sideRes, fruitRes] = await Promise.all([
+          fetch(buildUrl("entree"), { signal: controller.signal }),
           fetch(buildUrl("side"), { signal: controller.signal }),
           fetch(buildUrl("fruit"), { signal: controller.signal }),
         ]);
 
-        if (!sideRes.ok || !fruitRes.ok) {
+        if (!entreeRes.ok || !sideRes.ok || !fruitRes.ok) {
           throw new Error("Failed to load recipe options");
         }
 
-        const [sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }] = await Promise.all([
-          sideRes.json(),
-          fruitRes.json(),
-        ]);
+        const [entreeJson, sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }, { data?: Recipe[] }] =
+          await Promise.all([entreeRes.json(), sideRes.json(), fruitRes.json()]);
 
         const toOptionNames = (recipes: Recipe[] = []) =>
-          Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
+          /*Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
             a.localeCompare(b),
+          );*/
+          Array.from(new Map(recipes.map((r) => [r.name.trim(), { id: r._id, name: r.name.trim() }])).values()).sort(
+            (a, b) => a.name.localeCompare(b.name),
           );
 
+        setEntreeOptions(toOptionNames(entreeJson.data));
         setSideOptions(toOptionNames(sideJson.data));
         setFruitOptions(toOptionNames(fruitJson.data));
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
         console.error("Failed to load side/fruit recipe options", error);
+        setEntreeOptions([]);
         setSideOptions([]);
         setFruitOptions([]);
       } finally {
@@ -268,83 +435,190 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
     return () => controller.abort();
   }, [open]);
 
-  async function saveRecipe(isDraft: boolean) {
-    if (!isDraft && !title.trim()) return;
+  async function saveRecipe(isDraft: boolean, item_id: String | null) {
+    if (!isDraft && !name.trim()) return;
 
-    const ingredientLines = ingredientsText
-      .split(/[\r\n,]+/)
-      .map((line) => line.trim())
-      .filter(Boolean);
+    // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
+    if (!isCombo && item_id !== "") {
+      const res = await fetch(`/api/combos`, { method: "GET" });
+      if (!res.ok) {
+        console.error("Failed to check recipe combos", res.status);
+        alert("Failed to save recipe. Please try again.");
+        return;
+      }
 
-    const nutritionalInfo = [
-      Number(nutrition.calories) || 0,
-      Number(nutrition.protein) || 0,
-      Number(nutrition.fat) || 0,
-      Number(nutrition.carbs) || 0,
-      Number(nutrition.fiber) || 0,
-      Number(nutrition.sodium) || 0,
-    ];
+      const json = await res.json();
+      const data = json.data;
 
-    const comboPayload = {
-      _id: crypto.randomUUID(),
-      name: title.trim() || (isDraft ? "Untitled Draft" : ""),
-      isDraft,
-      serving: Number(servings) || 1,
-      sides: selectedSides.map((name) => ({ name, quantity: "1" })),
-      fruits: selectedFruit.map((name) => ({ name, quantity: "1" })),
-      filters: selectedFilters.map((filter) => filter.trim().toLowerCase()).filter(Boolean),
-      allergens: selectedAllergens.map((allergen) => allergen.trim().toLowerCase()).filter(Boolean),
-      instructions: instructionsText,
-      notes,
-      ...(imageUrl ? { imageUrl } : {}),
-      ...(nutritionalInfo.some((value) => value > 0) ? { nutritional_info: nutritionalInfo } : {}),
-    };
+      const isUsed = data.some(
+        (combo: Combo) =>
+          combo.entrees?.some((e) => e === id) ||
+          combo.sides?.some((s) => s === id) ||
+          combo.fruits?.some((f) => f === id),
+      );
 
-    const recipePayload = {
-      _id: crypto.randomUUID(),
-      name: title.trim() || (isDraft ? "Untitled Draft" : ""),
-      isDraft,
-      tags: [recipeType?.id, ...selectedFilters, ...selectedAllergens]
-        .filter((tag): tag is string => Boolean(tag))
-        .map((tag) => tag.trim().toLowerCase()),
-      serving: Number(servings) || 1,
-      ingredients:
-        ingredientLines.length > 0
-          ? ingredientLines.map((name) => ({ name, quantity: "1" }))
-          : [{ name: "Ingredient", quantity: "1" }],
-      instructions: instructionsText,
-      comments: notes,
-      ...(imageUrl ? { imageUrl } : {}),
-    };
+      if (isUsed === true) {
+        alert("Failed to save recipe as a draft. Recipe is being used in an existing combo.");
+        return;
+      }
+    }
 
-    const payload = isCombo ? comboPayload : recipePayload;
-    const apiPath = isCombo ? "/api/combos" : "/api/recipes";
+    const tags = [recipeType?.id, ...selectedFilters.map((f) => f.name)]
+      .filter((tag): tag is string => Boolean(tag))
+      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
+
+    let payload;
 
     setBusy("publish");
+
     try {
-      const res = await fetch(apiPath, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`Save failed (${res.status})`);
-      await res.json().catch(() => ({}));
+      let res;
+      // check if it's recipe or combo
+      if (isCombo) {
+        payload = {
+          _id: crypto.randomUUID(),
+          name: name.trim() || (isDraft ? "Untitled Draft" : ""),
+          serving: Number(servings) || 1,
+          entrees: selectedEntrees.map((entree) => entree.id),
+          sides: selectedSides.map((side) => side.id),
+          fruits: selectedFruits.map((fruit) => fruit.id),
+          filters: Array.from(new Set(tags)),
+          notes: notes,
+          allergens: selectedAllergens.map((allergen) => allergen.name),
+          instructions: instructionsText,
+          isDraft,
+          ...(imageUrl ? { imageUrl } : {}),
+        };
+
+        if (editMode === false) {
+          res = await fetch("/api/combos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        } else if (item && "_id" in item) {
+          // change to our id
+          payload["_id"] = item._id;
+          res = await fetch(`/api/combos/${item._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        }
+      } else {
+        payload = {
+          _id: crypto.randomUUID(),
+          name: name.trim() || (isDraft ? "Untitled Draft" : ""),
+          serving: Number(servings) || 1,
+          allergens: selectedAllergens.map((allergen) => allergen.name),
+          filters: Array.from(new Set(tags)),
+          ingredients:
+            ingredientInputs.length > 0
+              ? ingredientInputs
+                  .filter(
+                    (ingredient) =>
+                      ingredient.name.trim() !== "" || ingredient.quantity !== "" || ingredient.units.trim() !== "",
+                  )
+                  .map((ingredient) => ({
+                    name: ingredient.name,
+                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : undefined,
+                    units: ingredient.units,
+                  }))
+              : undefined,
+          instructions: instructionsText,
+          notes: notes,
+          isDraft,
+          nutritional_info: {
+            calories: nutrition.calories !== "" ? Number(nutrition.calories) : 0,
+            protein: nutrition.protein !== "" ? Number(nutrition.protein) : 0,
+            fat: nutrition.fat !== "" ? Number(nutrition.fat) : 0,
+            carbs: nutrition.carbs !== "" ? Number(nutrition.carbs) : 0,
+            fiber: nutrition.fiber !== "" ? Number(nutrition.fiber) : 0,
+            sodium: nutrition.sodium !== "" ? Number(nutrition.sodium) : 0,
+          },
+          ...(imageUrl ? { imageUrl } : {}),
+        };
+        console.log("Payload:", payload);
+
+        if (editMode === false) {
+          res = await fetch("/api/recipes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error(`Save failed (${res.status})`);
+          await res.json().catch(() => ({}));
+        } else if (item && "_id" in item) {
+          // change to our id
+          payload["_id"] = item._id;
+          res = await fetch(`/api/recipes/${item._id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (!res.ok) throw new Error(`Save failed (${res.status})`);
+          await res.json().catch(() => ({}));
+        }
+      }
+
       setId(payload._id);
     } finally {
       setBusy(null);
+
+      // close window
+      onClose();
+
+      // reload window
+      window.location.reload();
     }
   }
 
   async function trash() {
     if (!id) return;
-    if (!window.confirm("Delete this recipe?")) return;
+
+    // check if valid deletion can occur - no recipe should be able to be deleted if it's being used in an existing combo, but combos can be deleted regardless
+    if (!isCombo) {
+      const res = await fetch(`/api/combos`, { method: "GET" });
+      if (!res.ok) {
+        console.error("Failed to check recipe combos", res.status);
+        alert("Failed to delete recipe. Please try again.");
+        return;
+      }
+
+      const json = await res.json();
+      const data = json.data;
+
+      const isUsed = data.some(
+        (combo: Combo) =>
+          combo.entrees?.some((e) => e === id) ||
+          combo.sides?.some((s) => s === id) ||
+          combo.fruits?.some((f) => f === id),
+      );
+
+      if (isUsed === true) {
+        alert("Failed to delete. Recipe is being used in an existing combo.");
+        return;
+      }
+    }
+
+    setShowDeleteModal(true);
     setBusy("delete");
     try {
-      const res = await fetch(`/api/recipes/${encodeURIComponent(id)}`, { method: "DELETE" });
+      let res;
+      if (isCombo) {
+        res = await fetch(`/api/combos/${encodeURIComponent(id)}`, { method: "DELETE" });
+      } else {
+        // verify we can delete this recipe as long as it's not being used in an existing combo
+        res = await fetch(`/api/recipes/${encodeURIComponent(id)}`, { method: "DELETE" });
+      }
       if (!res.ok) throw new Error(`Delete failed (${res.status})`);
       onClose();
     } finally {
       setBusy(null);
+
+      window.location.reload();
     }
   }
 
@@ -363,29 +637,63 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           {/* Header */}
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={trash}
-                disabled={!id || busy !== null}
-                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
-                title={id ? "Delete recipe" : "Delete available after publish"}
-              >
-                <Trash2 className="h-5 w-5" />
-              </button>
-              <div>
-                <p className="text-sm font-montserrat font-semibold uppercase tracking-[0.2em] text-pepper/60">
-                  Create Recipe
-                </p>
-                <h2 className="text-2xl font-montserrat font-semibold text-pepper">
-                  New {recipeType?.label ?? "Recipe"}
-                </h2>
-              </div>
+              {/* only show trash option if we are editing */}
+              {editMode === true && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(true)}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                  title={id ? "Delete recipe" : "Delete available after publish"}
+                >
+                  <Trash2 className="h-5 w-5" />
+                </button>
+              )}
             </div>
+
+            {showDeleteModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
+                <div className="relative p-4 w-full max-w-md">
+                  <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
+                    {/* Close button */}
+                    <button
+                      type="button"
+                      className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center"
+                      onClick={() => setShowDeleteModal(false)}
+                    >
+                      ✕
+                    </button>
+
+                    {/* Modal content */}
+                    <h3 className="text-lg font-semibold text-heading">Delete item?</h3>
+
+                    <p className="text-sm text-body mt-2">This action cannot be undone.</p>
+
+                    {/* Buttons */}
+                    <div className="flex justify-end gap-2 mt-5">
+                      <button
+                        className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray"
+                        onClick={() => setShowDeleteModal(false)}
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        className="px-4 py-2 text-white hover:bg-radish-500 bg-radish-900 rounded-lg"
+                        onClick={trash}
+                        disabled={busy === "delete"}
+                      >
+                        {busy === "delete" ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-wrap items-center justify-end gap-3">
               <button
                 type="button"
-                onClick={() => saveRecipe(true)}
+                onClick={() => saveRecipe(true, item ? item._id : "")}
                 disabled={busy !== null}
                 className="inline-flex items-center gap-2 rounded-full border border-radish-200 bg-white px-4 py-2 text-sm font-semibold text-radish-900 transition hover:bg-radish-100 disabled:opacity-50"
               >
@@ -394,8 +702,8 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
               </button>
               <button
                 type="button"
-                onClick={() => saveRecipe(false)}
-                disabled={busy !== null || !title.trim()}
+                onClick={() => saveRecipe(false, "")}
+                disabled={busy !== null || !name.trim()}
                 className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
               >
                 {busy === "publish" ? "Saving…" : "Publish"}
@@ -404,123 +712,214 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           </div>
 
           {/* Image Upload */}
-          <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
-            <div className="mx-auto max-w-xs text-center">
-              <ImageUploader onUpload={(url) => setImageUrl(url)} />
+          {imageUrl ? (
+            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+              <div className="mx-auto max-w-xs text-center">
+                <Image
+                  src={imageUrl}
+                  alt="Uploaded"
+                  width={200}
+                  height={200}
+                  className="mx-auto mb-4 max-h-48 rounded-xl object-cover"
+                />
+                <button onClick={() => setImageUrl("")} className="text-sm text-blue-500">
+                  Replace image
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+              <div className="mx-auto max-w-xs text-center">
+                <ImageUploader onUpload={(url) => setImageUrl(url)} />
+              </div>
+            </div>
+          )}
 
           {/* Title */}
           <div className="mt-5">
             <label className="flex flex-col gap-1">
-              <span className="text-sm font-montserrat font-semibold text-pepper">Title</span>
+              <span className="text-sm font-montserrat font-semibold text-pepper">New {createLabel}</span>
               <input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Chicken Alfredo"
                 className="w-full rounded-md border border-pepper/20 px-3 py-2 font-montserrat text-pepper outline-none focus:border-pepper/50"
               />
             </label>
           </div>
 
-          <div className="mt-6 rounded-[32px] border border-pepper/20 bg-white p-5">
-            <div className="mb-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-pepper/50">New {createLabel}</p>
-            </div>
-            <div className="space-y-3">
-              {isCombo && (
-                <>
-                  <DropdownField
-                    icon={Carrot}
-                    label="Sides"
-                    options={sideOptions}
-                    selectedValues={selectedSides}
-                    onSelect={(value) => {
-                      setSelectedSides(
-                        selectedSides.includes(value)
-                          ? selectedSides.filter((s) => s !== value)
-                          : [...selectedSides, value],
-                      );
-                    }}
-                    placeholder={loadingOptions ? "Loading sides..." : "Select sides"}
-                  />
-                  <DropdownField
-                    icon={Apple}
-                    label="Fruit"
-                    options={fruitOptions}
-                    selectedValues={selectedFruit}
-                    onSelect={(value) => {
-                      setSelectedFruit(
-                        selectedFruit.includes(value)
-                          ? selectedFruit.filter((f) => f !== value)
-                          : [...selectedFruit, value],
-                      );
-                    }}
-                    placeholder={loadingOptions ? "Loading fruit..." : "Select fruit"}
-                  />
-                </>
-              )}
-              <FieldRow
-                icon={Tag}
-                label="Filters"
-                value={selectedFilters.join(", ")}
-                placeholder="Enter filters"
-                onChange={(value) => setSelectedFilters(value.trim() ? [value] : [])}
-              />
-              <DropdownField
-                icon={CircleAlert}
-                label="Allergens"
-                options={allergenOptions}
-                selectedValues={selectedAllergens}
-                onSelect={(value) => {
-                  setSelectedAllergens(
-                    selectedAllergens.includes(value)
-                      ? selectedAllergens.filter((a) => a !== value)
-                      : [...selectedAllergens, value],
-                  );
-                }}
-                placeholder="Select allergens"
-              />
-              <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
-            </div>
+          <div className="space-y-3 mt-5">
+            {isCombo && (
+              <>
+                <DropdownField
+                  icon={Carrot}
+                  label="Entree"
+                  options={entreeOptions}
+                  selectedValues={selectedEntrees.map((f) => f.name)}
+                  onSelect={(value) => {
+                    const selectedOption = entreeOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
+                    setSelectedEntree((prev) =>
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
+                />
+                <DropdownField
+                  icon={Carrot}
+                  label="Sides"
+                  options={sideOptions}
+                  selectedValues={selectedSides.map((f) => f.name)}
+                  onSelect={(value) => {
+                    const selectedOption = sideOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
+                    setSelectedSides((prev) =>
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading sides..." : "Select Side(s)"}
+                />
+                <DropdownField
+                  icon={Apple}
+                  label="Fruit"
+                  options={fruitOptions}
+                  selectedValues={selectedFruits.map((f) => f.name)}
+                  onSelect={(value) => {
+                    const selectedOption = fruitOptions.find((e) => e.name === value.name);
+
+                    if (!selectedOption) return;
+
+                    setSelectedFruit((prev) =>
+                      prev.some((e) => e.id === selectedOption.id)
+                        ? prev.filter((e) => e.id !== selectedOption.id)
+                        : [...prev, selectedOption],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
+                />
+              </>
+            )}
+            <DropdownField
+              icon={Tag}
+              label="Filters"
+              options={filterOptions}
+              selectedValues={selectedFilters.map((f) => f.name)}
+              onSelect={(value) => {
+                setSelectedFilters((prev) =>
+                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
+                );
+              }}
+              placeholder="Select Filter(s)"
+            />
+            <DropdownField
+              icon={CircleAlert}
+              label="Allergens"
+              options={allergenOptions}
+              selectedValues={selectedAllergens.map((f) => f.name)}
+              onSelect={(value) => {
+                setSelectedAllergens((prev) =>
+                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
+                );
+              }}
+              placeholder="Select Allergen(s)"
+            />
+            <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
           </div>
 
           <div className="my-6 h-px bg-pepper/10" />
 
           <div className="space-y-6">
-            <div className="space-y-3">
-              <div className="text-sm font-semibold text-pepper">Servings</div>
-              <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
-                <button
-                  type="button"
-                  onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="min-w-[24px] text-center text-xl font-semibold text-pepper">{servings || "1"}</span>
-                <button
-                  type="button"
-                  onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="h-px bg-pepper/10" />
-            </div>
+            {!isCombo && (
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-pepper">Servings</div>
+                <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
+                  <button
+                    type="button"
+                    onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <input
+                    type="number"
+                    value={servings || "1"}
+                    onChange={(e) => setServings(e.target.value)}
+                    className="max-w-[54px] text-center text-xl font-semibold text-pepper"
+                  />
 
-            <div className="space-y-3">
-              <div className="text-sm font-semibold text-pepper">Ingredients</div>
-              <textarea
-                value={ingredientsText}
-                onChange={(e) => setIngredientsText(e.target.value)}
-                placeholder="List ingredients here"
-                rows={3}
-                className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
-              />
-              <div className="h-px bg-pepper/10" />
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="h-px bg-pepper/10" />
+              </div>
+            )}
+
+            {!isCombo && (
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-pepper">Ingredients</div>
+                <div className="pt-6 pb-6 bg-white rounded-2xl">
+                  <div className="flex flex-col gap-2">
+                    {ingredientInputs.map((item, index) => (
+                      <div key={index} className="flex gap-3">
+                        <input
+                          type="text"
+                          placeholder="Enter Ingredient Name"
+                          value={item.name}
+                          onChange={(e) => handleIngredientChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <input
+                          type="number"
+                          placeholder="Enter Number"
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <input
+                          type="text"
+                          placeholder="Enter Units"
+                          value={item.units}
+                          onChange={(e) => handleUnitsChange(index, e.target.value)}
+                          className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                        />
+
+                        <button
+                          onClick={() => removeRow(index)}
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-4xl text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          <X size={20} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      onClick={addRow}
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-3xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Plus size={20} />
+                    </button>
+                  </div>
+                </div>
+                <div className="h-px bg-pepper/10" />
+              </div>
+            )}
 
             <div className="space-y-3">
               <div className="text-sm font-semibold text-pepper">Instructions</div>
@@ -535,51 +934,53 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
           </div>
 
           {/* Nutritional Info */}
-          <div className="mt-6">
-            <h3 className="text-base font-montserrat font-semibold text-pepper">Nutritional Information</h3>
+          {!isCombo && (
+            <div className="mt-6">
+              <h3 className="text-base font-montserrat font-semibold text-pepper">Nutritional Information</h3>
 
-            <div className="mt-3 flex flex-wrap gap-3">
-              <NutritionalInfo
-                label="Calories"
-                unit="kcal"
-                value={nutrition.calories}
-                onChange={(v) => setNutrition((n) => ({ ...n, calories: v }))}
-              />
-              <NutritionalInfo
-                label="Protein"
-                unit="g"
-                value={nutrition.protein}
-                onChange={(v) => setNutrition((n) => ({ ...n, protein: v }))}
-              />
-              <NutritionalInfo
-                label="Fat"
-                unit="g"
-                value={nutrition.fat}
-                onChange={(v) => setNutrition((n) => ({ ...n, fat: v }))}
-              />
-              <NutritionalInfo
-                label="Carb"
-                unit="g"
-                value={nutrition.carbs}
-                onChange={(v) => setNutrition((n) => ({ ...n, carbs: v }))}
-              />
-              <NutritionalInfo
-                label="Fiber"
-                unit="g"
-                value={nutrition.fiber}
-                onChange={(v) => setNutrition((n) => ({ ...n, fiber: v }))}
-              />
-              <NutritionalInfo
-                label="Sodium"
-                unit="mg"
-                value={nutrition.sodium}
-                onChange={(v) => setNutrition((n) => ({ ...n, sodium: v }))}
-              />
+              <div className="mt-3 flex flex-wrap gap-3">
+                <NutritionalInfo
+                  label="Calories"
+                  unit="kcal"
+                  value={nutrition.calories}
+                  onChange={(v) => setNutrition((n) => ({ ...n, calories: v }))}
+                />
+                <NutritionalInfo
+                  label="Protein"
+                  unit="g"
+                  value={nutrition.protein}
+                  onChange={(v) => setNutrition((n) => ({ ...n, protein: v }))}
+                />
+                <NutritionalInfo
+                  label="Fat"
+                  unit="g"
+                  value={nutrition.fat}
+                  onChange={(v) => setNutrition((n) => ({ ...n, fat: v }))}
+                />
+                <NutritionalInfo
+                  label="Carb"
+                  unit="g"
+                  value={nutrition.carbs}
+                  onChange={(v) => setNutrition((n) => ({ ...n, carbs: v }))}
+                />
+                <NutritionalInfo
+                  label="Fiber"
+                  unit="g"
+                  value={nutrition.fiber}
+                  onChange={(v) => setNutrition((n) => ({ ...n, fiber: v }))}
+                />
+                <NutritionalInfo
+                  label="Sodium"
+                  unit="mg"
+                  value={nutrition.sodium}
+                  onChange={(v) => setNutrition((n) => ({ ...n, sodium: v }))}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Footer */}
-          <div className="mt-6 flex justify-end">
+          {/*<div className="mt-6 flex justify-end">
             <button
               type="button"
               onClick={onClose}
@@ -588,7 +989,7 @@ export default function CreateRecipePopUp({ open, onClose, recipeType }: Props) 
             >
               Close
             </button>
-          </div>
+          </div>*/}
         </DialogPanel>
       </div>
     </Dialog>
