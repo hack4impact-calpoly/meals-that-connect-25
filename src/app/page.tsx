@@ -7,7 +7,8 @@ export default function Home() {
   return (
     <main className="overflow-auto font-montserrat">
       <div className="px-8 py-6">
-        <div className="grid grid-cols-[3fr_2fr] gap-6 items-stretch">
+        {/* <div className="grid grid-cols-[3fr_2fr] gap-6 items-stretch"> */}
+        <div className="grid grid-cols-1 md:grid-cols-[3fr_2fr] gap-6 items-stretch">
           {/* Left – Greeting + Weekly Calendar */}
           <div className="flex flex-col gap-6">
             <h1 className="text-4xl font-bold text-black">Hi, Brian!</h1>
