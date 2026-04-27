@@ -26,7 +26,7 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
     return (
       <div
         onClick={handleClick}
-        className="relative w-83 h-86.5 cursor-pointer overflow-hidden rounded-[14px] border-2 border-dashed border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition"
+        className="relative h-86.5 cursor-pointer overflow-hidden rounded-[14px] border-2 border-dashed border-gray-300 bg-white flex items-center justify-center hover:bg-gray-50 transition"
       >
         <div className="absolute flex flex-col justify-center items-center bg-pepper inset-0 rounded-xl hover:bg-zinc-600 transition">
           <span className="flex text-white text-lg font-semibold">View Drafts</span>

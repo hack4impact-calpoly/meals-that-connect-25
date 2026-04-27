@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
 import { CreateRecipeType } from "@/components/CreateRecipePopUp";
-import { Utensils } from "lucide-react";
+import { Utensils, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 const EMPTY_FILTERS: FilterSelections = {
@@ -33,6 +33,7 @@ export default function RecipePageClient() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   const handleOpenItem = (item: Recipe | Combo) => {
     setSelectedItem(item);
@@ -104,14 +105,25 @@ export default function RecipePageClient() {
           selectedCategories={selectedCategories}
           setSelectedCategories={setSelectedCategories}
           onOpenItem={handleOpenItem}
+          filterButton={
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition text-sm font-medium"
+            >
+              <SlidersHorizontal className="h-5 w-5 text-gray-700" />
+              <span>Filters</span>
+            </button>
+          }
         />
       </div>
 
       <div className="hidden md:block w-px bg-dark-gray self-stretch" />
 
-      <div className="hidden md:block md:overflow-auto">
-        <FilterMenu onFilterChange={setFilters} />
-      </div>
+      {showFilters && (
+        <div className="md:block md:overflow-auto">
+          <FilterMenu onFilterChange={setFilters} />
+        </div>
+      )}
 
       {mode === "view" ? (
         <ViewRecipePopUp
