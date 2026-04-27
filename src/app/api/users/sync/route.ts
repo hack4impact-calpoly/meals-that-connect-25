@@ -21,7 +21,9 @@ export async function POST() {
   const name = `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim() || email;
 
   const user = await User.findOneAndUpdate(
-    { clerkId: userId },
+    {
+      $or: [{ clerkId: userId }, { email }],
+    },
     {
       clerkId: userId,
       email,
@@ -29,7 +31,11 @@ export async function POST() {
       imageUrl: clerkUser.imageUrl,
       lastLoginDate: new Date(),
     },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert: true,
+    },
   );
 
   return NextResponse.json({ role: user.role });

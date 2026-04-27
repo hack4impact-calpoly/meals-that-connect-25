@@ -1,7 +1,9 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
+import type { Recipe } from "@/lib/types";
 
 export type RecipeCardProps = {
+  item?: Recipe;
   imageUrl?: string;
   name: string;
   calories?: number;
@@ -19,28 +21,53 @@ const TAG_STYLES: Record<string, string> = {
   fallback: "bg-gray-100 text-gray-700",
 };
 
-export default function RecipeDailyCard({ imageUrl, name, calories, servingSize, tags = [], onOpen }: RecipeCardProps) {
-  const caloriesText = calories != null ? `${calories} cal` : null;
+export default function RecipeDailyCard({
+  item,
+  imageUrl,
+  name,
+  calories,
+  servingSize,
+  tags = [],
+  onOpen,
+}: RecipeCardProps) {
+  const recipeId = item?._id;
+  const resolvedImageUrl = item?.imageUrl ?? imageUrl;
+  const resolvedName = item?.name ?? name;
+  const resolvedCalories = item?.nutritional_info.calories ?? calories;
+  const resolvedServingSize = item?.serving != null ? `${item.serving}` : servingSize;
+  const resolvedTags = item?.filters ?? tags;
 
-  const servingText = servingSize != null ? `${servingSize}` : null;
+  const caloriesText = resolvedCalories != null ? `${resolvedCalories} cal` : null;
+
+  const servingText = resolvedServingSize != null ? `${resolvedServingSize}` : null;
 
   const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
 
-  const primaryTag = tags[0];
+  const primaryTag = resolvedTags[0];
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
+  const handleCardClick = () => {
+    if (recipeId) {
+      window.open(`/recipe?id=${recipeId}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    onOpen?.();
+  };
 
   return (
     <div
-      onClick={onOpen}
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-6 px-5 transition hover:shadow-md cursor-pointer"}`}
+      onClick={handleCardClick}
+      className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-6 transition hover:shadow-md cursor-pointer"
     >
       <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
-        {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
+        {resolvedImageUrl ? (
+          <Image src={resolvedImageUrl} alt={resolvedName} fill sizes="80px" className="object-cover" />
+        ) : null}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
-          {name}
+        <h3 className="truncate text-xl font-bold font-montserrat" title={resolvedName}>
+          {resolvedName}
         </h3>
         {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
       </div>
