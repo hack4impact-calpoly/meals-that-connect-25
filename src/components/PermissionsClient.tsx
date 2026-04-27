@@ -31,8 +31,7 @@ export default function PermissionsClient({ users }: { users: any[] }) {
 
   const filteredUsers = useMemo(() => {
     const filtered = users.filter((user) => {
-      const isRole = selectedRole.size === 0 || selectedRole.has(user.role as RoleValue);
-      return isRole;
+      return selectedRole.size === 0 || selectedRole.has(user.role as RoleValue);
     });
 
     if (!sortType) return filtered;

@@ -68,6 +68,23 @@ export default async function Permissions() {
         $date: "2026-04-22T23:33:09.486Z",
       },
     },
+    {
+      __v: 0,
+      clerkId: "u4",
+      createdAt: {
+        $date: "2026-04-28T23:33:09.486Z",
+      },
+      email: "blai4@gmail.com",
+      imageUrl: "",
+      lastLoginDate: {
+        $date: "2026-04-28T23:33:09.485Z",
+      },
+      name: "Rryan Lai",
+      role: "Admin",
+      updatedAt: {
+        $date: "2026-04-28T23:33:09.486Z",
+      },
+    },
   ];
 
   return (

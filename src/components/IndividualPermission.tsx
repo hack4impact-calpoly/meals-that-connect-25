@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export type UserPerms = {
@@ -19,6 +19,13 @@ export default function IndividualPermission({ user, editing = false }: { user: 
   const [role, setRole] = useState(user.role);
   const [recipe, setRecipe] = useState(user.recipe);
   const [menuPlanning, setMenuPlanning] = useState(user.menuPlanning);
+
+  useEffect(() => {
+    setRole(user.role);
+    setRecipe(user.recipe);
+    setMenuPlanning(user.menuPlanning);
+  }, [user.role, user.recipe, user.menuPlanning]);
+
   return (
     <div
       className={`grid grid-cols-subgrid col-span-6 items-center rounded-lg border-2 bg-white pl-8 pr-6 py-5 shadow-sm transition-colors font-montserrat ${
