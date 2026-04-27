@@ -92,8 +92,8 @@ export default function MealBrowser({
     <div className="flex flex-1 flex-col gap-3 md:gap-4">
       <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start md:items-center">
         {topLeftChildren}
-        <div className="flex gap-3 w-full md:w-auto items-center">
-          <div className="flex-1 md:flex-none">
+        <div className="flex gap-3 w-full items-center">
+          <div className="flex-1">
             <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
           </div>
           <AddNewRecipeButton />
