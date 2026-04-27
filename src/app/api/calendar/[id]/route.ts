@@ -5,13 +5,13 @@ import Recipe from "@/database/RecipeSchema";
 import Combo from "@/database/ComboSchema";
 
 type Params = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -42,12 +42,23 @@ export async function GET(req: NextRequest, { params }: Params) {
     const itemLookup = new Map<string, { _id: string; name: string; serving?: number }>();
 
     recipeDocs.forEach((doc) => {
-      if (doc._id)
-        itemLookup.set(doc._id.toString(), { _id: doc._id.toString(), name: doc.name, serving: doc.serving });
+      if (doc._id) {
+        itemLookup.set(doc._id.toString(), {
+          _id: doc._id.toString(),
+          name: doc.name,
+          serving: doc.serving,
+        });
+      }
     });
+
     comboDocs.forEach((doc) => {
-      if (doc._id)
-        itemLookup.set(doc._id.toString(), { _id: doc._id.toString(), name: doc.name, serving: doc.serving });
+      if (doc._id) {
+        itemLookup.set(doc._id.toString(), {
+          _id: doc._id.toString(),
+          name: doc.name,
+          serving: doc.serving,
+        });
+      }
     });
 
     const resolveItems = (ids: string[] = []) =>
@@ -69,7 +80,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -89,11 +100,9 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await connectDB();
 
-    // Find or create calendar document and add recipe to category
     const update = { $addToSet: { [category]: recipeId } };
     await Calendar.findOneAndUpdate({ _id: id }, update, { upsert: true });
 
-    // Populate references and return
     const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
@@ -104,7 +113,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = params;
+  const { id } = await params;
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -130,12 +139,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });
     }
 
-    // Remove recipe from the specified category
-    calendarDay[category] = calendarDay[category].filter((id: string) => id !== recipeId);
+    calendarDay[category] = calendarDay[category].filter((itemId: string) => itemId !== recipeId);
 
     await calendarDay.save();
 
-    // Populate references and return
     const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
