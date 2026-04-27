@@ -37,7 +37,7 @@ export default function IndividualPermission({
     <div
       onClick={handleRowClick}
       className={`grid grid-cols-subgrid col-span-6 items-center rounded-lg border-2 bg-white pl-8 pr-6 py-5 shadow-sm transition-colors font-montserrat ${
-        isSelected ? "border-radish-900" : "border-gray-200"
+        isSelected && editing ? "border-radish-900" : "border-gray-200"
       }`}
     >
       {/* Avatar */}

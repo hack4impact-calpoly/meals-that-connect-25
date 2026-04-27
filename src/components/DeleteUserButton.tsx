@@ -5,7 +5,7 @@ export default function DeleteUserButton({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-3
-                               text-base font-bold font-montserrat text-white text-nowrap"
+                               text-base font-bold font-montserrat text-white text-nowrap cursor-pointer"
     >
       Delete User
       <Trash2 />
