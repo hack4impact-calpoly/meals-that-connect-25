@@ -5,12 +5,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import FilterTag from "./FilterTag";
 import { FilterSelections } from "@/lib/types";
 
-type FilterOption = {
+export type FilterOption = {
   id: string;
   label: string;
 };
 
-type FilterSection = {
+export type FilterSection = {
   id: string;
   label: string;
   options: FilterOption[];
