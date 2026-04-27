@@ -10,6 +10,15 @@ import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 
+interface RecipeDatabaseItem {
+  _id?: string;
+  id?: string;
+  name: string;
+  serving?: number;
+  tags?: string[];
+  itemType?: "recipe" | "combo";
+}
+
 interface RecipeDatabaseProps {
   items: Recipe[] | Combo[];
   loading: boolean;
@@ -111,6 +120,7 @@ export default function RecipeDatabase({
 
           return (
             <DraggableRecipeCard
+              recipeId={String(displayItem.id ?? displayItem._id ?? "")}
               key={displayItem.id ?? displayItem._id ?? index}
               imageUrl={""}
               name={displayItem.name ?? "Untitled"}
