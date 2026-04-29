@@ -1,13 +1,19 @@
 "use client";
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
 
 interface DraggableRecipeCardProps {
+  recipeId: string;
   imageUrl?: string;
   name: string;
   calories?: number;
   servingSize?: string;
   tags?: string[];
+  itemType?: "recipe" | "combo";
+  sides?: string[];
+  fruits?: string[];
+  disabled?: boolean;
 }
 
 const TAG_STYLES: Record<string, string> = {
@@ -20,12 +26,39 @@ const TAG_STYLES: Record<string, string> = {
 };
 
 export default function DraggableRecipeCard({
+  recipeId,
   imageUrl,
   name,
   calories,
   servingSize,
   tags = [],
+  itemType,
+  sides = [],
+  fruits = [],
+  disabled = false,
 }: DraggableRecipeCardProps) {
+  const normalizedTags = (tags ?? ["Entree"]).map((tag) => tag?.toString().trim()).filter(Boolean);
+
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `recipe-${recipeId}`,
+    data: {
+      type: "recipe",
+      recipeId,
+      name,
+      tags: normalizedTags,
+      primaryTag: normalizedTags[0] || "Entree",
+      itemType,
+      sides,
+      fruits,
+    },
+    disabled,
+  });
+
+  // Debug logging
+  if (!recipeId) {
+    console.warn("Warning: DraggableRecipeCard received empty recipeId for recipe:", name);
+  }
+
   const caloriesText = calories != null ? `${calories} cal` : null;
 
   const servingText = servingSize != null ? `${servingSize}` : null;
@@ -36,7 +69,14 @@ export default function DraggableRecipeCard({
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border-2 border-gray-300 bg-white p-4 transition hover:shadow-md">
+    <div
+      ref={setNodeRef}
+      className={`flex items-center gap-3 rounded-xl border-2 border-gray-300 bg-white p-4 transition ${
+        isDragging ? "opacity-50 bg-gray-50" : "hover:shadow-md"
+      }`}
+      {...attributes}
+      {...listeners}
+    >
       <div className="relative shrink-0 h-12 w-12 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
       </div>
@@ -54,7 +94,7 @@ export default function DraggableRecipeCard({
         </span>
       ) : null}
 
-      <GripVertical size={20} strokeWidth={1.7} className="cursor-move text-gray-500" />
+      <GripVertical size={20} strokeWidth={1.7} className="cursor-move text-gray-500 flex-shrink-0" />
     </div>
   );
 }
