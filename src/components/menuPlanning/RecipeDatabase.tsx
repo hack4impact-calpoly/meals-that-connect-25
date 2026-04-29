@@ -6,6 +6,7 @@ import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
+import PaginationDisplay from "@/components/PaginationDisplay";
 import { CategoryValue, Combo, Recipe } from "@/lib/types";
 
 type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
@@ -28,6 +29,9 @@ interface RecipeDatabaseProps {
   onToggleCategory: (category: CategoryValue) => void;
   sortBy: SortOption;
   onSortChange: (value: SortOption) => void;
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
@@ -61,6 +65,9 @@ export default function RecipeDatabase({
   onToggleCategory,
   sortBy,
   onSortChange,
+  currentPage,
+  totalPages,
+  onPageChange,
 }: RecipeDatabaseProps) {
   return (
     <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
@@ -116,6 +123,9 @@ export default function RecipeDatabase({
             _id?: string;
             name?: string;
             tags?: string[];
+            filters?: string[];
+            nutritional_info?: { calories?: number };
+            serving?: number;
           };
 
           return (
@@ -124,12 +134,21 @@ export default function RecipeDatabase({
               key={displayItem.id ?? displayItem._id ?? index}
               imageUrl={""}
               name={displayItem.name ?? "Untitled"}
-              calories={0}
-              servingSize={"100g"}
-              tags={displayItem.tags ?? []}
+              calories={displayItem.nutritional_info?.calories ?? 0}
+              servingSize={displayItem.serving ? `${displayItem.serving}g` : "100g"}
+              tags={displayItem.tags ?? displayItem.filters ?? []}
             />
           );
         })}
+      </div>
+
+      <div className="flex justify-center mt-4">
+        <PaginationDisplay
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={onPageChange}
+          disabled={loading}
+        />
       </div>
     </div>
   );
