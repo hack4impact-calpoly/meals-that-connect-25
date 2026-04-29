@@ -15,33 +15,9 @@ export default async function Permissions() {
     redirect("/");
   }
 
-  const users = [
-    {
-      _id: "u1",
-      name: "Bryan Lai",
-      role: "Admin",
-      recipe: true,
-      menuPlanning: true,
-    },
-    {
-      _id: "u2",
-      name: "Bryan Lai",
-      role: "Dining Site Staff",
-      recipe: true,
-      menuPlanning: false,
-    },
-    {
-      _id: "u3",
-      name: "Bryan Lai",
-      role: "Kitchen Staff",
-      recipe: false,
-      menuPlanning: false,
-    },
-  ];
-
   return (
     <main>
-      <PermissionsClient allUsers={users} />
+      <PermissionsClient />
     </main>
   );
 }

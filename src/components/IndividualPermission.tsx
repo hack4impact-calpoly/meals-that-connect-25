@@ -8,8 +8,6 @@ export type UserPerms = {
   name: string;
   avatarUrl?: string;
   role: string;
-  recipe: boolean;
-  menuPlanning: boolean;
 };
 
 const ROLES = ["Admin", "Dining Site Staff", "Kitchen Staff"];
@@ -26,8 +24,6 @@ export default function IndividualPermission({
   onSelect: (user: UserPerms) => void;
 }) {
   const [role, setRole] = useState(user.role);
-  const [recipe, setRecipe] = useState(user.recipe);
-  const [menuPlanning, setMenuPlanning] = useState(user.menuPlanning);
 
   const handleRowClick = () => {
     if (editing) onSelect(user);
@@ -63,32 +59,6 @@ export default function IndividualPermission({
         </select>
       ) : (
         <div className="justify-self-center text-center">{role}</div>
-      )}
-      {/* Recipe */}
-      {editing ? (
-        <select
-          value={recipe ? "Yes" : "No"}
-          onChange={(e) => setRecipe(e.target.value === "Yes")}
-          className="justify-self-center rounded-lg bg-medium-gray px-3 py-2 text-sm font-medium border-none cursor-pointer"
-        >
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      ) : (
-        <div className="justify-self-center text-center">{recipe ? "Yes" : "No"}</div>
-      )}
-      {/* Menu Planning */}
-      {editing ? (
-        <select
-          value={menuPlanning ? "Yes" : "No"}
-          onChange={(e) => setMenuPlanning(e.target.value === "Yes")}
-          className="justify-self-center rounded-lg bg-medium-gray px-3 py-2 text-sm font-medium border-none cursor-pointer"
-        >
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      ) : (
-        <div className="justify-self-center text-center">{menuPlanning ? "Yes" : "No"}</div>
       )}
       {/* Checkbox */}
       {editing ? (

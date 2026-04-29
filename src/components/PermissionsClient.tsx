@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { UserPerms } from "@/components/IndividualPermission";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
@@ -8,17 +8,29 @@ import EditPermissionsButton from "@/components/EditPermissionsButton";
 import PermissionsPopUp from "@/components/PermissionsPopUp";
 import SearchBarClient from "@/components/SearchbarClient";
 
-type Props = {
-  allUsers: UserPerms[];
-};
-
-export default function PermissionsClient({ allUsers }: Props) {
-  const [usersList, setUsersList] = useState<UserPerms[]>(allUsers);
+export default function PermissionsClient() {
+  const [usersList, setUsersList] = useState<UserPerms[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserPerms[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [search, setSearch] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
+
+  // get all existing users
+  async function getUsers(): Promise<UserPerms[]> {
+    const res = await fetch(`/api/users`);
+    if (!res.ok) throw new Error(`Failed to get users`);
+    return res.json();
+  }
+
+  useEffect(() => {
+    const loadAll = async () => {
+      const users = await getUsers();
+      setUsersList(users);
+    };
+
+    loadAll();
+  }, []);
 
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
