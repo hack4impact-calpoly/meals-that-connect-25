@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { UserPerms } from "@/components/IndividualPermission";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
 import EditPermissionsButton from "@/components/EditPermissionsButton";
 import PermissionsPopUp from "@/components/PermissionsPopUp";
+import SearchBarClient from "@/components/SearchbarClient";
 
 type Props = {
   allUsers: UserPerms[];
@@ -16,6 +17,17 @@ export default function PermissionsClient({ allUsers }: Props) {
   const [selectedUsers, setSelectedUsers] = useState<UserPerms[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const filteredUsers = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return usersList;
+
+    return usersList.filter((user) => {
+      const parts = user.name.toLowerCase().split(" ");
+      return parts.some((part) => part.includes(query)) || user.name.toLowerCase().includes(query);
+    });
+  }, [search, usersList]);
 
   const toggleUserSelection = (user: UserPerms) => {
     setSelectedUsers((prev) => {
@@ -52,14 +64,13 @@ export default function PermissionsClient({ allUsers }: Props) {
           />
         </div>
 
-        <div className="flex justify-between">
-          <div className="w-350 bg-white text-black border">insert search bar here</div>
-          <SortPermissionsButton align="right" />
+        <div className="flex items-center gap-3 mb-5">
+          <SearchBarClient placeholder="Search a user" onSearch={setSearch} /> <SortPermissionsButton align="right" />
         </div>
 
         <div>
           <PermissionsDisplay
-            users={usersList}
+            users={filteredUsers}
             editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}
