@@ -2,7 +2,6 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import dbConnect from "@/database/db";
 import User from "@/database/UserSchema";
-
 import PermissionsClient from "../../components/PermissionsClient";
 
 export default async function Permissions() {
