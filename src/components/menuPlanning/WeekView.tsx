@@ -35,12 +35,19 @@ const formatCalendarDayId = (date: Date) => {
   return `${year}${month}${day}`;
 };
 
-const mapCalendarRecipesToMeals = (recipes: CalendarRecipe[] | undefined, tag: WeekMealCardData["tag"]) =>
+const mapCalendarRecipesToMeals = (
+  recipes: CalendarRecipe[] | undefined,
+  tag: WeekMealCardData["tag"],
+  calendarCategory: WeekMealCardData["calendarCategory"],
+  calendarDayId: string,
+) =>
   (recipes ?? []).map((recipe) => ({
     id: recipe._id,
     name: recipe.name,
     servingSize: recipe.serving != null ? `${recipe.serving} servings` : undefined,
     tag,
+    calendarCategory,
+    calendarDayId,
   }));
 
 export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekViewProps) {
@@ -70,9 +77,9 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
 
             return {
               meals: [
-                ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree"),
-                ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides"),
-                ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit"),
+                ...mapCalendarRecipesToMeals(calendarDay.entrees, "Entree", "entrees", calendarDay._id),
+                ...mapCalendarRecipesToMeals(calendarDay.sides, "Sides", "sides", calendarDay._id),
+                ...mapCalendarRecipesToMeals(calendarDay.fruits, "Fruit", "fruits", calendarDay._id),
               ],
               showNutritionInfoNotMet: false,
             };
