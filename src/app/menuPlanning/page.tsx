@@ -9,6 +9,8 @@ import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
+import DayView from "@/components/menuPlanning/DayView";
+import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
