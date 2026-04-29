@@ -423,7 +423,7 @@ export default function MenuPlanning() {
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <main className="flex flex-row">
         <div className="flex flex-1 justify-center items-center bg-gray-100">
-          <div className="flex flex-col h-full w-210">
+          <div className="flex flex-col h-full w-260">
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
@@ -504,7 +504,7 @@ export default function MenuPlanning() {
           </div>
         </div>
 
-        <div className="w-103.25">
+        <div className="w-90">
           <RecipeDatabase
             items={items}
             loading={loading}
