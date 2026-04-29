@@ -4,11 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
-import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
+import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
-import RecipeDailyCard from "@/components/RecipeDailyCard";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
@@ -51,37 +50,6 @@ const SAMPLE_RECIPES: Recipe[] = [
     filters: ["Sides"],
     isDraft: false,
     nutritional_info: { calories: 200, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-];
-
-// Dummy recipe data for Day view (mock until backend integration)
-const DUMMY_DAY_RECIPES: Array<{
-  name: string;
-  calories: number;
-  servingSize: string;
-  tags: string[];
-  nutrition: Nutrition;
-}> = [
-  {
-    name: "Chicken Tikka Masala",
-    calories: 225,
-    servingSize: "150g",
-    tags: ["Entree"],
-    nutrition: { calories: 225, protein: 22, fat: 9, carbs: 14, fiber: 2, sodium: 480 },
-  },
-  {
-    name: "Mango Fruit Cup",
-    calories: 100,
-    servingSize: "100g",
-    tags: ["Fruit"],
-    nutrition: { calories: 100, protein: 1, fat: 0, carbs: 25, fiber: 3, sodium: 10 },
-  },
-  {
-    name: "Steamed Broccoli",
-    calories: 55,
-    servingSize: "80g",
-    tags: ["Side"],
-    nutrition: { calories: 55, protein: 4, fat: 1, carbs: 10, fiber: 4, sodium: 30 },
   },
 ];
 
@@ -455,7 +423,7 @@ export default function MenuPlanning() {
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <main className="flex flex-row">
         <div className="flex flex-1 justify-center items-center bg-gray-100">
-          <div className="flex flex-col h-full w-210">
+          <div className="flex flex-col h-full w-260">
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
@@ -532,24 +500,11 @@ export default function MenuPlanning() {
               </>
             )}
 
-            {calendarView === "Day" && (
-              <div className="mt-4 flex flex-col gap-3">
-                {DUMMY_DAY_RECIPES.map((recipe) => (
-                  <RecipeDailyCard
-                    key={recipe.name}
-                    name={recipe.name}
-                    calories={recipe.calories}
-                    servingSize={recipe.servingSize}
-                    tags={recipe.tags}
-                  />
-                ))}
-                <DailyNutritionSummary recipes={DUMMY_DAY_RECIPES.map((r) => r.nutrition)} />
-              </div>
-            )}
+            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
           </div>
         </div>
 
-        <div className="w-103.25">
+        <div className="w-90">
           <RecipeDatabase
             items={items}
             loading={loading}

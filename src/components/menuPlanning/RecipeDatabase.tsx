@@ -70,7 +70,7 @@ export default function RecipeDatabase({
   onPageChange,
 }: RecipeDatabaseProps) {
   return (
-    <div className="p-6 h-[calc(100vh-140px)] overflow-y-auto">
+    <div className="p-6 h-full">
       <div className="text-xl font-semibold mb-6">Recipe Database</div>
 
       <div className="flex flex-row items-center gap-4">
