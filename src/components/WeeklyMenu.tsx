@@ -16,8 +16,8 @@ interface MealItem {
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-jicama text-radish-900",
   Sides: "bg-lime text-black",
-  Fruit: "bg-fruit-900 text-white",
-  Entree: "bg-entree-900 text-white",
+  Fruit: "bg-fruit-900 text-black",
+  Entree: "bg-entree-900 text-black",
 };
 
 // Mock meal data
@@ -149,7 +149,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
           <p className="text-dark-gray text-sm text-center my-auto">No meals planned for this day.</p>
         ) : (
           meals.map((meal, idx) => {
-            const style = TAG_STYLES[meal.tag] ?? "bg-pepper text-white";
+            const style = TAG_STYLES[meal.tag] ?? "bg-pepper text-black";
             return (
               <div key={idx} className={`rounded-lg px-4 py-3 ${style}`}>
                 <p className="font-bold text-sm leading-tight">{meal.name}</p>
