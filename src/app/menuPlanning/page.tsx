@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay } from "@dnd-kit/core";
+import type { ReactNode } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
@@ -10,8 +11,8 @@ import MonthView from "@/components/menuPlanning/MonthView";
 import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
+import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
 import RecipeDailyCard from "@/components/RecipeDailyCard";
-import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
@@ -75,6 +76,61 @@ type CalendarItem = {
   fruits?: string[];
 };
 
+type ActiveDragData = {
+  id: string;
+  recipeId?: string;
+  name?: string;
+  servingSize?: string;
+  tags?: string[];
+  primaryTag?: string;
+  source?: string;
+};
+
+function TrashDropZone() {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "calendar-trash",
+    data: { type: "trash" },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
+        isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
+      }`}
+      aria-label="Trash"
+    >
+      <Trash2 size={24} strokeWidth={2.2} />
+    </div>
+  );
+}
+
+function SidebarDropZone({ children }: { children: ReactNode }) {
+  const { setNodeRef } = useDroppable({
+    id: "recipe-sidebar",
+    data: { type: "sidebar" },
+  });
+
+  return (
+    <div ref={setNodeRef} className="w-90">
+      {children}
+    </div>
+  );
+}
+
+function CalendarDragPreview({ name, servingSize, primaryTag }: ActiveDragData) {
+  return (
+    <div className="flex w-56 items-center gap-3 rounded-md bg-radish-900 px-4 py-3 font-montserrat text-white shadow-lg">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[16px] leading-tight font-bold">{name}</p>
+        {servingSize ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{servingSize}</p> : null}
+      </div>
+      {primaryTag ? <span className="shrink-0 text-xs font-medium">{primaryTag}</span> : null}
+      <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
+    </div>
+  );
+}
+
 const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day") => {
   const newDate = new Date(date);
 
@@ -124,6 +180,7 @@ export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<CalendarItem[]>([]);
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
 
   useEffect(() => {
     setDatesOffset(0);
@@ -303,10 +360,16 @@ export default function MenuPlanning() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setActiveDragData({
+      id: event.active.id as string,
+      ...(event.active.data.current as Omit<ActiveDragData, "id">),
+    });
   }, []);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
+    setActiveDragData(null);
 
     if (!over) {
       return;
@@ -315,7 +378,46 @@ export default function MenuPlanning() {
     const dragData = active.data.current as any;
     const dropData = over.data.current as any;
 
+    if (dragData?.type === "recipe" && dropData?.type === "trash") {
+      if (dragData.source !== "calendar") {
+        return;
+      }
+
+      const { recipeId, dayId, category } = dragData;
+
+      if (!recipeId || !dayId || !category) {
+        console.error("Invalid calendar recipe drag data:", dragData);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/calendar/${dayId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ recipeId, category }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API error:", errorData);
+          throw new Error(`Failed to delete recipe from calendar: ${response.status}`);
+        }
+
+        setRecipeDropTrigger((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error deleting recipe from calendar:", error);
+      }
+
+      return;
+    }
+
     if (dragData?.type !== "recipe" || dropData?.type !== "calendar") {
+      return;
+    }
+
+    if (dragData.source === "calendar") {
       return;
     }
 
@@ -408,10 +510,15 @@ export default function MenuPlanning() {
     } catch (error) {
       console.error("Error adding recipe to calendar:", error);
     }
-    setActiveId(null);
   }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+    setActiveDragData(null);
+  }, []);
+
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="flex flex-row">
         <div className="flex flex-1 justify-center items-center bg-gray-100">
           <div className="flex flex-col h-full w-260">
@@ -474,21 +581,32 @@ export default function MenuPlanning() {
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
+                </div>
+                <WarningQuotaMonthly />
               </div>
             )}
 
             {calendarView === "Week" && (
               <>
                 <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
+                </div>
                 <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
               </>
             )}
 
-            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
+            {calendarView === "Day" && (
+              <>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+              </>
+            )}
           </div>
         </div>
 
-        <div className="w-90">
+        <SidebarDropZone>
           <RecipeDatabase
             items={items}
             loading={loading}
@@ -502,13 +620,17 @@ export default function MenuPlanning() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </div>
+        </SidebarDropZone>
       </main>
 
       <DragOverlay>
         {activeId ? (
           <div className="rotate-3 opacity-90">
             {(() => {
+              if (activeDragData?.source === "calendar") {
+                return <CalendarDragPreview {...activeDragData} />;
+              }
+
               const activeRecipe = recipes.find((r) => (r._id || r.id) === activeId?.replace("recipe-", ""));
               return activeRecipe ? (
                 <DraggableRecipeCard
