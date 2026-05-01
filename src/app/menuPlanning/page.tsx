@@ -581,21 +581,28 @@ export default function MenuPlanning() {
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
+                </div>
+                <WarningQuotaMonthly />
               </div>
             )}
 
             {calendarView === "Week" && (
               <>
                 <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
+                </div>
                 <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
               </>
             )}
 
-            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
-
-            <div className="mt-auto flex justify-end pb-4">
-              <TrashDropZone />
-            </div>
+            {calendarView === "Day" && (
+              <>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+              </>
+            )}
           </div>
         </div>
 
