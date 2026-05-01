@@ -7,10 +7,12 @@ import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
+import MonthView from "@/components/menuPlanning/MonthView";
 import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
+import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
@@ -137,7 +139,7 @@ const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day
   } else if (view === "Week") {
     newDate.setDate(date.getDate() + offset * 7);
   } else if (view === "Month") {
-    newDate.setMonth(date.getMonth() + offset);
+    return new Date(date.getFullYear(), date.getMonth() + offset, 1);
   }
 
   return newDate;
@@ -156,25 +158,14 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
       return date;
     });
   } else if (view === "Month") {
+    // Only in-month dates (1..last). The MonthView adds leading blanks for alignment
+    // but does not force a 6x7 (42) grid.
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    let startDay: Date;
-    startDay = new Date(startOfMonth);
-
-    if (startDay.getDay() !== 0) {
-      const prevMonthStartDay =
-        new Date(today.getFullYear(), today.getMonth(), 0).getDate() - startOfMonth.getDay() + 1;
-      const prevMonth = today.getMonth() - 1;
-      const prevMonthYear = prevMonth < 0 ? today.getFullYear() - 1 : today.getFullYear();
-      const prevMonthDate = new Date(prevMonthYear, (prevMonth + 12) % 12, prevMonthStartDay);
-      startDay = new Date(prevMonthDate);
-    }
-
-    return Array.from({ length: 35 }, (_, i) => {
-      const date = new Date(startDay);
-      date.setDate(startDay.getDate() + i);
-      return date;
-    });
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    return Array.from(
+      { length: lastDay },
+      (_, i) => new Date(startOfMonth.getFullYear(), startOfMonth.getMonth(), i + 1),
+    );
   }
   return [];
 };
@@ -585,18 +576,11 @@ export default function MenuPlanning() {
             </div>
 
             {calendarView === "Month" && (
-              <div className="space-y-2">
-                <div>Month view coming soon!</div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[0]} name="Chicken Tikka Masala" tags={["Entree"]} />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <MonthView monthDates={viewDates} dateToday={today} />
+                <div className="mt-2">
+                  <WarningQuotaMonthly />
                 </div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[1]} name="Mango Cup" tags={["Fruit"]} />
-                </div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[2]} name="Brown Rice" tags={["Sides"]} />
-                </div>
-                <WarningQuotaMonthly />
               </div>
             )}
 
