@@ -29,7 +29,6 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   const { id } = await params;
-  console.log("ID IS HERE: ", id);
   if (!id) {
     return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
   }

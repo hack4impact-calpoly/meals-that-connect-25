@@ -53,20 +53,29 @@ export default function PermissionsClient() {
     });
   };
 
-  const handleBulkDelete = () => {
-    const selectedIds = selectedUsers.map((u) => u._id);
-    const updatedList = usersList.filter((user) => !selectedIds.includes(user._id));
+  const handleBulkDelete = async () => {
+    try {
+      const deletePromises = selectedUsers.map((user) => {
+        return fetch(`/api/users/${user._id}`, {
+          method: "DELETE",
+        });
+      });
+      await Promise.all(deletePromises);
+      const selectedIds = selectedUsers.map((u) => u._id);
+      const updatedList = usersList.filter((user) => !selectedIds.includes(user._id));
 
-    setUsersList(updatedList);
-    setSelectedUsers([]);
-    setIsEditing(false);
-    setShowDeleteModal(false);
+      setUsersList(updatedList);
+      setSelectedUsers([]);
+      setIsEditing(false);
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error("Error deleting user from calendar:", err);
+    }
   };
 
   const handleSave = async () => {
     try {
       const updatePromises = usersList.map((user) => {
-        console.log("CALLING PATCH");
         return fetch(`/api/users/${user._id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },

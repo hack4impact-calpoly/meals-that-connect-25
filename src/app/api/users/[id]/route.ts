@@ -5,7 +5,6 @@ import { clerkClient } from "@clerk/nextjs/server";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  console.log("ID IS HERE: ", id);
 
   if (!id) {
     return NextResponse.json({ error: "User ID is required" }, { status: 400 });
@@ -14,15 +13,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   let updates = {};
   try {
     updates = await req.json();
-    console.log("2. UPDATES RECIEVED:", updates);
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
   try {
-    console.log("3. ATTEMPTING DB CONNECTION..");
     await connectDB();
-    console.log("4. DB CONNECTED SUCCESS");
     const updatedUser = await User.findOneAndUpdate(
       { clerkId: id },
       { $set: updates },
@@ -33,18 +29,43 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     );
 
     if (!updatedUser) {
-      console.log("5. FAILURE: USER NOT FOUND IN DB");
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    console.log("5. SUCCESS USER UPDATED IN DB");
     return NextResponse.json(updatedUser, { status: 200 });
   } catch (err: any) {
-    console.error("DATABASE ERROR:", err);
     if (err?.name === "ValidationError" || err?.name === "StrictModeError") {
       return NextResponse.json({ error: "Invalid Data" }, { status: 400 });
     }
     console.error("Error updating recipe:", err);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  if (!id) {
+    return NextResponse.json({ error: "Missing Recipe ID" }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+    const client = await clerkClient();
+    try {
+      await client.users.deleteUser(id);
+    } catch (clerkErr) {
+      console.error("Clerk Delete Error:", clerkErr);
+    }
+
+    const deletedUser = await User.findOneAndDelete({ clerkId: id });
+
+    if (!deletedUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "User delete successfully", id: deletedUser._id }, { status: 200 });
+  } catch (err: any) {
+    console.error("Error deleting user:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
