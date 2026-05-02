@@ -63,10 +63,29 @@ export default function PermissionsClient() {
     setShowDeleteModal(false);
   };
 
-  const handleSave = () => {
-    setSelectedUsers([]);
-    setIsEditing(false);
-    setShowSaveModal(false);
+  const handleSave = async () => {
+    try {
+      const updatePromises = usersList.map((user) => {
+        console.log("CALLING PATCH");
+        return fetch(`/api/users/${user._id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: user.role }),
+        });
+      });
+      await Promise.all(updatePromises);
+
+      setSelectedUsers([]);
+      setIsEditing(false);
+      setShowSaveModal(false);
+    } catch (error) {
+      console.error("Failed to save changes:", error);
+      alert("Something went wrong while saving.");
+    }
+  };
+
+  const handleLocalRoleChange = (userId: string, newRole: string) => {
+    setUsersList((prev) => prev.map((u) => (u._id === userId ? { ...u, role: newRole } : u)));
   };
 
   return (
@@ -96,6 +115,7 @@ export default function PermissionsClient() {
             editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}
+            onRoleChange={handleLocalRoleChange}
           />
         </div>
       </div>

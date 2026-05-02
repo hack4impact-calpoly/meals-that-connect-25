@@ -17,14 +17,14 @@ export default function IndividualPermission({
   editing = false,
   isSelected,
   onSelect,
+  onRoleChange,
 }: {
   user: UserPerms;
   editing?: boolean;
   isSelected: boolean;
   onSelect: (user: UserPerms) => void;
+  onRoleChange: (userId: string, newRole: string) => void;
 }) {
-  const [role, setRole] = useState(user.role);
-
   const handleRowClick = () => {
     if (editing) onSelect(user);
   };
@@ -47,8 +47,8 @@ export default function IndividualPermission({
       {/* Role */}
       {editing ? (
         <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
+          value={user.role}
+          onChange={(e) => onRoleChange(user._id, e.target.value)}
           className="justify-self-center rounded-lg bg-radish-100 px-3 py-2 text-sm font-medium border-none cursor-pointer"
         >
           {ROLES.map((r) => (
@@ -58,7 +58,7 @@ export default function IndividualPermission({
           ))}
         </select>
       ) : (
-        <div className="justify-self-center text-center">{role}</div>
+        <div className="justify-self-center text-center">{user.role}</div>
       )}
       {/* Checkbox */}
       {editing ? (

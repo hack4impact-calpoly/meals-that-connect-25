@@ -5,9 +5,10 @@ type Props = {
   editing?: boolean;
   onSelect: (user: UserPerms) => void;
   selectedIds: string[];
+  onRoleChange: (userId: string, newRole: string) => void;
 };
 
-export default function PermissionsDisplay({ users, editing = false, onSelect, selectedIds }: Props) {
+export default function PermissionsDisplay({ users, editing = false, onSelect, selectedIds, onRoleChange }: Props) {
   return (
     <div className="grid grid-cols-[auto_1.5fr_1fr_1fr_1fr_auto] gap-x-4 gap-y-3 pt-2 text-black font-montserrat">
       {/* Header */}
@@ -23,6 +24,7 @@ export default function PermissionsDisplay({ users, editing = false, onSelect, s
           editing={editing}
           onSelect={() => onSelect(u)}
           isSelected={selectedIds.includes(u._id)}
+          onRoleChange={onRoleChange}
         />
       ))}
     </div>
