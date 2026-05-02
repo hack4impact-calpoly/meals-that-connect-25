@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { DndContext, DragEndEvent, DragStartEvent, DragOverlay } from "@dnd-kit/core";
+import type { ReactNode } from "react";
+import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
 import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
-import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
+import MonthView from "@/components/menuPlanning/MonthView";
+import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
-import RecipeDailyCard from "@/components/RecipeDailyCard";
 import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
-import { ChevronLeft, ChevronRight, ArrowDownToLine } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
+import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
@@ -54,37 +56,6 @@ const SAMPLE_RECIPES: Recipe[] = [
   },
 ];
 
-// Dummy recipe data for Day view (mock until backend integration)
-const DUMMY_DAY_RECIPES: Array<{
-  name: string;
-  calories: number;
-  servingSize: string;
-  tags: string[];
-  nutrition: Nutrition;
-}> = [
-  {
-    name: "Chicken Tikka Masala",
-    calories: 225,
-    servingSize: "150g",
-    tags: ["Entree"],
-    nutrition: { calories: 225, protein: 22, fat: 9, carbs: 14, fiber: 2, sodium: 480 },
-  },
-  {
-    name: "Mango Fruit Cup",
-    calories: 100,
-    servingSize: "100g",
-    tags: ["Fruit"],
-    nutrition: { calories: 100, protein: 1, fat: 0, carbs: 25, fiber: 3, sodium: 10 },
-  },
-  {
-    name: "Steamed Broccoli",
-    calories: 55,
-    servingSize: "80g",
-    tags: ["Side"],
-    nutrition: { calories: 55, protein: 4, fat: 1, carbs: 10, fiber: 4, sodium: 30 },
-  },
-];
-
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
   { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
@@ -105,6 +76,61 @@ type CalendarItem = {
   fruits?: string[];
 };
 
+type ActiveDragData = {
+  id: string;
+  recipeId?: string;
+  name?: string;
+  servingSize?: string;
+  tags?: string[];
+  primaryTag?: string;
+  source?: string;
+};
+
+function TrashDropZone() {
+  const { setNodeRef, isOver } = useDroppable({
+    id: "calendar-trash",
+    data: { type: "trash" },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
+        isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
+      }`}
+      aria-label="Trash"
+    >
+      <Trash2 size={24} strokeWidth={2.2} />
+    </div>
+  );
+}
+
+function SidebarDropZone({ children }: { children: ReactNode }) {
+  const { setNodeRef } = useDroppable({
+    id: "recipe-sidebar",
+    data: { type: "sidebar" },
+  });
+
+  return (
+    <div ref={setNodeRef} className="w-90">
+      {children}
+    </div>
+  );
+}
+
+function CalendarDragPreview({ name, servingSize, primaryTag }: ActiveDragData) {
+  return (
+    <div className="flex w-56 items-center gap-3 rounded-md bg-radish-900 px-4 py-3 font-montserrat text-white shadow-lg">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[16px] leading-tight font-bold">{name}</p>
+        {servingSize ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{servingSize}</p> : null}
+      </div>
+      {primaryTag ? <span className="shrink-0 text-xs font-medium">{primaryTag}</span> : null}
+      <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
+    </div>
+  );
+}
+
 const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day") => {
   const newDate = new Date(date);
 
@@ -113,7 +139,7 @@ const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day
   } else if (view === "Week") {
     newDate.setDate(date.getDate() + offset * 7);
   } else if (view === "Month") {
-    newDate.setMonth(date.getMonth() + offset);
+    return new Date(date.getFullYear(), date.getMonth() + offset, 1);
   }
 
   return newDate;
@@ -132,25 +158,14 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
       return date;
     });
   } else if (view === "Month") {
+    // Only in-month dates (1..last). The MonthView adds leading blanks for alignment
+    // but does not force a 6x7 (42) grid.
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    let startDay: Date;
-    startDay = new Date(startOfMonth);
-
-    if (startDay.getDay() !== 0) {
-      const prevMonthStartDay =
-        new Date(today.getFullYear(), today.getMonth(), 0).getDate() - startOfMonth.getDay() + 1;
-      const prevMonth = today.getMonth() - 1;
-      const prevMonthYear = prevMonth < 0 ? today.getFullYear() - 1 : today.getFullYear();
-      const prevMonthDate = new Date(prevMonthYear, (prevMonth + 12) % 12, prevMonthStartDay);
-      startDay = new Date(prevMonthDate);
-    }
-
-    return Array.from({ length: 35 }, (_, i) => {
-      const date = new Date(startDay);
-      date.setDate(startDay.getDate() + i);
-      return date;
-    });
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+    return Array.from(
+      { length: lastDay },
+      (_, i) => new Date(startOfMonth.getFullYear(), startOfMonth.getMonth(), i + 1),
+    );
   }
   return [];
 };
@@ -165,6 +180,7 @@ export default function MenuPlanning() {
   const [recipes, setRecipes] = useState<CalendarItem[]>([]);
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
 
   useEffect(() => {
     setDatesOffset(0);
@@ -344,10 +360,16 @@ export default function MenuPlanning() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setActiveDragData({
+      id: event.active.id as string,
+      ...(event.active.data.current as Omit<ActiveDragData, "id">),
+    });
   }, []);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveId(null);
+    setActiveDragData(null);
 
     if (!over) {
       return;
@@ -356,7 +378,46 @@ export default function MenuPlanning() {
     const dragData = active.data.current as any;
     const dropData = over.data.current as any;
 
+    if (dragData?.type === "recipe" && dropData?.type === "trash") {
+      if (dragData.source !== "calendar") {
+        return;
+      }
+
+      const { recipeId, dayId, category } = dragData;
+
+      if (!recipeId || !dayId || !category) {
+        console.error("Invalid calendar recipe drag data:", dragData);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/calendar/${dayId}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ recipeId, category }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error("API error:", errorData);
+          throw new Error(`Failed to delete recipe from calendar: ${response.status}`);
+        }
+
+        setRecipeDropTrigger((prev) => prev + 1);
+      } catch (error) {
+        console.error("Error deleting recipe from calendar:", error);
+      }
+
+      return;
+    }
+
     if (dragData?.type !== "recipe" || dropData?.type !== "calendar") {
+      return;
+    }
+
+    if (dragData.source === "calendar") {
       return;
     }
 
@@ -449,13 +510,18 @@ export default function MenuPlanning() {
     } catch (error) {
       console.error("Error adding recipe to calendar:", error);
     }
-    setActiveId(null);
   }, []);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveId(null);
+    setActiveDragData(null);
+  }, []);
+
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="flex flex-row">
         <div className="flex flex-1 justify-center items-center bg-gray-100">
-          <div className="flex flex-col h-full w-210">
+          <div className="flex flex-col h-full w-260">
             <div className="flex justify-between items-center mt-4">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
@@ -510,16 +576,13 @@ export default function MenuPlanning() {
             </div>
 
             {calendarView === "Month" && (
-              <div className="space-y-2">
-                <div>Month view coming soon!</div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[0]} name="Chicken Tikka Masala" tags={["Entree"]} />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <MonthView monthDates={viewDates} dateToday={today} />
+                <div className="mt-2">
+                  <WarningQuotaMonthly />
                 </div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[1]} name="Mango Cup" tags={["Fruit"]} />
-                </div>
-                <div className="w-40">
-                  <RecipeMonthlyCard item={SAMPLE_RECIPES[2]} name="Brown Rice" tags={["Sides"]} />
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
                 </div>
                 <WarningQuotaMonthly />
               </div>
@@ -528,28 +591,22 @@ export default function MenuPlanning() {
             {calendarView === "Week" && (
               <>
                 <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <div className="mt-auto flex justify-end pb-4">
+                  <TrashDropZone />
+                </div>
                 <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
               </>
             )}
 
             {calendarView === "Day" && (
-              <div className="mt-4 flex flex-col gap-3">
-                {DUMMY_DAY_RECIPES.map((recipe) => (
-                  <RecipeDailyCard
-                    key={recipe.name}
-                    name={recipe.name}
-                    calories={recipe.calories}
-                    servingSize={recipe.servingSize}
-                    tags={recipe.tags}
-                  />
-                ))}
-                <DailyNutritionSummary recipes={DUMMY_DAY_RECIPES.map((r) => r.nutrition)} />
-              </div>
+              <>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+              </>
             )}
           </div>
         </div>
 
-        <div className="w-103.25">
+        <SidebarDropZone>
           <RecipeDatabase
             items={items}
             loading={loading}
@@ -563,13 +620,17 @@ export default function MenuPlanning() {
             totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
-        </div>
+        </SidebarDropZone>
       </main>
 
       <DragOverlay>
         {activeId ? (
           <div className="rotate-3 opacity-90">
             {(() => {
+              if (activeDragData?.source === "calendar") {
+                return <CalendarDragPreview {...activeDragData} />;
+              }
+
               const activeRecipe = recipes.find((r) => (r._id || r.id) === activeId?.replace("recipe-", ""));
               return activeRecipe ? (
                 <DraggableRecipeCard

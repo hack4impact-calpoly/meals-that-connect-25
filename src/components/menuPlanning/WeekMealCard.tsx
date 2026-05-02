@@ -1,4 +1,7 @@
+"use client";
+
 import { GripVertical } from "lucide-react";
+import { useDraggable } from "@dnd-kit/core";
 
 export type WeekMealCardData = {
   id: string;
@@ -8,6 +11,8 @@ export type WeekMealCardData = {
   tag?: "Entree" | "Sides" | "Fruit" | "Combo" | string;
   backgroundColor?: string;
   textColor?: string;
+  calendarDayId?: string;
+  calendarCategory?: "entrees" | "sides" | "fruits";
 };
 
 type WeekMealCardProps = WeekMealCardData;
@@ -37,13 +42,30 @@ const DEFAULT_CARD_STYLE = {
 };
 
 export default function WeekMealCard({
+  id,
   name,
   calories,
   servingSize,
   tag,
   backgroundColor,
   textColor,
+  calendarDayId,
+  calendarCategory,
 }: WeekMealCardProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: `calendar-${calendarDayId}-${calendarCategory}-${id}`,
+    data: {
+      type: "recipe",
+      source: "calendar",
+      recipeId: id,
+      dayId: calendarDayId,
+      category: calendarCategory,
+      name,
+      servingSize,
+      tags: tag ? [tag] : [],
+      primaryTag: tag,
+    },
+  });
   const tagStyle = tag ? (CARD_STYLE_BY_TAG[tag] ?? DEFAULT_CARD_STYLE) : DEFAULT_CARD_STYLE;
   const resolvedBackgroundColor = backgroundColor ?? tagStyle.backgroundColor;
   const resolvedTextColor = textColor ?? tagStyle.textColor;
@@ -52,8 +74,13 @@ export default function WeekMealCard({
 
   return (
     <div
-      className="flex items-center gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)]"
+      ref={setNodeRef}
+      className={`flex cursor-move items-center gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${
+        isDragging ? "opacity-40" : ""
+      }`}
       style={{ backgroundColor: resolvedBackgroundColor, color: resolvedTextColor }}
+      {...attributes}
+      {...listeners}
     >
       <div className="min-w-0 flex-1">
         <p className="truncate text-[16px] leading-tight font-bold" title={name}>
