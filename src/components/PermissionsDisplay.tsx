@@ -10,11 +10,18 @@ type Props = {
 
 export default function PermissionsDisplay({ users, editing = false, onSelect, selectedIds, onRoleChange }: Props) {
   return (
-    <div className="grid grid-cols-[auto_1.5fr_1fr_1fr_1fr_auto] gap-x-4 gap-y-3 pt-2 text-black font-montserrat">
+    <div className="flex flex-col gap-y-3 pt-2 text-black font-montserrat">
       {/* Header */}
-      <div className="grid grid-cols-subgrid col-start-2 col-span-4 items-center pl-6 text-sm font-semibold justify-items-center">
-        <div className="justify-self-start">NAME</div>
-        <div>ROLE</div>
+      <div className="grid grid-cols-12 w-full items-center pl-8 pr-6 text-sm font-semibold justify-items-center">
+        <div className="col-span-1"></div>
+
+        <div className="col-span-4 justify-self-start">NAME</div>
+
+        <div className="col-span-5"></div>
+
+        <div className="col-span-1">ROLE</div>
+
+        <div className="col-span-1"></div>
       </div>
       {/* Rows */}
       {users.map((u) => (
