@@ -73,8 +73,8 @@ describe("/api/recipes", () => {
     });
 
     it("filters recipes by filters query", async () => {
-      await seedRecipes(3, { filters: ["Vegetarian"], allergens: [] });
-      await seedRecipes(2, { filters: ["Beef"], allergens: [] });
+      await seedRecipes(3, { filters: ["Vegetarian"], allergens: ["Vegetarian"] }); // TODO: on schema change the duplication should not be necessary
+      await seedRecipes(2, { filters: ["Beef"], allergens: ["Beef"] });
 
       const res = await GET(new NextRequest("http://localhost/api/recipes?filters=Vegetarian"));
       const body = await res.json();
@@ -88,18 +88,18 @@ describe("/api/recipes", () => {
     });
 
     it("filters recipes by categories query", async () => {
-      await seedRecipes(2, { filters: ["Vegetarian"] });
-      await seedRecipes(1, { filters: ["Vegan"] });
-      await seedRecipes(2, { filters: ["Beef"] });
+      await seedRecipes(2, { filters: ["Side"] });
+      await seedRecipes(1, { filters: ["Entree"] });
+      await seedRecipes(2, { filters: ["Fruit"] });
 
-      const res = await GET(new NextRequest("http://localhost/api/recipes?categories=Vegetarian"));
+      const res = await GET(new NextRequest("http://localhost/api/recipes?categories=Side"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
       expect(body.data).toHaveLength(2);
 
       for (const recipe of body.data) {
-        expect(recipe.filters).toContain("Vegetarian");
+        expect(recipe.filters).toContain("Side");
       }
     });
 
@@ -144,14 +144,12 @@ describe("/api/recipes", () => {
 
     it("combines category and serving filters", async () => {
       await Recipe.create([
-        makeRecipe({ name: "Veg Family", filters: ["Vegetarian"], serving: 4 }),
-        makeRecipe({ name: "Veg Single", filters: ["Vegetarian"], serving: 1 }),
-        makeRecipe({ name: "Beef Family", filters: ["Beef"], serving: 4 }),
+        makeRecipe({ name: "Veg Family", filters: ["Side"], serving: 4 }),
+        makeRecipe({ name: "Veg Single", filters: ["Entree"], serving: 1 }),
+        makeRecipe({ name: "Beef Family", filters: ["Fruit"], serving: 4 }),
       ]);
 
-      const res = await GET(
-        new NextRequest("http://localhost/api/recipes?categories=Vegetarian&servings=family-serving"),
-      );
+      const res = await GET(new NextRequest("http://localhost/api/recipes?categories=Side&servings=family-serving"));
       const body = await res.json();
 
       expect(res.status).toBe(200);
