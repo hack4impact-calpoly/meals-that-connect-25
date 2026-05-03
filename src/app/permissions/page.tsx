@@ -2,8 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import dbConnect from "@/database/db";
 import User from "@/database/UserSchema";
-import PermissionsDisplay from "@/components/PermissionsDisplay";
-import SortPermissionsButton from "@/components/SortPermissionsButton";
+import PermissionsClient from "@/components/PermissionsClient";
 
 export default async function Permissions() {
   const { userId } = await auth();
@@ -42,12 +41,7 @@ export default async function Permissions() {
 
   return (
     <main>
-      <div className="flex justify-end p-5">
-        <SortPermissionsButton align="right" />
-      </div>
-      <div className="p-5">
-        <PermissionsDisplay users={users} editing={true} />
-      </div>
+      <PermissionsClient users={users} />
     </main>
   );
 }
