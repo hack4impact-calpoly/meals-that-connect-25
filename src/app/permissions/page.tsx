@@ -18,6 +18,7 @@ export default async function Permissions() {
   // replace with real users
   const users = [
     {
+      _id: "u1",
       clerkId: "u1",
       __v: 0,
       createdAt: {
@@ -35,6 +36,7 @@ export default async function Permissions() {
       },
     },
     {
+      _id: "u2",
       clerkId: "u2",
       __v: 0,
       createdAt: {
@@ -52,6 +54,7 @@ export default async function Permissions() {
       },
     },
     {
+      _id: "u3",
       __v: 0,
       clerkId: "u3",
       createdAt: {
@@ -69,6 +72,7 @@ export default async function Permissions() {
       },
     },
     {
+      _id: "u4",
       __v: 0,
       clerkId: "u4",
       createdAt: {
