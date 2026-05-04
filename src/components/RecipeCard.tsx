@@ -52,29 +52,29 @@ export default function RecipeCard({
   return (
     <div
       onClick={onOpen}
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white py-10 px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
+      className={`flex items-center gap-3 md:gap-4 rounded-lg md:rounded-xl border-2 border-gray-300 bg-white py-6 md:py-10 px-4 md:px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
     >
-      <div className="relative shrink-0 h-20 w-20 overflow-hidden rounded-md bg-gray-100">
+      <div className="relative shrink-0 h-16 md:h-20 w-16 md:w-20 overflow-hidden rounded-md bg-gray-100">
         {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="truncate text-xl font-bold font-montserrat" title={name}>
+        <h3 className="truncate text-lg md:text-xl font-bold font-montserrat" title={name}>
           {name}
         </h3>
-        {metaText ? <p className="text-base font-medium font-montserrat">{metaText}</p> : null}
+        {metaText ? <p className="text-sm md:text-base font-medium font-montserrat">{metaText}</p> : null}
       </div>
 
       {primaryTag ? (
         <span
-          className={`shrink-0 w-20 rounded-md text-center px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}
+          className={`shrink-0 w-16 md:w-20 rounded-md text-center px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-base font-medium font-montserrat ${tagStyle}`}
         >
           {primaryTag}
         </span>
       ) : null}
 
       {isDraft && (userRole === "Admin" || userRole === "Kitchen Staff") && (
-        <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />
+        <Pencil className="cursor-pointer shrink-0 h-5 w-5" onClick={() => setEditMode((prev) => !prev)} />
       )}
 
       {editMode === true && (
@@ -96,7 +96,7 @@ export default function RecipeCard({
             onSelect?.();
           }}
           onClick={(e) => e.stopPropagation()} // to prevent checkbox from triggering popUp component
-          className="h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer"
+          className="h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer shrink-0"
         />
       )}
     </div>

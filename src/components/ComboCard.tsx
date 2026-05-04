@@ -65,7 +65,7 @@ export default function ComboCard({
   return (
     <div
       onClick={onOpen} // TODO: cursor pointer only if onOpen is provided?
-      className={`relative w-83 h-86.5 overflow-hidden rounded-[14px] cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
+      className={`relative h-86.5 overflow-hidden rounded-[14px] cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-3 border-dashed border-gray-300" : "border-2 border-gray-300"} bg-white`}
     >
       <div className="relative h-28 w-full bg-medium-gray">
         {imageUrl ? <Image src={imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" /> : null}

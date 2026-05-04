@@ -24,7 +24,7 @@ interface DonutChartProps {
 }
 
 function DonutChart({ value, total }: DonutChartProps) {
-  const size = 220;
+  const size = 165;
   const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -71,7 +71,7 @@ export default function SummaryCard({ title, value, total, labelSuffix }: Summar
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div className="bg-white rounded-2xl p-6 font-montserrat">
+    <div className="bg-white rounded-2xl p-5 font-montserrat">
       {/* Header row */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-black">{title}</h3>

@@ -30,6 +30,7 @@ type Props = {
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
 
   userRole?: string;
+  filterButton?: React.ReactNode; // filter button to display on left of controls row
 };
 
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
@@ -54,6 +55,7 @@ export default function MealBrowser({
   setSelectedCategories,
   topLeftChildren,
   topRightChildren,
+  filterButton,
   selectedIds,
   onToggleSelect,
   onOpenItem,
@@ -90,16 +92,20 @@ export default function MealBrowser({
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="flex gap-5 items-center">
+    <div className="flex flex-1 flex-col gap-3 md:gap-4">
+      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start md:items-center">
         {topLeftChildren}
-        <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+        <div className="flex gap-3 w-full items-center">
+          <div className="flex-1">
+            <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+          </div>
+          <AddNewRecipeButton />
+        </div>
         {topRightChildren}
         {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
-        {/* <AddNewRecipeButton /> */}
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      {/* <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <CategoryToggle<CategoryValue>
           options={categoryOptions}
           selectedCategories={selectedCategories}
@@ -111,9 +117,28 @@ export default function MealBrowser({
           onPageChange={(page) => setCurrentPage(page)}
           disabled={loading}
         />
+      </div> */}
+
+      <div className="flex flex-col md:gap-3">
+        <div className="flex flex-row items-center gap-2 md:gap-3">
+          {filterButton && <div className="hidden md:block">{filterButton}</div>}
+          <div className="flex-1">
+            <CategoryToggle
+              options={categoryOptions}
+              selectedCategories={selectedCategories}
+              onToggle={toggleCategory}
+            />
+          </div>
+          <PaginationDisplay
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+            disabled={loading}
+          />
+        </div>
       </div>
 
-      <div className="pb-5 overflow-auto">
+      <div className="w-full pb-5 overflow-auto">
         <CardGrid
           loading={loading}
           error={error}

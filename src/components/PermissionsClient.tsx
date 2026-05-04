@@ -5,13 +5,20 @@ import SortPermissionsButton, { CreateSortType } from "@/components/SortPermissi
 import { RoleValue } from "@/lib/types";
 import { useEffect, useMemo, useState } from "react";
 import CategoryToggle from "./CategoryToggle";
+import SearchBarClient from "@/components/SearchbarClient";
+import { User } from "@/lib/types";
 
 const roleOptions: Array<{ value: RoleValue; label: string }> = [
   { value: "Admin", label: "Admin" },
   { value: "Kitchen Staff", label: "Kitchen Staff" },
 ];
 
-export default function PermissionsClient({ users }: { users: any[] }) {
+interface PermissionsClientProps {
+  users: User[];
+}
+
+export default function PermissionsClient({ users }: PermissionsClientProps) {
+  const [search, setSearch] = useState("");
   const [selectedRole, setSelectedRole] = useState<Set<RoleValue>>(new Set<RoleValue>());
   const [sortType, setSortType] = useState<CreateSortType | null>(null);
 
@@ -30,30 +37,38 @@ export default function PermissionsClient({ users }: { users: any[] }) {
   };
 
   const filteredUsers = useMemo(() => {
-    const filtered = users.filter((user) => {
+    const query = search.trim().toLowerCase();
+
+    let roleFilter = users.filter((user) => {
       return selectedRole.size === 0 || selectedRole.has(user.role as RoleValue);
     });
 
-    if (!sortType) return filtered;
-
-    let sorted = [...filtered];
-
-    if (sortType.id === "a-to-z") {
-      sorted.sort((a, b) => a.name.localeCompare(b.name));
-    } else if (sortType.id === "z-to-a") {
-      sorted.sort((a, b) => b.name.localeCompare(a.name));
-    } else if (sortType.id === "last-updated") {
-      sorted.sort((a, b) => new Date(b.updatedAt.$date).getTime() - new Date(a.updatedAt.$date).getTime());
-    } else if (sortType.id === "created-date") {
-      sorted.sort((a, b) => new Date(b.createdAt.$date).getTime() - new Date(a.createdAt.$date).getTime());
+    if (query) {
+      roleFilter = roleFilter.filter((user) => {
+        const parts = user.name.toLowerCase().split(" ");
+        return parts.some((part) => part.includes(query)) || user.name.toLowerCase().includes(query);
+      });
     }
 
-    return sorted;
-  }, [users, selectedRole, sortType]);
+    if (sortType) {
+      if (sortType.id === "a-to-z") {
+        roleFilter.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortType.id === "z-to-a") {
+        roleFilter.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortType.id === "last-updated") {
+        roleFilter.sort((a, b) => new Date(b.updatedAt.$date).getTime() - new Date(a.updatedAt.$date).getTime());
+      } else if (sortType.id === "created-date") {
+        roleFilter.sort((a, b) => new Date(b.createdAt.$date).getTime() - new Date(a.createdAt.$date).getTime());
+      }
+    }
+
+    return roleFilter;
+  }, [users, search, selectedRole, sortType]);
 
   return (
     <main>
       <div className="flex justify-between p-5">
+        <SearchBarClient placeholder="Search a user" onSearch={setSearch} />
         <CategoryToggle<RoleValue> options={roleOptions} selectedCategories={selectedRole} onToggle={toggleRole} />
         <SortPermissionsButton align="right" onSortChange={setSortType} />
       </div>
