@@ -1,5 +1,3 @@
-"use client";
-
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
@@ -58,6 +56,7 @@ export default function MealBrowser({
   onToggleSelect,
   onOpenItem,
 }: Props) {
+  // TODO: bring toggle out to a helper function. Used in a lot of places
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
       const next = new Set<CategoryValue>(prev);
@@ -90,20 +89,22 @@ export default function MealBrowser({
 
   return (
     <div className="flex flex-1 flex-col gap-3 md:gap-4">
-      <div className="flex flex-col md:flex-row gap-3 md:gap-5 items-start md:items-center">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
-        <div className="flex gap-3 w-full items-center">
+
+        <div className="flex w-full items-center gap-3">
           <div className="flex-1">
             <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
           </div>
+
           <AddNewRecipeButton />
+
+          {topRightChildren}
         </div>
-        {topRightChildren}
       </div>
 
-      <div className="flex flex-col md:gap-3">
-        <div className="flex flex-row items-center gap-2 md:gap-3">
-          {filterButton && <div className="hidden md:block">{filterButton}</div>}
+      <div className="flex flex-col gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <div className="flex-1">
             <CategoryToggle
               options={categoryOptions}
@@ -111,6 +112,20 @@ export default function MealBrowser({
               onToggle={toggleCategory}
             />
           </div>
+
+          <div className="hidden md:block">
+            <PaginationDisplay
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setCurrentPage(page)}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 md:hidden">
+          <div>{filterButton}</div>
+
           <PaginationDisplay
             currentPage={currentPage}
             totalPages={totalPages}
@@ -120,7 +135,7 @@ export default function MealBrowser({
         </div>
       </div>
 
-      <div className="w-full pb-5 overflow-auto">
+      <div className="w-full overflow-auto pb-5">
         <CardGrid
           loading={loading}
           error={error}

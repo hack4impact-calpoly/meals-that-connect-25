@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
 import { CreateRecipeType } from "@/components/CreateRecipePopUp";
-import { Menu, Utensils } from "lucide-react";
+import { Menu, Utensils, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
@@ -83,15 +83,16 @@ export default function RecipePageClient() {
         selectedCategories={selectedCategories}
         setSelectedCategories={setSelectedCategories}
         onOpenItem={handleOpenItem}
-        topRightChildren={
+        filterButton={
           <button
             type="button"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-medium-gray bg-white text-pepper md:hidden"
+            className="flex items-center gap-2 rounded-md text-pepper md:hidden"
             aria-expanded={mobileFiltersOpen}
             aria-label="Open filters"
             onClick={() => setMobileFiltersOpen(true)}
           >
-            <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
+            <SlidersHorizontal className="h-6 w-6" strokeWidth={2} aria-hidden />
+            <span className="font-montserrat text-md font-semibold">Filters</span>
           </button>
         }
       />
@@ -99,7 +100,7 @@ export default function RecipePageClient() {
       <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
 
       {mobileFiltersOpen ? (
-        <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
+        <div className="fixed inset-0 z-50 flex h-dvh min-h-0 flex-col bg-white md:hidden">
           <FilterMenu
             mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
             initialSelections={filters}
