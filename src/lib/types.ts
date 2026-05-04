@@ -48,6 +48,19 @@ export type Combo = {
   isDraft: boolean;
 };
 
+export type User = {
+  _id: string;
+  clerkId: string;
+  __v: number;
+  createdAt: { $date: string };
+  email: string;
+  imageUrl?: string;
+  lastLoginDate: { $date: string };
+  name: string;
+  role: string;
+  updatedAt: { $date: string };
+};
+
 export const EMPTY_FILTERS: FilterSelections = {
   allergens: new Set(),
   proteins: new Set(),

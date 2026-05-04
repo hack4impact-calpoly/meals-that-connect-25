@@ -69,8 +69,10 @@ export default function PermissionsClient({ users }: PermissionsClientProps) {
     <main>
       <div className="flex justify-between p-5">
         <SearchBarClient placeholder="Search a user" onSearch={setSearch} />
-        <CategoryToggle<RoleValue> options={roleOptions} selectedCategories={selectedRole} onToggle={toggleRole} />
         <SortPermissionsButton align="right" onSortChange={setSortType} />
+      </div>
+      <div className="px-5">
+        <CategoryToggle<RoleValue> options={roleOptions} selectedCategories={selectedRole} onToggle={toggleRole} />
       </div>
       <div className="p-5">
         <PermissionsDisplay users={filteredUsers} editing={true} />

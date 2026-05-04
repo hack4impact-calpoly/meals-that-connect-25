@@ -2,29 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-
-export type UserPerms = {
-  _id: string;
-  name: string;
-  avatarUrl?: string;
-  role: string;
-  recipe: boolean;
-  menuPlanning: boolean;
-};
+import { User } from "@/lib/types";
 
 const ROLES = ["Admin", "Dining Site Staff", "Kitchen Staff"];
 
-export default function IndividualPermission({ user, editing = false }: { user: UserPerms; editing?: boolean }) {
+export default function IndividualPermission({ user, editing = false }: { user: User; editing?: boolean }) {
   const [selected, setSelected] = useState(false);
   const [role, setRole] = useState(user.role);
-  const [recipe, setRecipe] = useState(user.recipe);
-  const [menuPlanning, setMenuPlanning] = useState(user.menuPlanning);
 
   useEffect(() => {
     setRole(user.role);
-    setRecipe(user.recipe);
-    setMenuPlanning(user.menuPlanning);
-  }, [user.role, user.recipe, user.menuPlanning]);
+  }, [user.role]);
 
   return (
     <div
@@ -34,7 +22,7 @@ export default function IndividualPermission({ user, editing = false }: { user: 
     >
       {/* Avatar */}
       <div className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-radish-500 bg-gray-100 shrink-0">
-        {user.avatarUrl ? <Image src={user.avatarUrl} alt="" fill sizes="56px" className="object-cover" /> : null}
+        {user.imageUrl ? <Image src={user.imageUrl} alt="" fill sizes="56px" className="object-cover" /> : null}
       </div>
       {/* Name */}
       <div className="justify-self-start max-w-full truncate font-semibold text-xl" title={user.name}>
@@ -55,32 +43,6 @@ export default function IndividualPermission({ user, editing = false }: { user: 
         </select>
       ) : (
         <div className="justify-self-center text-center">{role}</div>
-      )}
-      {/* Recipe */}
-      {editing ? (
-        <select
-          value={recipe ? "Yes" : "No"}
-          onChange={(e) => setRecipe(e.target.value === "Yes")}
-          className="justify-self-center rounded-lg bg-medium-gray px-3 py-2 text-sm font-medium border-none cursor-pointer"
-        >
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      ) : (
-        <div className="justify-self-center text-center">{recipe ? "Yes" : "No"}</div>
-      )}
-      {/* Menu Planning */}
-      {editing ? (
-        <select
-          value={menuPlanning ? "Yes" : "No"}
-          onChange={(e) => setMenuPlanning(e.target.value === "Yes")}
-          className="justify-self-center rounded-lg bg-medium-gray px-3 py-2 text-sm font-medium border-none cursor-pointer"
-        >
-          <option value="Yes">Yes</option>
-          <option value="No">No</option>
-        </select>
-      ) : (
-        <div className="justify-self-center text-center">{menuPlanning ? "Yes" : "No"}</div>
       )}
       {/* Checkbox */}
       {editing ? (
