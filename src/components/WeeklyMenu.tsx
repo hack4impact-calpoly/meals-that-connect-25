@@ -66,9 +66,9 @@ const formatWeekRange = (weekDates: Date[]) => {
   const first = weekDates[0];
   const last = weekDates[4];
   const month = first.toLocaleDateString("en-US", { month: "short" });
-  const startDay = String(first.getDate()).padStart(2, "0");
-  const endDay = String(last.getDate()).padStart(2, "0");
-  return `${month} ${startDay}–${endDay}`;
+  const startDay = String(first.getDate());
+  const endDay = String(last.getDate());
+  return `${month} ${startDay} – ${month} ${endDay}`;
 };
 
 export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
