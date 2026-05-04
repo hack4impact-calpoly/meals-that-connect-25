@@ -39,14 +39,19 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .exec(),
     ]);
 
-    const itemLookup = new Map<string, { _id: string; name: string; serving?: number }>();
+    const itemLookup = new Map<
+      string,
+      { _id: string; name: string; type: string; serving?: number; calories?: number }
+    >();
 
     recipeDocs.forEach((doc) => {
       if (doc._id) {
         itemLookup.set(doc._id.toString(), {
           _id: doc._id.toString(),
           name: doc.name,
+          type: doc.type,
           serving: doc.serving,
+          calories: doc.nutritional_info.calories,
         });
       }
     });
@@ -56,13 +61,17 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         itemLookup.set(doc._id.toString(), {
           _id: doc._id.toString(),
           name: doc.name,
+          type: doc.type,
           serving: doc.serving,
+          calories: doc.nutritional_info.calories,
         });
       }
     });
 
     const resolveItems = (ids: string[] = []) =>
-      ids.map((id) => itemLookup.get(id) ?? { _id: id, name: id, serving: undefined });
+      ids.map(
+        (id) => itemLookup.get(id) ?? { _id: id, name: id, type: undefined, serving: undefined, calories: undefined },
+      );
 
     return NextResponse.json(
       {

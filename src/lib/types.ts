@@ -17,6 +17,7 @@ export type Recipe = {
   item: any;
   _id: string;
   name: string;
+  type: string;
   serving: number;
   filters: string[]; // never empty bc it will automatically contain Entree/Side/Fruit
   allergens?: string[];
@@ -59,3 +60,12 @@ export const EMPTY_FILTERS: FilterSelections = {
 export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;
+
+export const TAG_STYLES: Record<string, string> = {
+  Combo: "bg-combo-500 text-combo-900",
+  Side: "bg-sides-500 text-sides-900",
+  Fruit: "bg-fruit-500 text-fruit-900",
+  Entree: "bg-entree-900 text-entree-500",
+  Entrée: "bg-entree-900 text-entree-500",
+  fallback: "bg-gray-100 text-gray-700",
+};

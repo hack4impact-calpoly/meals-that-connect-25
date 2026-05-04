@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TAG_STYLES } from "@/lib/types";
 
 interface WeeklyMenuProps {
   dateToday: Date;
@@ -8,42 +9,10 @@ interface WeeklyMenuProps {
 
 interface MealItem {
   name: string;
+  type: string;
   calories: number;
   serving: string;
-  tag: "Entree" | "Sides" | "Fruit" | "Combo";
 }
-
-const TAG_STYLES: Record<string, string> = {
-  Combo: "bg-jicama text-radish-900",
-  Sides: "bg-lime text-black",
-  Fruit: "bg-fruit-900 text-black",
-  Entree: "bg-entree-900 text-black",
-};
-
-// Mock meal data
-const MOCK_MEALS: Record<number, MealItem[]> = {
-  1: [
-    { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
-    { name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" },
-  ],
-  2: [
-    { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
-    { name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" },
-  ],
-  3: [
-    { name: "Chicken Tikka Masala", calories: 225, serving: "150g", tag: "Entree" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-  ],
-  4: [{ name: "Mango Cup", calories: 100, serving: "1 cup", tag: "Fruit" }],
-  5: [
-    { name: "Corn Salad", calories: 120, serving: "100g", tag: "Sides" },
-    { name: "Brown Rice", calories: 200, serving: "150g", tag: "Sides" },
-  ],
-};
 
 const getOffsetDate = (date: Date, offset: number) => {
   const newDate = new Date(date);
@@ -71,6 +40,12 @@ const formatWeekRange = (weekDates: Date[]) => {
   return `${month} ${startDay} – ${month} ${endDay}`;
 };
 
+const fetchCalendarById = async (id: string) => {
+  const res = await fetch(`/api/calendar/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch calendar");
+  return await res.json();
+};
+
 export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
@@ -86,9 +61,23 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
   const activeDayIndex = selectedDayIndex !== null ? selectedDayIndex : todayIndexInWeek !== -1 ? todayIndexInWeek : 0;
   const activeDate = weekDates[activeDayIndex];
   const activeDayOfWeek = activeDate.getDay();
-  const meals = MOCK_MEALS[activeDayOfWeek] ?? [];
+
+  const [meals, setMeals] = useState<MealItem[]>([]);
 
   const isToday = (date: Date) => date.toDateString() === todayStr;
+
+  useEffect(() => {
+    const calendarId = activeDate.toISOString().slice(0, 10).replace(/-/g, "");
+    const getCalendar = async () => {
+      try {
+        const data = await fetchCalendarById(calendarId);
+        setMeals([...data.entrees, ...data.sides, ...data.fruits]);
+      } catch (err) {
+        setMeals([]);
+      }
+    };
+    getCalendar();
+  }, [weekOffset, selectedDayIndex, dateToday]);
 
   return (
     <div className="bg-white rounded-2xl p-6 font-montserrat flex flex-col flex-1">
@@ -149,7 +138,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
           <p className="text-dark-gray text-sm text-center my-auto">No meals planned for this day.</p>
         ) : (
           meals.map((meal, idx) => {
-            const style = TAG_STYLES[meal.tag] ?? "bg-pepper text-black";
+            const style = TAG_STYLES[meal.type] ?? "bg-pepper text-black";
             return (
               <div key={idx} className={`rounded-lg px-4 py-3 ${style}`}>
                 <p className="font-bold text-sm leading-tight">{meal.name}</p>
