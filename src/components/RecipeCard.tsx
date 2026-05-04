@@ -73,7 +73,7 @@ export default function RecipeCard({
         </span>
       ) : null}
 
-      {isDraft && userRole === "Admin" && (
+      {isDraft && (userRole === "Admin" || userRole === "Kitchen Staff") && (
         <Pencil className="cursor-pointer" onClick={() => setEditMode((prev) => !prev)} />
       )}
 
@@ -87,7 +87,7 @@ export default function RecipeCard({
         />
       )}
 
-      {isDraft && onSelect && userRole === "Admin" && (
+      {isDraft && onSelect && (userRole === "Admin" || userRole === "Kitchen Staff") && (
         <input
           type="checkbox"
           checked={!!isSelected}

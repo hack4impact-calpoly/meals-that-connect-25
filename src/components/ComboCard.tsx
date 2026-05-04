@@ -80,14 +80,14 @@ export default function ComboCard({
           />
         )}
 
-        {isDraft && userRole === "Admin" && (
+        {isDraft && (userRole === "Admin" || userRole === "Kitchen Staff") && (
           <Pencil
             className="absolute top-35 right-4 z-20 h-5 w-5 rounded-xs accent-radish-900 cursor-pointer"
             onClick={() => setEditMode((prev) => !prev)}
           />
         )}
 
-        {isDraft && onSelect && userRole === "Admin" && (
+        {isDraft && onSelect && (userRole === "Admin" || userRole === "Kitchen Staff") && (
           <input
             type="checkbox"
             checked={!!isSelected}

@@ -95,7 +95,7 @@ export default function MealBrowser({
         {topLeftChildren}
         <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
         {topRightChildren}
-        {userRole === "Admin" && <AddNewRecipeButton />}
+        {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
         {/* <AddNewRecipeButton /> */}
       </div>
 

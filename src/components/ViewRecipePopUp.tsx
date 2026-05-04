@@ -169,7 +169,9 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 />
               </div>
               <div className="flex flex-row gap-4">
-                {userRole === "Admin" && <Pencil className="cursor-pointer" onClick={applyEditMode} />}
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <Pencil className="cursor-pointer" onClick={applyEditMode} />
+                )}
                 <Ellipsis className="cursor-pointer" />
               </div>
             </div>
