@@ -99,10 +99,9 @@ export default function MealBrowser({
           <div className="flex-1">
             <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
           </div>
-          <AddNewRecipeButton />
+          {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
         </div>
         {topRightChildren}
-        {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
       </div>
 
       {/* <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
