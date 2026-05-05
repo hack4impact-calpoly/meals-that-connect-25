@@ -60,7 +60,7 @@ export default function SortPermissionsButton({
   return (
     <>
       <Menu as="div" className="relative">
-        <MenuButton className="w-10 w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
+        <MenuButton className="w-10 w-fit h-11 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
           <ListFilter className="text-pepper" />
         </MenuButton>
         <MenuItems

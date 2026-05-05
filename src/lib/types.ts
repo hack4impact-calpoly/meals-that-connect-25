@@ -72,4 +72,4 @@ export const EMPTY_FILTERS: FilterSelections = {
 export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;
-export type RoleValue = "Admin" | "Kitchen Staff";
+export type RoleValue = "Admin" | "Kitchen Staff" | "Dining Site Staff";

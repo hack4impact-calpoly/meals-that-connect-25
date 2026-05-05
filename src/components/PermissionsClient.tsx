@@ -11,6 +11,7 @@ import { User } from "@/lib/types";
 const roleOptions: Array<{ value: RoleValue; label: string }> = [
   { value: "Admin", label: "Admin" },
   { value: "Kitchen Staff", label: "Kitchen Staff" },
+  { value: "Dining Site Staff", label: "Dining Site Staff" },
 ];
 
 interface PermissionsClientProps {
@@ -67,7 +68,7 @@ export default function PermissionsClient({ users }: PermissionsClientProps) {
 
   return (
     <main>
-      <div className="flex justify-between p-5">
+      <div className="flex justify-between items-align px-5 py-3 gap-3">
         <SearchBarClient placeholder="Search a user" onSearch={setSearch} />
         <SortPermissionsButton align="right" onSortChange={setSortType} />
       </div>
