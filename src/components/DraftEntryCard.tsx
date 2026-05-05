@@ -15,13 +15,6 @@ export default function DraftEntryCard({ variant, numDrafts }: Props) {
     router.push("/drafts");
   };
 
-  /*
-    TODO: find a way to factor out the layout from ComboCard and RecipeCard
-    to avoid code duplication.
-    Maybe use the actual RecipeCard and ComboCard, but add some props for a "View Drafts" variant
-  */
-
-  // Combo-style
   if (variant === "Combo") {
     return (
       <div
