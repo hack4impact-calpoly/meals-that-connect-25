@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 
@@ -94,7 +94,7 @@ export default function Navbar() {
         ))}
       </div>
 
-      {isSignedIn && (
+      {isSignedIn ? (
         <div className="relative hidden md:block" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
@@ -121,6 +121,15 @@ export default function Navbar() {
               </button>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="relative hidden md:block" ref={dropdownRef}>
+          <button
+            onClick={() => redirect("/sign-in")}
+            className="flex items-center gap-3 rounded-lg border border-medium-gray px-4 py-2 hover:bg-light-gray transition-colors cursor-pointer"
+          >
+            Sign In
+          </button>
         </div>
       )}
 
