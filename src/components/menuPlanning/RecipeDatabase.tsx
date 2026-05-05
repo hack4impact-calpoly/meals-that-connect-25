@@ -145,8 +145,8 @@ export default function RecipeDatabase({
               servingSize={displayItem.serving ? `${displayItem.serving}g` : "100g"}
               tags={displayItem.tags ?? displayItem.filters ?? []}
               itemType={itemType}
-              entrees={displayItem.entrees ?? []} // TODO: Find a better way to deal with this, maybe?
-              sides={displayItem.sides ?? []} // This is fragile to schema changes
+              entrees={displayItem.entrees ?? []}
+              sides={displayItem.sides ?? []}
               fruits={displayItem.fruits ?? []}
             />
           );

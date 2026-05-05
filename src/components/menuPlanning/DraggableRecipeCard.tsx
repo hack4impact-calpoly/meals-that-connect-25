@@ -11,7 +11,7 @@ interface DraggableRecipeCardProps {
   servingSize?: string;
   tags?: string[];
   itemType?: "recipe" | "combo";
-  entrees?: string[]; // TODO: Fragile to schema changes. Maybe just make each item keep it's own type.
+  entrees?: string[];
   sides?: string[];
   fruits?: string[];
   disabled?: boolean;
@@ -43,7 +43,6 @@ export default function DraggableRecipeCard({
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `recipe-${recipeId}`,
-    // TODO: create a type for this in types.ts shared between draggable items.
     data: {
       type: "recipe",
       source: "sidebar",

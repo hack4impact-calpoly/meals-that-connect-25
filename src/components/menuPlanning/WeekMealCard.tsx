@@ -4,7 +4,6 @@ import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import { TAG_STYLES } from "@/lib/types";
 
-// TODO: pull this out into the enum definition for the recipe schema
 export type CalendarMealCategory = "entrees" | "sides" | "fruits";
 
 export type WeekMealCardData = {
@@ -12,7 +11,7 @@ export type WeekMealCardData = {
   name: string;
   calories?: number;
   servingSize?: string;
-  tag?: "Entree" | "Entrée" | "Sides" | "Side" | "Fruit" | string; // TODO: once category is an enum this type can be replaced
+  tag?: "Entree" | "Entrée" | "Sides" | "Side" | "Fruit" | string;
   calendarDayId?: string;
   calendarCategory?: CalendarMealCategory;
 };

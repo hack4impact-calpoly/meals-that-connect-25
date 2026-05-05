@@ -66,11 +66,11 @@ const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
 ];
 
 type CalendarItem = {
-  _id?: string; // TODO: why both id and _id? Half the code in this file is just for guessing which one to use.
+  _id?: string;
   id?: string;
   name: string;
   serving?: number;
-  tags?: string[]; // TODO: too many things are optional, will silently fail on schema change
+  tags?: string[];
   itemType: "recipe" | "combo";
   entrees?: string[];
   sides?: string[];
@@ -83,8 +83,8 @@ type ActiveDragData = {
   name?: string;
   servingSize?: string;
   source?: string;
-  tags?: string[]; // TODO: too many things are optional, will silently fail on schema change
-  primaryTag?: string; // TODO: will turn into "category" on schema change
+  tags?: string[];
+  primaryTag?: string;
   itemType?: "recipe" | "combo";
   entrees?: string[];
   sides?: string[];
@@ -329,7 +329,6 @@ export default function MenuPlanning() {
   useEffect(() => {
     async function fetchRecipesAndCombos() {
       try {
-        // TODO: why?
         const [recipesRes, combosRes] = await Promise.all([
           fetch("/api/recipes?isDraft=false&limit=200"),
           fetch("/api/combos?isDraft=false&limit=200"),
@@ -512,8 +511,6 @@ export default function MenuPlanning() {
     setActiveDragData(null);
   }, []);
 
-  // TODO: fix scroll logic
-  // scrollbar fixed to top, RecipeDatabase to fill height, scrollable calendar area.
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="flex flex-row">

@@ -64,7 +64,7 @@ function mapCalendarRecipesToMeals(
     id: recipe._id,
     name: recipe.name,
     calories: recipe.nutritional_info?.calories,
-    servingSize: recipe.serving != null ? `${recipe.serving}` : undefined, // TODO: unclear if this should be in grams or something
+    servingSize: recipe.serving != null ? `${recipe.serving}` : undefined,
     tag,
     calendarCategory,
     calendarDayId,
@@ -79,7 +79,6 @@ function mapCalendarDayToMeals(calendarDay: CalendarDayResponse, fallbackDayId: 
   );
 }
 
-// TODO: Fix the calendar API. Fetching every day individually is painful.
 async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promise<WeekViewDayData> {
   const response = await fetch(`/api/calendar/${dayId}`, { signal });
 

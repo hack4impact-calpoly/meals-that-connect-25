@@ -60,8 +60,6 @@ export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;
 
-// TODO: When the recipe schema is finalized, update this to use item.category
-// instead of tags/filters. Expected future categories: ENTREE, FRUIT, VEGETABLE, GRAIN.
 export const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",
   Side: "bg-sides-500 text-sides-900",

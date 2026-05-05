@@ -56,7 +56,6 @@ export default function MealBrowser({
   onToggleSelect,
   onOpenItem,
 }: Props) {
-  // TODO: bring toggle out to a helper function. Used in a lot of places
   const toggleCategory = (category: CategoryValue) => {
     setSelectedCategories((prev) => {
       const next = new Set<CategoryValue>(prev);
