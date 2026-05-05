@@ -10,7 +10,7 @@ export default async function DraftsPage() {
   await dbConnect();
   const currentUser = await User.findOne({ clerkId: userId });
 
-  if (!currentUser || currentUser.role !== "Admin" || currentUser.role !== "Kitchen Staff") {
+  if (!currentUser || (currentUser.role !== "Admin" && currentUser.role !== "Kitchen Staff")) {
     redirect("/");
   }
 
