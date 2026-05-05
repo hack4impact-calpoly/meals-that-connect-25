@@ -40,7 +40,9 @@ export default function CardGrid({
   if (isComboMode) {
     return (
       <div className="grid grid-cols-2 gap-3 md:gap-6 md:max-w-3xl">
-        {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
+        {!draftMode && (userRole === "Admin" || userRole === "Kitchen Staff") && (
+          <DraftEntryCard variant="Combo" numDrafts={draftCount} />
+        )}
 
         {(items as Combo[]).map((combo) => (
           <ComboCard
@@ -67,7 +69,9 @@ export default function CardGrid({
 
   return (
     <div className="grid grid-cols-1 gap-3 md:gap-4 md:grid-cols-2 md:max-w-3xl">
-      {!draftMode && <DraftEntryCard variant="recipe" numDrafts={draftCount} />}
+      {!draftMode && (userRole === "Admin" || userRole === "Kitchen Staff") && (
+        <DraftEntryCard variant="recipe" numDrafts={draftCount} />
+      )}
 
       {(items as Recipe[]).map((recipe) => (
         <RecipeCard

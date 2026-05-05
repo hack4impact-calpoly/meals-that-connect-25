@@ -363,7 +363,7 @@ export default function MenuPlanningClient({ userRole }: MenuPlanningClientProps
   }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    if (!userRole) return;
+    if (!userRole || userRole === "Dining Site Staff") return;
     setActiveId(event.active.id as string);
     setActiveDragData({
       id: event.active.id as string,
@@ -611,7 +611,7 @@ export default function MenuPlanningClient({ userRole }: MenuPlanningClientProps
           </div>
         </div>
 
-        {userRole && (
+        {(userRole === "Admin" || userRole === "Kitchen Staff") && (
           <SidebarDropZone>
             <RecipeDatabase
               items={items}
