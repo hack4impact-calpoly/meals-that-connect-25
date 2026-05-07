@@ -7,18 +7,7 @@ import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe } from "@/lib/types";
-
-type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
-
-interface RecipeDatabaseItem {
-  _id?: string;
-  id?: string;
-  name: string;
-  serving?: number;
-  tags?: string[];
-  itemType?: "recipe" | "combo";
-}
+import { CategoryValue, Combo, Recipe, SortOption } from "@/lib/types";
 
 interface RecipeDatabaseProps {
   items: Recipe[] | Combo[];
@@ -34,6 +23,7 @@ interface RecipeDatabaseProps {
   onPageChange: (page: number) => void;
 }
 
+// TODO: find a way to improve on category value
 const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
   { value: "Combo", label: "Combos" },
   { value: "Entree", label: "Entrées" },
@@ -138,14 +128,14 @@ export default function RecipeDatabase({
           return (
             <DraggableRecipeCard
               recipeId={itemId}
-              key={displayItem.id ?? displayItem._id ?? index}
-              imageUrl=""
+              key={displayItem.id ?? displayItem._id ?? index} // TODO: this seems strange
+              imageUrl="" // TODO: this seems strange
               name={displayItem.name ?? "Untitled"}
               calories={displayItem.nutritional_info?.calories ?? 0}
               servingSize={displayItem.serving ? `${displayItem.serving}g` : "100g"}
-              tags={displayItem.tags ?? displayItem.filters ?? []}
+              tags={displayItem.tags ?? displayItem.filters ?? []} // TODO: this seems strange
               itemType={itemType}
-              entrees={displayItem.entrees ?? []}
+              entrees={displayItem.entrees ?? []} // TODO: rather than all these, maybe just make them optionals?
               sides={displayItem.sides ?? []}
               fruits={displayItem.fruits ?? []}
             />

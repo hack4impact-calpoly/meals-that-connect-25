@@ -33,7 +33,7 @@ type CalendarDayResponse = {
 };
 
 const CALENDAR_SECTIONS: Array<{
-  category: CalendarMealCategory;
+  category: CalendarMealCategory; // TODO: replace this with Category from types.ts
   tag: WeekMealCardData["tag"];
 }> = [
   { category: "entrees", tag: "Entree" },
@@ -61,7 +61,7 @@ function mapCalendarRecipesToMeals(
   calendarDayId: string,
 ): WeekMealCardData[] {
   return (recipes ?? []).map((recipe) => ({
-    id: recipe._id,
+    id: recipe._id, // TODO: standardize all recipe IDs as _id. Let "id" be for dnd-kit
     name: recipe.name,
     calories: recipe.nutritional_info?.calories,
     servingSize: recipe.serving != null ? `${recipe.serving}` : undefined,
@@ -81,7 +81,7 @@ function mapCalendarDayToMeals(calendarDay: CalendarDayResponse, fallbackDayId: 
 
 async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promise<WeekViewDayData> {
   const response = await fetch(`/api/calendar/${dayId}`, { signal });
-
+  // TODO: get rid of this. Should fetch an entire week at once.
   if (response.status === 404) {
     return {
       meals: [],
@@ -172,6 +172,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
                   </div>
                 ) : dayData.meals.length > 0 ? (
                   dayData.meals.map((meal) => (
+                    // TODO: pick better names for things
                     <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarCategory}-${meal.id}`} {...meal} />
                   ))
                 ) : (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
+// TODO: this could go in types.ts
 const MONTHS = [
   "January",
   "February",

@@ -24,7 +24,7 @@ interface CalendarDay {
   fruits: Recipe[];
   sides: Recipe[];
 }
-
+// TODO: too much code in this file, first fix categories, then clean up, then improve.
 const today = new Date();
 const SAMPLE_RECIPES: Recipe[] = [
   {
@@ -71,14 +71,15 @@ type CalendarItem = {
   name: string;
   serving?: number;
   tags?: string[];
-  itemType: "recipe" | "combo";
+  itemType: "recipe" | "combo"; // TODO: not needed
   entrees?: string[];
   sides?: string[];
   fruits?: string[];
 };
 
+// TODO: move to types.ts
 type ActiveDragData = {
-  id: string;
+  id: string; // TODO: keep consistent as _id
   recipeId?: string;
   name?: string;
   servingSize?: string;

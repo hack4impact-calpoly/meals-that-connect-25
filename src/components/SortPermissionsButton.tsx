@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { ListFilter } from "lucide-react";
@@ -8,6 +7,7 @@ export type CreateSortType = {
   label: string;
 };
 
+// TODO: Ig this is fine, but inconsistent with recipe/combo sort options
 const FILTER_TYPES: CreateSortType[] = [
   { id: "last-updated", label: "Last Updated" },
   { id: "created-date", label: "Created Date" },

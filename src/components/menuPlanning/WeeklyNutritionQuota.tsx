@@ -3,6 +3,7 @@
 import { Nutrition } from "@/lib/types";
 
 // Weekly nutrition quota targets (per week across 5 days)
+// TODO: move to types.ts, for easier comparison with nutrition schema
 const WEEKLY_QUOTA: Nutrition = {
   calories: 3000,
   protein: 75,
@@ -12,6 +13,7 @@ const WEEKLY_QUOTA: Nutrition = {
   sodium: 3200,
 };
 
+// TODO: move to types.ts
 const NUTRIENT_LABELS: Array<{ key: keyof Nutrition; label: string; unit: string }> = [
   { key: "calories", label: "Calories", unit: "kcal" },
   { key: "protein", label: "Protein", unit: "g" },
@@ -27,6 +29,7 @@ interface WeeklyNutritionQuotaProps {
 }
 
 export default function WeeklyNutritionQuota({ dailyTotals }: WeeklyNutritionQuotaProps) {
+  // TODO: make a helper function for this? maybe?
   const weeklyTotals = dailyTotals.reduce(
     (acc, day) => ({
       calories: acc.calories + (day.calories ?? 0),
@@ -39,6 +42,7 @@ export default function WeeklyNutritionQuota({ dailyTotals }: WeeklyNutritionQuo
     { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
   );
 
+  // TODO: make a helper for this
   const allMet = NUTRIENT_LABELS.every(({ key }) => weeklyTotals[key] >= WEEKLY_QUOTA[key]);
 
   return (

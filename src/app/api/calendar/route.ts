@@ -3,6 +3,7 @@ import connectDB from "@/database/db";
 import Calendar from "@/database/CalendarSchema";
 
 export async function GET(req: NextRequest) {
+  // TODO: figure out the difference between this and the other one
   try {
     await connectDB();
     const searchParams = req.nextUrl.searchParams;

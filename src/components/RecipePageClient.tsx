@@ -12,6 +12,7 @@ import { CreateRecipeType } from "@/components/CreateRecipePopUp";
 import { Menu, Utensils, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+// TODO: what the helly
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
   const out: FilterSelections = {};
   for (const key of Object.keys(f)) {

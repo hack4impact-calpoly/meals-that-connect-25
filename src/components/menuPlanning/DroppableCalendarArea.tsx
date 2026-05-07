@@ -7,7 +7,7 @@ interface DroppableCalendarAreaProps {
   children: ReactNode;
   className?: string;
 }
-
+// TODO: figure out how this looks and if I can reuse it
 export default function DroppableCalendarArea({ dayId, children }: DroppableCalendarAreaProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: `droppable-${dayId}`,

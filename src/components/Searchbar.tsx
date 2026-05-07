@@ -8,7 +8,7 @@ interface SearchBarProps {
   onSubmit?: (value: string) => void;
   placeholder?: string;
 }
-
+// TODO: I don't think this is used anywhere
 export default function SearchBar({ value, onChange, onSubmit, placeholder = "Search" }: SearchBarProps) {
   return (
     <form

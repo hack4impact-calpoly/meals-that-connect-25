@@ -2,7 +2,9 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
+import { TAG_STYLES } from "@/lib/types";
 
+// TODO: Should this be shared with something?
 interface DraggableRecipeCardProps {
   recipeId: string;
   imageUrl?: string;
@@ -17,15 +19,6 @@ interface DraggableRecipeCardProps {
   disabled?: boolean;
 }
 
-const TAG_STYLES: Record<string, string> = {
-  Combo: "bg-combo-500 text-combo-900",
-  Sides: "bg-sides-500 text-sides-900",
-  Fruit: "bg-fruit-500 text-fruit-900",
-  Entree: "bg-entree-900 text-entree-500",
-  Entrée: "bg-entree-900 text-entree-500",
-  fallback: "bg-gray-100 text-gray-700",
-};
-
 export default function DraggableRecipeCard({
   recipeId,
   imageUrl,
@@ -39,6 +32,7 @@ export default function DraggableRecipeCard({
   fruits = [],
   disabled = false,
 }: DraggableRecipeCardProps) {
+  // TODO: wont need to normalize tags
   const normalizedTags = (tags ?? ["Entree"]).map((tag) => tag?.toString().trim()).filter(Boolean);
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({

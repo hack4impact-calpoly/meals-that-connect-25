@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { TAG_STYLES } from "@/lib/types";
 
 interface WeeklyMenuProps {
   dateToday: Date;
@@ -12,13 +13,6 @@ interface MealItem {
   serving: string;
   tag: "Entree" | "Sides" | "Fruit" | "Combo";
 }
-
-const TAG_STYLES: Record<string, string> = {
-  Combo: "bg-jicama text-radish-900",
-  Sides: "bg-lime text-black",
-  Fruit: "bg-fruit-900 text-black",
-  Entree: "bg-entree-900 text-black",
-};
 
 // Mock meal data
 const MOCK_MEALS: Record<number, MealItem[]> = {

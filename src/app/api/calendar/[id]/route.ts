@@ -67,7 +67,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json(
       {
         _id: calendarDay._id,
-        entrees: resolveItems(calendarDay.entrees),
+        entrees: resolveItems(calendarDay.entrees), // TODO modify this endpoint
         fruits: resolveItems(calendarDay.fruits),
         sides: resolveItems(calendarDay.sides),
       },
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "recipeId and category are required" }, { status: 400 });
     }
 
+    // TODO: this stuff
     if (!["entrees", "sides", "fruits"].includes(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }

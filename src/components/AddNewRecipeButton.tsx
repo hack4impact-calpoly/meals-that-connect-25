@@ -7,6 +7,7 @@ import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
 
 /* Dropdown options for creating a new recipe. Add/remove entries here to change
    what appears in the menu. */
+// TODO: make a better type definition for this in types.ts
 const RECIPE_TYPES: CreateRecipeType[] = [
   { id: "Combo", label: "Add Combo", icon: Utensils },
   { id: "Entree", label: "Add Entrée", icon: Soup },

@@ -1,14 +1,27 @@
 import mongoose, { Schema } from "mongoose";
 import Ingredient from "./IngredientSchema";
 import Nutrition from "./NutritionSchema";
+import { RECIPE_CATEGORIES } from "@/lib/types";
 
 const RecipeSchema = new Schema(
   {
     _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
 
+    isSubrecipe: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+
     serving: {
       type: Number,
+      required: true,
+    },
+
+    category: {
+      type: String,
+      enum: RECIPE_CATEGORIES,
       required: true,
     },
 

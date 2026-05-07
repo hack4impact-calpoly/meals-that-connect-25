@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
-import { Nutrition } from "@/lib/types";
+import { Nutrition, TAG_STYLES } from "@/lib/types";
 
 interface DayViewProps {
   date: Date;
@@ -14,7 +14,7 @@ type DayMeal = {
   id: string;
   name: string;
   servingSize?: string;
-  tag: "Entree" | "Sides" | "Fruit" | string;
+  tag: "Entree" | "Sides" | "Fruit" | string; // TODO: figure out what the hell this is.
   category: "entrees" | "sides" | "fruits";
 };
 
@@ -34,14 +34,7 @@ type CalendarDayResponse = {
 const TAG_BY_CATEGORY: Record<string, string> = {
   entrees: "Entree",
   sides: "Sides",
-  fruits: "Fruit",
-};
-
-const TAG_STYLES: Record<string, string> = {
-  Entree: "bg-entree-900 text-entree-500",
-  Sides: "bg-sides-500 text-sides-900",
-  Fruit: "bg-fruit-500 text-fruit-900",
-  fallback: "bg-gray-100 text-gray-700",
+  fruits: "Fruit", // TODO: figure out what the hell this is
 };
 
 const formatDayId = (date: Date) => {

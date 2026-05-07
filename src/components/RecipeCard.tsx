@@ -11,7 +11,7 @@ export type RecipeCardProps = {
   name: string;
   calories?: number;
   servingSize: string;
-  tags?: string[];
+  tags?: string[]; // TODO: will need to change
   isDraft?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
@@ -37,7 +37,7 @@ export default function RecipeCard({
 
   const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
 
-  const primaryTag = tags[0];
+  const primaryTag = tags[0]; // TODO: will need to change
   const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
 
   return (

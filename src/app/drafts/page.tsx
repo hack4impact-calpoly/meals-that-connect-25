@@ -26,7 +26,7 @@ export default function DraftsPage() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"])); // TODO: Verify after that this still works
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);

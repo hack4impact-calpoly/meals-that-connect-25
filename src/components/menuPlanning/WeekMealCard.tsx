@@ -7,11 +7,11 @@ import { TAG_STYLES } from "@/lib/types";
 export type CalendarMealCategory = "entrees" | "sides" | "fruits";
 
 export type WeekMealCardData = {
-  id: string;
+  id: string; // TODO: this might need to be _id?
   name: string;
   calories?: number;
   servingSize?: string;
-  tag?: "Entree" | "Entrée" | "Sides" | "Side" | "Fruit" | string;
+  tag?: "Entree" | "Entrée" | "Sides" | "Side" | "Fruit" | string; // TODO: fix this
   calendarDayId?: string;
   calendarCategory?: CalendarMealCategory;
 };
@@ -31,7 +31,7 @@ export default function WeekMealCard({
   const tagClassName = tag ? (TAG_STYLES[tag] ?? TAG_STYLES.fallback) : TAG_STYLES.fallback;
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: dragId,
+    id: dragId, // TODO: this seems to be an ID for dnd-kit, unrelated to _id
     disabled: !calendarDayId || !calendarCategory,
     data: {
       type: "recipe",

@@ -13,7 +13,7 @@ const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
   "family-serving": { min: 4, max: 6 },
   "party-serving": { min: 7 },
 };
-
+// TODO: For now just update categories, overhaul when updating the filters
 export async function GET(req: NextRequest) {
   try {
     await connectDB();

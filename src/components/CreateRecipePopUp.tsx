@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import {
@@ -20,6 +18,8 @@ import ImageUploader from "@/components/ImageUploader";
 import type { Recipe, Combo, Ingredient, RecipeReference } from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
 import Image from "next/image";
+
+// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
 export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
 type Props = {
@@ -272,6 +272,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     setIngredientInputs(updated);
   };
 
+  // TODO: what the helly
   const isRecipe = (item: Recipe | Combo): item is Recipe => {
     return "ingredients" in item;
   };

@@ -1,12 +1,11 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { Recipe, Combo, RecipeReference } from "@/lib/types";
+import { TAG_STYLES } from "@/lib/types";
+import type { Combo, MealCategory, Nutrition, Recipe, RecipeCategory } from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
-  Share,
   Pencil,
   Ellipsis,
   Carrot,
@@ -29,106 +28,95 @@ type Props = {
   changeMode: (mode: "view" | "edit") => void;
 };
 
+type ComboRecipeMap = {
+  entrees: Recipe[];
+  vegetables: Recipe[];
+  fruits: Recipe[];
+  grains: Recipe[];
+};
+
+const EMPTY_COMBO_RECIPE_MAP: ComboRecipeMap = {
+  entrees: [],
+  vegetables: [],
+  fruits: [],
+  grains: [],
+};
+
+function emptyNutrition(): Nutrition {
+  return {
+    calories: 0,
+    protein: 0,
+    fat: 0,
+    carbs: 0,
+    fiber: 0,
+    sodium: 0,
+  };
+}
+
+function scaleNutrition(nutrition: Nutrition, multiplier: number): Nutrition {
+  return {
+    calories: (nutrition.calories || 0) * multiplier,
+    protein: (nutrition.protein || 0) * multiplier,
+    fat: (nutrition.fat || 0) * multiplier,
+    carbs: (nutrition.carbs || 0) * multiplier,
+    fiber: (nutrition.fiber || 0) * multiplier,
+    sodium: (nutrition.sodium || 0) * multiplier,
+  };
+}
+
+function addNutrition(a: Nutrition, b: Nutrition): Nutrition {
+  return {
+    calories: a.calories + b.calories,
+    protein: a.protein + b.protein,
+    fat: a.fat + b.fat,
+    carbs: a.carbs + b.carbs,
+    fiber: a.fiber + b.fiber,
+    sodium: a.sodium + b.sodium,
+  };
+}
+
+function formatNutritionValue(value: number, originalServings: number, servings: number) {
+  const scaled = (value / Math.max(1, originalServings)) * servings;
+  return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
+}
+
+async function getRecipe(id: string, signal?: AbortSignal): Promise<Recipe> {
+  const res = await fetch(`/api/recipes/${id}`, { signal });
+
+  if (!res.ok) {
+    throw new Error(`Failed to get individual recipe (${res.status})`);
+  }
+
+  return res.json();
+}
+
+async function getRecipes(ids: string[] = [], signal?: AbortSignal): Promise<Recipe[]> {
+  return Promise.all(ids.map((id) => getRecipe(id, signal)));
+}
+
+function getComboNutrition(comboRecipes: ComboRecipeMap, comboServing: number): Nutrition {
+  const allRecipes = [
+    ...comboRecipes.entrees,
+    ...comboRecipes.vegetables,
+    ...comboRecipes.fruits,
+    ...comboRecipes.grains,
+  ];
+
+  const nutritionPerServing = allRecipes.reduce((total, recipe) => {
+    const recipeServing = Math.max(1, recipe.serving || 1);
+    const recipeNutrition = recipe.nutritional_info ?? emptyNutrition();
+
+    return addNutrition(total, scaleNutrition(recipeNutrition, 1 / recipeServing));
+  }, emptyNutrition());
+
+  return scaleNutrition(nutritionPerServing, Math.max(1, comboServing));
+}
+
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
-  const originalServings = item?.serving || 1;
-
-  const [calories, setCalories] = useState(0);
-  const [protein, setProtein] = useState(0);
-  const [fat, setFat] = useState(0);
-  const [carbs, setCarbs] = useState(0);
-  const [fiber, setFiber] = useState(0);
-  const [sodium, setSodium] = useState(0);
-
-  const [entreeMap, setEntreeMap] = useState<RecipeReference[]>([]);
-  const [sideMap, setSideMap] = useState<RecipeReference[]>([]);
-  const [fruitMap, setFruitMap] = useState<RecipeReference[]>([]);
-
-  const isRecipe = (item: Recipe | Combo): item is Recipe => {
-    return "ingredients" in item;
-  };
-
-  async function getRecipe(id: string): Promise<Recipe> {
-    const res = await fetch(`/api/recipes/${id}`);
-    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
-    return res.json();
-  }
 
   useEffect(() => {
-    // get data on every entree/side/fruit for every combo and sum up nutritional info (this is needed because the nutritional info for combos is not stored in the db, but calculated on the fly)
-    if (item && isRecipe(item) === false) {
-      const loadAll = async () => {
-        const [eM, sN, fN] = await Promise.all([
-          Promise.all(
-            (item.entrees ?? []).map(async (e) => {
-              const r = await getRecipe(e);
-              return { id: r._id, name: r.name };
-            }),
-          ),
-          Promise.all(
-            (item.sides ?? []).map(async (s) => {
-              const r = await getRecipe(s);
-              return { id: r._id, name: r.name };
-            }),
-          ),
-          Promise.all(
-            (item.fruits ?? []).map(async (f) => {
-              const r = await getRecipe(f);
-              return { id: r._id, name: r.name };
-            }),
-          ),
-        ]);
-
-        setSideMap(sN);
-        setFruitMap(fN);
-        setEntreeMap(eM);
-      };
-
-      loadAll();
-
-      item.entrees?.forEach((e) => {
-        // go through each entree information and sum up nutritional info
-        getRecipe(e).then((recipe) => {
-          setCalories((c) => recipe.nutritional_info.calories / recipe.serving);
-          setProtein((p) => recipe.nutritional_info.protein / recipe.serving);
-          setFat((f) => recipe.nutritional_info.fat / recipe.serving);
-          setCarbs((c) => recipe.nutritional_info.carbs / recipe.serving);
-          setFiber((f) => recipe.nutritional_info.fiber / recipe.serving);
-          setSodium((s) => recipe.nutritional_info.sodium / recipe.serving);
-        });
-      });
-
-      item.sides?.forEach((s) => {
-        getRecipe(s).then((recipe) => {
-          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
-          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
-          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
-          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
-          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
-          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
-        });
-      });
-
-      item.fruits?.forEach((f) => {
-        getRecipe(f).then((recipe) => {
-          setCalories((c) => c + recipe.nutritional_info.calories / recipe.serving);
-          setProtein((p) => p + recipe.nutritional_info.protein / recipe.serving);
-          setFat((f) => f + recipe.nutritional_info.fat / recipe.serving);
-          setCarbs((c) => c + recipe.nutritional_info.carbs / recipe.serving);
-          setFiber((f) => f + recipe.nutritional_info.fiber / recipe.serving);
-          setSodium((s) => s + recipe.nutritional_info.sodium / recipe.serving);
-        });
-      });
-    } else if (item) {
-      setCalories(item.nutritional_info.calories || 0);
-      setProtein(item.nutritional_info.protein || 0);
-      setFat(item.nutritional_info.fat || 0);
-      setCarbs(item.nutritional_info.carbs || 0);
-      setFiber(item.nutritional_info.fiber || 0);
-      setSodium(item.nutritional_info.sodium || 0);
-    }
-
     if (open && item?.serving) {
       setServings(item.serving);
     }
@@ -136,272 +124,386 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
   if (!item) return null;
 
-  const applyEditMode = () => {
-    changeMode("edit");
-  };
+  const originalServings = item.serving || 1;
 
   return (
     <Dialog open={open} onClose={onClose} className="relative z-50">
-      {/* backdrop */}
       <DialogBackdrop className="fixed inset-0 bg-black/40" />
-      {/* container */}
+
       <div className="fixed inset-0 overflow-y-auto">
         <div className="flex min-h-full items-center justify-center p-4">
           <DialogPanel
-            className={`bg-white p-6 shadow-lg rounded-lg transition-all duration-300 
-  ${
-    maximized
-      ? "fixed inset-0 w-screen h-screen max-w-none rounded-none z-50 overflow-y-auto"
-      : "w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-  }`}
+            className={`rounded-lg bg-white p-6 shadow-lg transition-all duration-300 ${
+              maximized
+                ? "fixed inset-0 z-50 h-screen w-screen max-w-none overflow-y-auto rounded-none"
+                : "max-h-[90vh] w-full max-w-3xl overflow-y-auto"
+            }`}
           >
-            {/* header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <ArrowLeft
                   className={`cursor-pointer ${maximized ? "" : "hidden"}`}
                   onClick={() => setMaximized((m) => !m)}
                 />
                 <Maximize2
-                  className={`cursor-pointer transform -scale-y-100 ${maximized ? "hidden" : ""}`}
+                  className={`-scale-y-100 transform cursor-pointer ${maximized ? "hidden" : ""}`}
                   onClick={() => setMaximized((m) => !m)}
                 />
               </div>
+
               <div className="flex flex-row gap-4">
-                <Pencil className="cursor-pointer" onClick={applyEditMode} />
+                <Pencil className="cursor-pointer" onClick={() => changeMode("edit")} />
                 <Ellipsis className="cursor-pointer" />
               </div>
             </div>
 
-            {/* image */}
-            <div className="relative h-50 w-full bg-medium-gray rounded-lg overflow-hidden">
-              {"imageUrl" in item && item.imageUrl && (
-                <div className="relative w-full h-64 mb-4">
+            <div className="relative h-50 w-full overflow-hidden rounded-lg bg-medium-gray">
+              {item.imageUrl && (
+                <div className="relative mb-4 h-64 w-full">
                   <Image src={item.imageUrl} alt="" fill className="object-cover" />
                 </div>
               )}
-              {/* <span
-                className={`absolute left-2 top-24 inline-flex rounded-full px-4 py-1.5 text-base font-medium font-montserrat border-[3px] border-white `}
-              ></span> */}
             </div>
 
-            {/* title */}
-            <div className="text-2xl font-bold mb-4 mt-5">{item.name}</div>
+            <div className="mb-4 mt-5 text-2xl font-bold">{item.name}</div>
 
-            {/* entrees (combo) */}
-            {"entrees" in item && item.entrees && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Carrot /> Entrees
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {entreeMap.map((e, i) => (
-                    <div key={i} className="bg-brown text-white px-2 py-1 rounded-md flex items-center gap-1">
-                      {e.name}
-                      <button
-                        onClick={() => window.open(`/recipe?id=${e.id}`)}
-                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* sides (combo) */}
-            {"sides" in item && item.sides && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Carrot /> Sides
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {sideMap.map((s, i) => (
-                    <div key={i} className="bg-lime px-2 py-1 rounded-md flex items-center gap-1">
-                      {s.name}
-                      <button
-                        onClick={() => window.open(`/recipe?id=${s.id}`)}
-                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* fruits (combo) */}
-            {"fruits" in item && item.fruits && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold">
-                  <Apple /> Fruits
-                </h3>
-
-                <div className="flex flex-wrap gap-2">
-                  {fruitMap.map((f, i) => (
-                    <div key={i} className="bg-fruit-500 text-white px-2 py-1 rounded-md flex items-center gap-1">
-                      {f.name}
-                      <button
-                        onClick={() => window.open(`/recipe?id=${f.id}`)}
-                        className="p-1 rounded hover:bg-brown/80 cursor-pointer"
-                      >
-                        <ArrowUpRight size={20} />
-                      </button>{" "}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* filters */}
-            {"filters" in item && item.filters && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
-                  <Tag /> Filters
-                </h3>
-
-                <div className="flex flex-wrap gap-2 max-w-full">
-                  {item.filters.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
-                      {f}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* allergens */}
-            {"allergens" in item && item.allergens && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 py-1 font-bold shrink-0">
-                  <CircleAlert /> Allergens
-                </h3>
-
-                <div className="flex flex-wrap gap-2 max-w-full">
-                  {item.allergens.map((f, i) => (
-                    <div key={i} className="bg-pepper text-white px-2 py-1 rounded-md whitespace-nowrap">
-                      {f}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* notes */}
-            {"notes" in item && item.notes && (
-              <div className="flex mb-4">
-                <h3 className="flex w-30 gap-2 font-bold">
-                  <SquarePen /> Notes
-                </h3>
-                <p>{item.notes}</p>
-              </div>
-            )}
-
-            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-
-            {/* servings */}
-            <h3 className="text-xl mb-4 font-semibold">Servings</h3>
-            {"serving" in item && (
-              <div className="flex items-center w-min border border-gray-600 rounded-md">
-                <button
-                  className="bg-gray-200 rounded text-gray-600 hover:bg-gray-300"
-                  onClick={() => setServings((s) => Math.max(1, s - 1))}
-                >
-                  <Minus />
-                </button>
-                <span className="text-center w-15 font-mono">{servings}</span>
-                <button
-                  className="bg-gray-200 rounded text-gray-600 hover:bg-gray-300"
-                  onClick={() => setServings((s) => s + 1)}
-                >
-                  <Plus />
-                </button>
-              </div>
-            )}
-
-            {/* ingredients (recipe) */}
-            {"ingredients" in item && item.ingredients && (
-              <>
-                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-                <div className="mb-4">
-                  <h3 className="text-xl mb-4 font-semibold">Ingredients</h3>
-
-                  <ul className="list-disc pl-5">
-                    {item.ingredients.map((ing, i) => (
-                      <li key={i}>
-                        {ing.name}: {(ing.quantity / originalServings) * servings} {ing.units}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </>
-            )}
-
-            {/* instructions */}
-            {"instructions" in item && item.instructions && (
-              <>
-                <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-                <div className="mb-4">
-                  <h3 className="text-xl mb-4 font-semibold">Instructions</h3>
-                  <p className="whitespace-pre-wrap">{item.instructions}</p>
-                </div>
-              </>
-            )}
-
-            {/* nutritional info */}
-            <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
-            <h3 className="text-xl mb-4 font-semibold">Nutritional Information</h3>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <NutritionalInfo
-                label="Calories"
-                unit="kcal"
-                value={((calories / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
+            {isComboMode ? (
+              <ComboDetails
+                combo={item as Combo}
+                servings={servings}
+                setServings={setServings}
+                originalServings={originalServings}
               />
-              <NutritionalInfo
-                label="Protein"
-                unit="g"
-                value={((protein / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
+            ) : (
+              <RecipeDetails
+                recipe={item as Recipe}
+                servings={servings}
+                setServings={setServings}
+                originalServings={originalServings}
               />
-              <NutritionalInfo
-                label="Fat"
-                unit="g"
-                value={((fat / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
-              />
-              <NutritionalInfo
-                label="Carbs"
-                unit="g"
-                value={((carbs / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
-              />
-              <NutritionalInfo
-                label="Fiber"
-                unit="g"
-                value={((fiber / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
-              />
-              <NutritionalInfo
-                label="Sodium"
-                unit="mg"
-                value={((sodium / originalServings) * servings).toString()}
-                onChange={() => {}}
-                readOnly={true}
-              />
-            </div>
+            )}
           </DialogPanel>
         </div>
-      </div>{" "}
+      </div>
     </Dialog>
+  );
+}
+
+function RecipeDetails({
+  recipe,
+  servings,
+  setServings,
+  originalServings,
+}: {
+  recipe: Recipe;
+  servings: number;
+  setServings: React.Dispatch<React.SetStateAction<number>>;
+  originalServings: number;
+}) {
+  const nutrition = recipe.nutritional_info ?? emptyNutrition();
+
+  return (
+    <>
+      <LabeledSection label="Category" icon={<Tag />}>
+        <Chip label={recipe.category} styleKey={recipe.category} />
+        {recipe.isSubrecipe ? <Chip label="Subrecipe" /> : null}
+      </LabeledSection>
+
+      <TagListSection label="Filters" icon={<Tag />} items={recipe.filters} />
+      <TagListSection label="Allergens" icon={<CircleAlert />} items={recipe.allergens} />
+
+      {recipe.notes ? (
+        <LabeledSection label="Notes" icon={<SquarePen />}>
+          <p>{recipe.notes}</p>
+        </LabeledSection>
+      ) : null}
+
+      <Divider />
+
+      <ServingsControl servings={servings} setServings={setServings} />
+
+      {recipe.ingredients?.length ? (
+        <>
+          <Divider />
+
+          <div className="mb-4">
+            <h3 className="mb-4 text-xl font-semibold">Ingredients</h3>
+
+            <ul className="list-disc pl-5">
+              {recipe.ingredients.map((ingredient, i) => (
+                <li key={i}>
+                  {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </>
+      ) : null}
+
+      {recipe.instructions ? <InstructionsSection instructions={recipe.instructions} /> : null}
+
+      <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
+    </>
+  );
+}
+
+function ComboDetails({
+  combo,
+  servings,
+  setServings,
+  originalServings,
+}: {
+  combo: Combo;
+  servings: number;
+  setServings: React.Dispatch<React.SetStateAction<number>>;
+  originalServings: number;
+}) {
+  const [comboRecipes, setComboRecipes] = useState<ComboRecipeMap>(EMPTY_COMBO_RECIPE_MAP);
+
+  const nutrition = useMemo(() => getComboNutrition(comboRecipes, combo.serving), [comboRecipes, combo.serving]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadComboRecipes() {
+      try {
+        setComboRecipes(EMPTY_COMBO_RECIPE_MAP);
+
+        const [entrees, vegetables, fruits, grains] = await Promise.all([
+          getRecipes(combo.entrees, controller.signal),
+          getRecipes(combo.vegetables, controller.signal),
+          getRecipes(combo.fruits, controller.signal),
+          getRecipes(combo.grains, controller.signal),
+        ]);
+
+        setComboRecipes({
+          entrees,
+          vegetables,
+          fruits,
+          grains,
+        });
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+
+        console.error("Failed to load combo recipes:", err);
+        setComboRecipes(EMPTY_COMBO_RECIPE_MAP);
+      }
+    }
+
+    loadComboRecipes();
+
+    return () => controller.abort();
+  }, [combo]);
+
+  return (
+    <>
+      <RecipeGroup label="Entrees" icon={<Carrot />} items={comboRecipes.entrees} styleKey="Entree" />
+      <RecipeGroup label="Vegetables" icon={<Carrot />} items={comboRecipes.vegetables} styleKey="Vegetable" />
+      <RecipeGroup label="Fruits" icon={<Apple />} items={comboRecipes.fruits} styleKey="Fruit" />
+      <RecipeGroup label="Grains" icon={<Tag />} items={comboRecipes.grains} styleKey="Grain" />
+
+      <TagListSection label="Filters" icon={<Tag />} items={combo.filters} />
+      <TagListSection label="Allergens" icon={<CircleAlert />} items={combo.allergens} />
+
+      {combo.notes ? (
+        <LabeledSection label="Notes" icon={<SquarePen />}>
+          <p>{combo.notes}</p>
+        </LabeledSection>
+      ) : null}
+
+      <Divider />
+
+      <ServingsControl servings={servings} setServings={setServings} />
+
+      {combo.instructions ? <InstructionsSection instructions={combo.instructions} /> : null}
+
+      <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
+    </>
+  );
+}
+
+function RecipeGroup({
+  label,
+  icon,
+  items,
+  styleKey,
+}: {
+  label: string;
+  icon: ReactNode;
+  items: Recipe[];
+  styleKey: RecipeCategory;
+}) {
+  if (!items.length) return null;
+
+  return (
+    <LabeledSection label={label} icon={icon}>
+      <div className="flex flex-wrap gap-2">
+        {items.map((recipe) => (
+          <div key={recipe._id} className={`flex items-center gap-1 rounded-md px-2 py-1 ${TAG_STYLES[styleKey]}`}>
+            {recipe.name}
+
+            <button
+              type="button"
+              onClick={() => window.open(`/recipe?id=${recipe._id}`)}
+              className="cursor-pointer rounded p-1 hover:opacity-80"
+              aria-label={`Open ${recipe.name}`}
+            >
+              <ArrowUpRight size={20} />
+            </button>
+          </div>
+        ))}
+      </div>
+    </LabeledSection>
+  );
+}
+
+function TagListSection({ label, icon, items }: { label: string; icon: ReactNode; items?: string[] }) {
+  if (!items?.length) return null;
+
+  return (
+    <LabeledSection label={label} icon={icon}>
+      <div className="flex max-w-full flex-wrap gap-2">
+        {items.map((item, i) => (
+          <Chip key={`${item}-${i}`} label={item} />
+        ))}
+      </div>
+    </LabeledSection>
+  );
+}
+
+function LabeledSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
+  return (
+    <div className="mb-4 flex">
+      <h3 className="flex w-30 shrink-0 gap-2 py-1 font-bold">
+        {icon}
+        {label}
+      </h3>
+
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Chip({ label, styleKey }: { label: string; styleKey?: MealCategory }) {
+  return (
+    <div
+      className={`whitespace-nowrap rounded-md px-2 py-1 ${styleKey ? TAG_STYLES[styleKey] : "bg-pepper text-white"}`}
+    >
+      {label}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="my-8 hidden h-px w-full bg-medium-gray md:block" />;
+}
+
+function ServingsControl({
+  servings,
+  setServings,
+}: {
+  servings: number;
+  setServings: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  return (
+    <>
+      <h3 className="mb-4 text-xl font-semibold">Servings</h3>
+
+      <div className="flex w-min items-center rounded-md border border-gray-600">
+        <button
+          type="button"
+          className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
+          onClick={() => setServings((s) => Math.max(1, s - 1))}
+        >
+          <Minus />
+        </button>
+
+        <span className="w-15 text-center font-mono">{servings}</span>
+
+        <button
+          type="button"
+          className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
+          onClick={() => setServings((s) => s + 1)}
+        >
+          <Plus />
+        </button>
+      </div>
+    </>
+  );
+}
+
+function InstructionsSection({ instructions }: { instructions: string }) {
+  return (
+    <>
+      <Divider />
+
+      <div className="mb-4">
+        <h3 className="mb-4 text-xl font-semibold">Instructions</h3>
+        <p className="whitespace-pre-wrap">{instructions}</p>
+      </div>
+    </>
+  );
+}
+
+function NutritionSection({
+  nutrition,
+  servings,
+  originalServings,
+}: {
+  nutrition: Nutrition;
+  servings: number;
+  originalServings: number;
+}) {
+  return (
+    <>
+      <Divider />
+
+      <h3 className="mb-4 text-xl font-semibold">Nutritional Information</h3>
+
+      <div className="mt-3 flex flex-wrap gap-3">
+        <NutritionalInfo
+          label="Calories"
+          unit="kcal"
+          value={formatNutritionValue(nutrition.calories, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+        <NutritionalInfo
+          label="Protein"
+          unit="g"
+          value={formatNutritionValue(nutrition.protein, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+        <NutritionalInfo
+          label="Fat"
+          unit="g"
+          value={formatNutritionValue(nutrition.fat, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+        <NutritionalInfo
+          label="Carbs"
+          unit="g"
+          value={formatNutritionValue(nutrition.carbs, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+        <NutritionalInfo
+          label="Fiber"
+          unit="g"
+          value={formatNutritionValue(nutrition.fiber, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+        <NutritionalInfo
+          label="Sodium"
+          unit="mg"
+          value={formatNutritionValue(nutrition.sodium, originalServings, servings)}
+          onChange={() => {}}
+          readOnly={true}
+        />
+      </div>
+    </>
   );
 }

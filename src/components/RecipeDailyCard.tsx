@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
-import type { Recipe } from "@/lib/types";
+import { Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item?: Recipe;
@@ -12,15 +12,6 @@ export type RecipeCardProps = {
   onOpen?: () => void;
 };
 
-const TAG_STYLES: Record<string, string> = {
-  Combo: "bg-combo-500 text-combo-900",
-  Sides: "bg-sides-500 text-sides-900",
-  Fruit: "bg-fruit-500 text-fruit-900",
-  Entree: "bg-yellow-900 text-white",
-  Entrée: "bg-yellow-900 text-white",
-  fallback: "bg-gray-100 text-gray-700",
-};
-
 export default function RecipeDailyCard({
   item,
   imageUrl,
@@ -30,12 +21,13 @@ export default function RecipeDailyCard({
   tags = [],
   onOpen,
 }: RecipeCardProps) {
+  // TODO: why all this "resolved" stuff?
   const recipeId = item?._id;
   const resolvedImageUrl = item?.imageUrl ?? imageUrl;
   const resolvedName = item?.name ?? name;
   const resolvedCalories = item?.nutritional_info.calories ?? calories;
   const resolvedServingSize = item?.serving != null ? `${item.serving}` : servingSize;
-  const resolvedTags = item?.filters ?? tags;
+  const resolvedTags = item?.filters ?? tags; // TODO: fix this
 
   const caloriesText = resolvedCalories != null ? `${resolvedCalories} cal` : null;
 
