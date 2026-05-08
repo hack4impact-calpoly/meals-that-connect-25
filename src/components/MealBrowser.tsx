@@ -26,9 +26,9 @@ type Props = {
   onToggleSelect?: (id: string, name: string) => void;
   onOpenItem?: (item: Recipe | Combo) => void;
 
-  topLeftChildren?: ReactNode;
-  topRightChildren?: ReactNode;
-  filterButton?: ReactNode;
+  topLeftChildren?: ReactNode; // top-left slot for an extra button
+  topRightChildren?: ReactNode; // for additional buttons after search bar
+  filterButton?: ReactNode; // filter button to display on mobile
 };
 
 export default function MealBrowser({

@@ -175,6 +175,7 @@ export default function MenuPlanning() {
     setDatesOffset(0);
   }, [calendarView]);
 
+  // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
   const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
 
   const downloadMonthlyMenu = async () => {
