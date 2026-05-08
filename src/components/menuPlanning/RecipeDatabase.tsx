@@ -9,7 +9,7 @@ import PaginationDisplay from "@/components/PaginationDisplay";
 import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, SORT_OPTIONS, SortOption } from "@/lib/types";
 
 interface RecipeDatabaseProps {
-  items: Array<Recipe | Combo>;
+  items: Recipe[] | Combo[];
   loading: boolean;
   error: string | null;
   onSearch: (value: string) => void;
