@@ -33,6 +33,7 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const isSubrecipeParam = searchParams.get("isSubrecipe");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
@@ -98,6 +99,12 @@ export async function GET(req: NextRequest) {
     } else if (isDraftParam === "false") {
       filter.isDraft = false;
     }
+
+    if (isSubrecipeParam === "true") {
+      filter.isSubrecipe = true;
+    } else if (isSubrecipeParam === "false") {
+      filter.isSubrecipe = false;
+    } // Undefined means query for a mix
 
     let sort: Record<string, 1 | -1> = { createdAt: -1 };
 

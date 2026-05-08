@@ -44,6 +44,10 @@ export function useMealData({
   const refresh = () => setRefreshKey((k) => k + 1);
 
   const isComboMode = selectedCategories.has("Combo");
+  const isSubrecipeOnly = filters.additional?.has("isSubrecipe") ?? false;
+
+  // TODO: This is a hopefully temporary hack, new filter schema will support this better.
+  const SPECIAL_FILTERS = new Set(["issubrecipe"]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -70,10 +74,18 @@ export function useMealData({
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
 
+        // If the parameter is present, then filter. Otherwise get any.
+        // Has no effect on combos.
+        if (!isComboMode && isSubrecipeOnly) {
+          params.append("isSubrecipe", "true");
+        }
+
         if (trimmed) {
           params.append("name", trimmed);
         } else {
-          const tagParams = buildFilterTags(filters);
+          // isSubrecipe should not be a part of the "tags", since it is its own field.
+          const tagParams = buildFilterTags(filters).filter((tag) => !SPECIAL_FILTERS.has(tag));
+          console.log(tagParams);
           tagParams.forEach((t) => {
             if (t.includes("serving")) {
               params.append("servings", t);
@@ -144,7 +156,17 @@ export function useMealData({
 
     load();
     return () => controller.abort();
-  }, [currentPage, debouncedSearch, filters, selectedCategories, isComboMode, draftMode, sortBy, refreshKey]);
+  }, [
+    currentPage,
+    debouncedSearch,
+    filters,
+    selectedCategories,
+    isComboMode,
+    draftMode,
+    sortBy,
+    refreshKey,
+    isSubrecipeOnly,
+  ]);
 
   const items = isComboMode ? combos : recipes;
 

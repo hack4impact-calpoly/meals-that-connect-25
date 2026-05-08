@@ -68,6 +68,11 @@ export const FILTER_SECTIONS: FilterSection[] = [
       { id: "low-sodium", label: "Low Sodium" },
     ],
   },
+  {
+    id: "additional",
+    label: "Additional Filters",
+    options: [{ id: "isSubrecipe", label: "Subrecipes Only" }],
+  },
 ];
 
 function emptySelections(): FilterSelections {

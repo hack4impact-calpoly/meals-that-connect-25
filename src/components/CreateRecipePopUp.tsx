@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { AlignLeft, ChevronDown, CircleAlert, Minus, Plus, Save, Tag, Trash2, X, type LucideIcon } from "lucide-react";
+import { AlignLeft, ChefHat, ChevronDown, Minus, Plus, Save, Trash2, X, type LucideIcon } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 import {
   Recipe,
@@ -213,6 +213,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [selectedGrains, setSelectedGrains] = useState<RecipePreview[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<{ id: string; name: string }[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<{ id: string; name: string }[]>([]);
+  const [isSubrecipe, setIsSubrecipe] = useState(false);
 
   const [entreeOptions, setEntreeOptions] = useState<RecipePreview[]>([]);
   const [vegetableOptions, setVegetableOptions] = useState<RecipePreview[]>([]);
@@ -234,6 +235,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       id: option.label,
     })),
   );
+  const subrecipeOptions = [
+    { id: "yes", name: "Yes" },
+    { id: "no", name: "No" },
+  ];
 
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -306,6 +311,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       setSelectedGrains([]);
       setSelectedFilters([]);
       setSelectedAllergens([]);
+      setIsSubrecipe(false);
       setNotes("");
       setServings("1");
       setInstructionsText("");
@@ -333,8 +339,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       if (!item) return;
 
-      // if it's entree/side/fruit
+      // if it's a recipe
       if (!isCombo && isRecipeItem(item) === true) {
+        setIsSubrecipe(item.isSubrecipe);
         setIngredientInputs(
           item.ingredients
             ? item.ingredients.map((ingredient: Ingredient) => ({
@@ -472,6 +479,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
     // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
     if (!isCombo && isDraft && itemId !== "") {
+      // FIXME: Shoudn't this happen server side? Due to pagination I don't think this works.
       const res = await fetch(`/api/combos`, { method: "GET" });
       if (!res.ok) {
         console.error("Failed to check recipe combos", res.status);
@@ -546,6 +554,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
         payload = {
           _id: crypto.randomUUID(),
           name: name.trim() || (isDraft ? "Untitled Draft" : ""),
+          isSubrecipe: isSubrecipe,
           category: recipeCategory,
           serving: Number(servings) || 1,
           allergens: selectedAllergens.map((allergen) => allergen.name),
@@ -859,6 +868,20 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 />
               </>
             )}
+
+            {!isCombo && (
+              <DropdownField
+                icon={ChefHat}
+                label="Is this a Subrecipe?"
+                options={subrecipeOptions}
+                selectedValues={[isSubrecipe ? "Yes" : "No"]}
+                onSelect={(value) => {
+                  setIsSubrecipe(value.id === "yes");
+                }}
+                placeholder="Select Yes or No"
+              />
+            )}
+
             <DropdownField
               icon={FILTER_ICON}
               label="Filters"
