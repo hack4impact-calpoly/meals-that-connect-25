@@ -8,6 +8,7 @@ interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
   refetchTrigger?: number;
+  userRole: string | null;
 }
 
 type WeekViewDayData = {
@@ -50,7 +51,7 @@ const mapCalendarRecipesToMeals = (
     calendarDayId,
   }));
 
-export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekViewProps) {
+export default function WeekView({ dateToday, weekDates, refetchTrigger, userRole }: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -127,7 +128,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
               date.toDateString() === dateToday.toDateString()
                 ? "border-2 border-radish-900"
                 : "border border-medium-gray/35"
-            } bg-white`}
+            } ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"} bg-white`}
           >
             {isLoading ? (
               <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 text-center font-montserrat text-xs font-medium text-pepper/55">
@@ -135,7 +136,9 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
               </div>
             ) : (weekViewMeals[idx]?.meals ?? []).length > 0 ? (
               <DroppableCalendarArea dayId={formatCalendarDayId(date)}>
-                {weekViewMeals[idx]?.meals?.map((meal) => <WeekMealCard key={meal.id} {...meal} />) || null}
+                {weekViewMeals[idx]?.meals?.map((meal) => (
+                  <WeekMealCard key={meal.id} userRole={userRole} {...meal} />
+                )) || null}
               </DroppableCalendarArea>
             ) : (
               <DroppableCalendarArea dayId={formatCalendarDayId(date)}>

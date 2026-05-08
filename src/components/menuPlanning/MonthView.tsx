@@ -15,9 +15,10 @@ type Props = {
   /** In-month dates only (1..last day). */
   monthDates: Date[];
   dateToday: Date;
+  userRole: string | null;
 };
 
-export default function MonthView({ monthDates, dateToday }: Props) {
+export default function MonthView({ monthDates, dateToday, userRole }: Props) {
   const focusDate = monthDates[0] ?? new Date();
   const leadingBlanks = focusDate.getDay(); // Sunday-first
   const cells: Array<Date | null> = [...Array.from({ length: leadingBlanks }, () => null), ...monthDates];
@@ -52,7 +53,8 @@ export default function MonthView({ monthDates, dateToday }: Props) {
                   key={`${wi}-${di}`}
                   className={`relative min-h-[90px] overflow-hidden rounded-[12px] border border-medium-gray ${
                     weekend ? "bg-medium-gray/35" : "bg-white"
-                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"}`}
+                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"} 
+                    ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"}`}
                   data-drop-disabled={weekend ? "true" : undefined}
                   aria-disabled={weekend}
                   title={weekend ? "Weekends — meals cannot be placed here" : undefined}

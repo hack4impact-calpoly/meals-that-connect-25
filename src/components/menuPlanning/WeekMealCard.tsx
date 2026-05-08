@@ -15,7 +15,9 @@ export type WeekMealCardData = {
   calendarCategory?: "entrees" | "sides" | "fruits";
 };
 
-type WeekMealCardProps = WeekMealCardData;
+type WeekMealCardProps = WeekMealCardData & {
+  userRole: string | null;
+};
 
 const CARD_STYLE_BY_TAG: Record<string, { backgroundColor: string; textColor: string }> = {
   Combo: {
@@ -42,6 +44,7 @@ const DEFAULT_CARD_STYLE = {
 };
 
 export default function WeekMealCard({
+  userRole,
   id,
   name,
   calories,
@@ -89,7 +92,10 @@ export default function WeekMealCard({
         {metaText ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{metaText}</p> : null}
       </div>
 
-      <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
+      <GripVertical
+        className={`h-5 w-5 shrink-0 text-current opacity-90 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        aria-hidden="true"
+      />
     </div>
   );
 }

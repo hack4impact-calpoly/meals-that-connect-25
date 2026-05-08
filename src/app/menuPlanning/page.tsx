@@ -362,7 +362,6 @@ export default function MenuPlanning() {
   }, []);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    if (!userRole || userRole === "Dining Site Staff") return;
     setActiveId(event.active.id as string);
     setActiveDragData({
       id: event.active.id as string,
@@ -581,7 +580,7 @@ export default function MenuPlanning() {
 
             {calendarView === "Month" && (
               <div className="flex min-h-0 flex-1 flex-col">
-                <MonthView monthDates={viewDates} dateToday={today} />
+                <MonthView monthDates={viewDates} dateToday={today} userRole={userRole} />
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
@@ -594,7 +593,12 @@ export default function MenuPlanning() {
 
             {calendarView === "Week" && (
               <>
-                <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <WeekView
+                  dateToday={today}
+                  weekDates={viewDates}
+                  refetchTrigger={recipeDropTrigger}
+                  userRole={userRole}
+                />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
@@ -604,7 +608,7 @@ export default function MenuPlanning() {
 
             {calendarView === "Day" && (
               <>
-                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} userRole={userRole} />
               </>
             )}
           </div>

@@ -8,6 +8,7 @@ import { Nutrition } from "@/lib/types";
 interface DayViewProps {
   date: Date;
   refetchTrigger?: number;
+  userRole: string | null;
 }
 
 type DayMeal = {
@@ -51,7 +52,7 @@ const formatDayId = (date: Date) => {
   return `${year}${month}${day}`;
 };
 
-export default function DayView({ date, refetchTrigger }: DayViewProps) {
+export default function DayView({ date, refetchTrigger, userRole }: DayViewProps) {
   const [meals, setMeals] = useState<DayMeal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -124,7 +125,9 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
   const emptyNutrition: Nutrition[] = [];
 
   return (
-    <div className="mt-4 flex flex-col gap-3">
+    <div
+      className={`mt-4 flex flex-col gap-3 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"}`}
+    >
       <DroppableCalendarArea dayId={dayId}>
         {isLoading ? (
           <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 py-8 text-center font-montserrat text-xs font-medium text-pepper/55">
@@ -154,7 +157,8 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
                 <button
                   onClick={() => handleDelete(meal)}
                   disabled={deletingId === meal.id}
-                  className="shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
+                  className={`shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50 
+                              ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
                   aria-label={`Remove ${meal.name}`}
                 >
                   <Trash2 size={18} strokeWidth={1.7} />
