@@ -5,6 +5,7 @@ import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
 import PaginationDisplay from "@/components/PaginationDisplay";
 import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe } from "@/lib/types";
+import { toggleCategory } from "@/lib/helpers";
 
 type Props = {
   setSearch: (s: string) => void;
@@ -50,24 +51,6 @@ export default function MealBrowser({
   onToggleSelect,
   onOpenItem,
 }: Props) {
-  const toggleCategory = (category: CategoryValue) => {
-    setSelectedCategories((prev) => {
-      const next = new Set<CategoryValue>(prev);
-
-      if (category === "Combo") {
-        if (next.has("Combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["Combo"]);
-      }
-
-      if (next.has("Combo")) next.delete("Combo");
-
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-
-      return next;
-    });
-  };
-
   return (
     <div className="flex flex-1 flex-col gap-3 md:gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
@@ -90,7 +73,7 @@ export default function MealBrowser({
             <CategoryToggle
               options={CATEGORY_DISPLAY}
               selectedCategories={selectedCategories}
-              onToggle={toggleCategory}
+              onToggle={(category) => toggleCategory(category, setSelectedCategories)}
             />
           </div>
 

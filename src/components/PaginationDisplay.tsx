@@ -4,7 +4,7 @@ type Props = {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  disabled?: boolean;
+  disabled: boolean;
 };
 
 export default function PaginationDisplay({ currentPage, totalPages, onPageChange, disabled = false }: Props) {

@@ -26,6 +26,7 @@ import {
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
+import { toggleCategory } from "@/lib/helpers";
 
 // TODO: too much code in this file, first fix categories. Later will will find a way to improve.
 const today = new Date();
@@ -242,24 +243,6 @@ export default function MenuPlanning() {
     } catch (error) {
       console.error("Error downloading monthly menu:", error);
     }
-  };
-
-  const toggleCategory = (category: CategoryValue) => {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-
-      if (category === "Combo") {
-        if (next.has("Combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["Combo"]);
-      }
-
-      if (next.has("Combo")) next.delete("Combo");
-
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-
-      return next;
-    });
   };
 
   const { items, loading, error, currentPage, totalPages, setCurrentPage } = useMealData({
@@ -504,7 +487,7 @@ export default function MenuPlanning() {
             error={error}
             onSearch={setSearch}
             selectedCategories={selectedCategories}
-            onToggleCategory={toggleCategory}
+            onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
             sortBy={sortBy}
             onSortChange={setSortBy}
             currentPage={currentPage}

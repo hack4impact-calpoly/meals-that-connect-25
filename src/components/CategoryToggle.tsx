@@ -26,7 +26,7 @@ export default function CategoryToggle({
             onClick={() => onToggle(option.category)}
             className={`${baseClass} ${selected ? selectedClass : unselectedClass}`}
           >
-            {option.label}
+            {option.plural}
           </button>
         );
       })}
