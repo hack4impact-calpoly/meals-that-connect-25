@@ -25,8 +25,6 @@ export default function DraftsPage() {
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
 
-  // TODO: make recipes also selectable, currently only ComboCard has selection button
-  // figma doesn't have styles for selectable RecipeCard
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
@@ -70,11 +68,6 @@ export default function DraftsPage() {
       return next;
     });
   };
-  /*
-    TODO: style DraftEntryCard (the card that links to the drafts page)
-    TODO: figure out what to do about selecting RecipeCards.
-    TODO: consider adding min-w and max-w to RecipeCard, allow for responsive grid. Combos are already responsive.
-  */
 
   const handleDelete = async () => {
     setShowDeleteModal(true);
@@ -159,9 +152,6 @@ export default function DraftsPage() {
         )}
       </div>
 
-      {/*TODO: Style buttons and whatnot */}
-      {/*TODO: separate into a component that takes the buttons as props. Permissions page also uses this */}
-      {/*TODO: refresh the page after a button click? or figure out a better way */}
       {selectedIds.size > 0 && (
         <div className="flex justify-between bg-white border-t border-gray-300 px-6 py-4 shadow-md">
           <div className="flex flex-wrap items-center gap-4">

@@ -73,6 +73,7 @@ type CalendarItem = {
   serving?: number;
   tags?: string[];
   itemType: "recipe" | "combo";
+  entrees?: string[];
   sides?: string[];
   fruits?: string[];
 };
@@ -82,9 +83,13 @@ type ActiveDragData = {
   recipeId?: string;
   name?: string;
   servingSize?: string;
+  source?: string;
   tags?: string[];
   primaryTag?: string;
-  source?: string;
+  itemType?: "recipe" | "combo";
+  entrees?: string[];
+  sides?: string[];
+  fruits?: string[];
 };
 
 function TrashDropZone() {
@@ -347,7 +352,8 @@ export default function MenuPlanning() {
         const comboItems: CalendarItem[] = (combosJson.data ?? []).map((combo: Combo) => ({
           ...combo,
           itemType: "combo",
-          tags: ["Combo", ...(combo.sides?.length ? ["Side"] : []), ...(combo.fruits?.length ? ["Fruit"] : [])],
+          tags: ["Combo"],
+          entrees: combo.entrees ?? [],
           sides: combo.sides ?? [],
           fruits: combo.fruits ?? [],
         }));
@@ -424,7 +430,7 @@ export default function MenuPlanning() {
       return;
     }
 
-    const { recipeId, tags, primaryTag, itemType, sides = [], fruits = [] } = dragData;
+    const { recipeId, tags, primaryTag, itemType, entrees = [], sides = [], fruits = [] } = dragData;
     const { dayId } = dropData;
 
     if (!recipeId || typeof recipeId !== "string" || recipeId.trim() === "") {
@@ -432,11 +438,12 @@ export default function MenuPlanning() {
       return;
     }
 
+    type CalendarCategory = "entrees" | "sides" | "fruits";
+
     const rawTags = Array.isArray(tags) ? tags : tags ? [tags] : [primaryTag || "Entree"];
     const normalizedTags = rawTags.map((tag) => tag?.toString().trim().toLowerCase()).filter(Boolean);
-    const hasComboTag = normalizedTags.includes("combo") || itemType === "combo";
 
-    const mapTagToCategory = (tag: string) => {
+    const mapTagToCategory = (tag: string): CalendarCategory | undefined => {
       switch (tag) {
         case "entree":
         case "entrée":
@@ -444,8 +451,6 @@ export default function MenuPlanning() {
           return "entrees";
         case "side":
         case "sides":
-        case "vegetarian":
-        case "soup":
           return "sides";
         case "fruit":
         case "fruits":
@@ -455,49 +460,38 @@ export default function MenuPlanning() {
       }
     };
 
-    const explicitCategories = Array.from(
-      new Set(
-        normalizedTags
-          .map(mapTagToCategory)
-          .filter((category): category is "entrees" | "sides" | "fruits" => Boolean(category)),
-      ),
-    );
+    const calendarItemsToAdd: Array<{ recipeId: string; category: CalendarCategory }> =
+      itemType === "combo"
+        ? [
+            ...entrees.map((id: string) => ({ recipeId: id, category: "entrees" as const })),
+            ...sides.map((id: string) => ({ recipeId: id, category: "sides" as const })),
+            ...fruits.map((id: string) => ({ recipeId: id, category: "fruits" as const })),
+          ].filter((item) => item.recipeId && item.recipeId.trim() !== "")
+        : [
+            {
+              recipeId,
+              category: normalizedTags.map(mapTagToCategory).find(Boolean) ?? "entrees",
+            },
+          ];
 
-    const defaultComboCategories: Array<"entrees" | "sides" | "fruits"> = [
-      ...(sides.length > 0 ? ["sides" as const] : []),
-      ...(fruits.length > 0 ? ["fruits" as const] : []),
-    ];
-
-    const categoriesToSend: Array<"entrees" | "sides" | "fruits"> =
-      explicitCategories.length > 0
-        ? explicitCategories
-        : hasComboTag
-          ? defaultComboCategories.length > 0
-            ? defaultComboCategories
-            : ["entrees"]
-          : ["entrees"];
-
-    const categoryItemIds = (category: "entrees" | "sides" | "fruits"): string[] => {
-      if (itemType === "combo") {
-        if (category === "sides") return sides;
-        if (category === "fruits") return fruits;
-        return [];
-      }
-      return [recipeId];
-    };
+    if (calendarItemsToAdd.length === 0) {
+      console.error("No valid recipes found in dragged item:", dragData);
+      return;
+    }
 
     try {
       const responses = await Promise.all(
-        categoriesToSend.flatMap((category) =>
-          categoryItemIds(category).map((itemId) =>
-            fetch(`/api/calendar/${dayId}`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ recipeId: itemId, category }),
+        calendarItemsToAdd.map((item) =>
+          fetch(`/api/calendar/${dayId}`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              recipeId: item.recipeId,
+              category: item.category,
             }),
-          ),
+          }),
         ),
       );
 
@@ -587,7 +581,6 @@ export default function MenuPlanning() {
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
-                <WarningQuotaMonthly />
               </div>
             )}
 

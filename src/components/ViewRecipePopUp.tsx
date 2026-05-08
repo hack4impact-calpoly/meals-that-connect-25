@@ -327,7 +327,6 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             )}
 
             {/* ingredients (recipe) */}
-            {/* TODO: figma shows that combos also have ingredients, but the schema doesnt (maybe its just sides + fruit?) */}
             {"ingredients" in item && item.ingredients && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />
@@ -346,7 +345,6 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
             )}
 
             {/* instructions */}
-            {/* TODO: fix instructions schema (change from string -> array) */}
             {"instructions" in item && item.instructions && (
               <>
                 <div className="hidden md:block h-px w-full bg-medium-gray my-8" />

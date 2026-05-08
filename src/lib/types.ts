@@ -73,3 +73,12 @@ export type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
 export type CategoryValue = "Entree" | "Side" | "Fruit" | "Combo";
 export type FilterSelections = Record<string, Set<string>>;
 export type RoleValue = "Admin" | "Kitchen Staff" | "Dining Site Staff";
+
+export const TAG_STYLES: Record<string, string> = {
+  Combo: "bg-combo-500 text-combo-900",
+  Side: "bg-sides-500 text-sides-900",
+  Fruit: "bg-fruit-500 text-fruit-900",
+  Entree: "bg-entree-900 text-entree-500",
+  Entrée: "bg-entree-900 text-entree-500",
+  fallback: "bg-gray-100 text-gray-700",
+};
