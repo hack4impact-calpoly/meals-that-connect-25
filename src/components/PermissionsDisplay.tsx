@@ -1,3 +1,4 @@
+import { useUser } from "@clerk/nextjs";
 import IndividualPermission, { UserPerms } from "./IndividualPermission";
 
 type Props = {
@@ -9,6 +10,8 @@ type Props = {
 };
 
 export default function PermissionsDisplay({ users, editing = false, onSelect, selectedIds, onRoleChange }: Props) {
+  const { user: currentUser } = useUser();
+  const otherUsers = users.filter((u) => u._id !== currentUser?.id);
   return (
     <div className="flex flex-col gap-y-3 pt-2 text-black font-montserrat">
       {/* Header */}
@@ -24,7 +27,7 @@ export default function PermissionsDisplay({ users, editing = false, onSelect, s
         <div className="col-span-1"></div>
       </div>
       {/* Rows */}
-      {users.map((u) => (
+      {otherUsers.map((u) => (
         <IndividualPermission
           key={u._id}
           user={u}

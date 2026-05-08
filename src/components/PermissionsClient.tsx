@@ -127,8 +127,10 @@ export default function PermissionsClient() {
             onRoleChange={handleLocalRoleChange}
           />
         </div>
+
+        {isEditing && selectedUsers.length > 0 && <div className="h-20"></div>}
       </div>
-      {isEditing && (
+      {isEditing && selectedUsers.length > 0 && (
         <PermissionsPopUp
           selectedUsers={selectedUsers}
           setSelectedUsers={setSelectedUsers}

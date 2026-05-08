@@ -24,7 +24,7 @@ export default function PermissionsPopUp({ selectedUsers, setSelectedUsers, onBu
           <DeleteUserTag key={u._id} user={u} onDelete={() => removeUser(u._id)} />
         ))}
       </div>
-      {selectedUsers.length != 0 && <DeleteUserButton onClick={onBulkDelete} />}
+      {<DeleteUserButton onClick={onBulkDelete} />}
     </div>
   );
 }
