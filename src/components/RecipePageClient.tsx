@@ -11,10 +11,7 @@ import { Recipe, Combo } from "@/lib/types";
 import { CreateRecipeType } from "@/components/CreateRecipePopUp";
 import { Menu, Utensils } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-
-type RecipePageClientProps = {
-  userRole: string;
-};
+import { useUserRole } from "./UserRoleProvider";
 
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
   const out: FilterSelections = {};
@@ -24,7 +21,7 @@ function cloneFilterSelections(f: FilterSelections): FilterSelections {
   return out;
 }
 
-export default function RecipePageClient({ userRole }: RecipePageClientProps) {
+export default function RecipePageClient() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
@@ -36,6 +33,7 @@ export default function RecipePageClient({ userRole }: RecipePageClientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
+  const { userRole } = useUserRole();
 
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);

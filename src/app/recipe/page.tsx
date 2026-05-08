@@ -12,14 +12,9 @@ import dbConnect from "@/database/db";
 import User from "@/database/UserSchema";
 
 export default async function RecipePage() {
-  const { userId } = await auth();
-
-  await dbConnect();
-  const currentUser = await User.findOne({ clerkId: userId });
-
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <RecipePageClient userRole={currentUser.role} />
+      <RecipePageClient />
     </Suspense>
   );
 }

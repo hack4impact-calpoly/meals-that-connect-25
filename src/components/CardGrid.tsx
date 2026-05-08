@@ -16,7 +16,7 @@ type Props = {
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
   onOpenItem?: (item: Recipe | Combo) => void;
-  userRole?: string;
+  userRole: string | null;
 };
 
 export default function CardGrid({

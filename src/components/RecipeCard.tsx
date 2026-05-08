@@ -15,7 +15,7 @@ export type RecipeCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
-  userRole?: string;
+  userRole: string | null;
 };
 const TAG_STYLES: Record<string, string> = {
   Combo: "bg-combo-500 text-combo-900",

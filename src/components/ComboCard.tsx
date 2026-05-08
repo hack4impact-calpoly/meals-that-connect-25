@@ -16,7 +16,7 @@ type ComboCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
-  userRole?: string;
+  userRole: string | null;
 };
 
 export default function ComboCard({

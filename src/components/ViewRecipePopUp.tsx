@@ -27,7 +27,7 @@ type Props = {
   item: Recipe | Combo | null;
   isComboMode: boolean;
   changeMode: (mode: "view" | "edit") => void;
-  userRole: string;
+  userRole?: string | null;
 };
 
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode, userRole }: Props) {

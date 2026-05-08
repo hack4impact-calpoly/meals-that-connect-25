@@ -29,7 +29,7 @@ type Props = {
   topLeftChildren?: React.ReactNode; // top-left slot for an extra button
   topRightChildren?: React.ReactNode; // for additional buttons after search bar
 
-  userRole?: string;
+  userRole: string | null;
   filterButton?: React.ReactNode; // filter button to display on left of controls row
 };
 
