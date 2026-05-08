@@ -6,9 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
-
-// TODO: types.ts
-type UserRole = "Admin" | "Dining Site Staff" | "Kitchen Staff";
+import { UserRole } from "@/lib/types";
 
 export default function Navbar() {
   const pathname = usePathname();

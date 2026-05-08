@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { TAG_STYLES } from "@/lib/types";
-import type { Combo, MealCategory, Nutrition, Recipe, RecipeCategory } from "@/lib/types";
+import type { Combo, CategoryValue, Nutrition, Recipe, RecipeCategory } from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
@@ -384,7 +384,7 @@ function LabeledSection({ label, icon, children }: { label: string; icon: ReactN
   );
 }
 
-function Chip({ label, styleKey }: { label: string; styleKey?: MealCategory }) {
+function Chip({ label, styleKey }: { label: string; styleKey?: CategoryValue }) {
   return (
     <div
       className={`whitespace-nowrap rounded-md px-2 py-1 ${styleKey ? TAG_STYLES[styleKey] : "bg-pepper text-white"}`}

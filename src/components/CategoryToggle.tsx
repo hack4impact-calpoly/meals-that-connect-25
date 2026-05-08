@@ -1,11 +1,11 @@
-import { CategoryValue } from "@/lib/types";
+import { CategoryDisplayType, CategoryValue } from "@/lib/types";
 
 export default function CategoryToggle({
   options,
   selectedCategories,
   onToggle,
 }: {
-  options: Array<{ value: CategoryValue; label: string }>;
+  options: CategoryDisplayType[];
   selectedCategories: Set<CategoryValue>;
   onToggle: (category: CategoryValue) => void;
 }) {
@@ -17,13 +17,13 @@ export default function CategoryToggle({
   return (
     <div className="flex flex-wrap gap-2">
       {options.map((option) => {
-        const selected = selectedCategories.has(option.value);
+        const selected = selectedCategories.has(option.category);
 
         return (
           <button
-            key={option.value}
+            key={option.category}
             type="button"
-            onClick={() => onToggle(option.value)}
+            onClick={() => onToggle(option.category)}
             className={`${baseClass} ${selected ? selectedClass : unselectedClass}`}
           >
             {option.label}

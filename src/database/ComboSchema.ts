@@ -12,37 +12,37 @@ const ComboSchema = new Schema(
 
     entrees: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     vegetables: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     fruits: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     grains: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     filters: {
       type: [String],
-      required: false,
+      required: true,
       default: [],
     },
 
     allergens: {
       type: [String],
-      required: false,
+      required: true,
       default: [],
     },
 

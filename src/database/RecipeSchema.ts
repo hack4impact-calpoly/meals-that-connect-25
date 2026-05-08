@@ -25,12 +25,12 @@ const RecipeSchema = new Schema(
       required: true,
     },
 
-    allergens: { type: [String], required: false },
-    filters: { type: [String], required: false },
+    allergens: { type: [String], required: true },
+    filters: { type: [String], required: true },
 
     ingredients: {
       type: [Ingredient.schema],
-      required: false,
+      required: true,
     },
 
     instructions: { type: String, required: false },

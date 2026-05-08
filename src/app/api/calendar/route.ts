@@ -3,21 +3,23 @@ import connectDB from "@/database/db";
 import Calendar from "@/database/CalendarSchema";
 
 export async function GET(req: NextRequest) {
-  // TODO: figure out the difference between this and the other one
   try {
     await connectDB();
-    const searchParams = req.nextUrl.searchParams;
 
+    const searchParams = req.nextUrl.searchParams;
     const year = searchParams.get("year");
     const month = searchParams.get("month")?.padStart(2, "0");
 
     if (year && month) {
       const yearMonth = `${year}${month}`;
+
       const result = await Calendar.find({ _id: { $regex: `^${yearMonth}` } })
         .populate("entrees")
+        .populate("vegetables")
         .populate("fruits")
-        .populate("sides")
+        .populate("grains")
         .exec();
+
       return NextResponse.json(result);
     }
 

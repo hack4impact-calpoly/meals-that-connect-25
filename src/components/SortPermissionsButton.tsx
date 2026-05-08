@@ -7,7 +7,6 @@ export type CreateSortType = {
   label: string;
 };
 
-// TODO: Ig this is fine, but inconsistent with recipe/combo sort options
 const FILTER_TYPES: CreateSortType[] = [
   { id: "last-updated", label: "Last Updated" },
   { id: "created-date", label: "Created Date" },
@@ -53,7 +52,7 @@ export default function SortPermissionsButton({
   return (
     <>
       <Menu as="div" className="relative">
-        <MenuButton className="w-10 w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
+        <MenuButton className="w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
           <ListFilter className="text-pepper" />
         </MenuButton>
         <MenuItems

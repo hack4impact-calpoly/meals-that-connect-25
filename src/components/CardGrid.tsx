@@ -16,7 +16,7 @@ type Props = {
   onOpenItem?: (item: Recipe | Combo) => void;
 };
 
-// TODO: layouts are currently sortof broken. Figure out why
+// FIXME: layouts are currently sortof broken (max 2 cols for some reason). Figure out why
 export default function CardGrid({
   loading,
   error,

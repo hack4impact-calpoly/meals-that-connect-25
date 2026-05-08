@@ -6,25 +6,25 @@ const CalendarSchema = new Schema(
 
     entrees: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     vegetables: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     fruits: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
 
     grains: {
       type: [{ type: String, ref: "Recipe" }],
-      required: false,
+      required: true,
       default: [],
     },
   },

@@ -2,71 +2,59 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
-import { Recipe } from "@/lib/types";
-import { TAG_STYLES } from "@/lib/types";
+import { Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
-  imageUrl?: string;
-  name: string;
-  calories?: number;
-  servingSize: string;
-  tags?: string[]; // TODO: will need to change
-  isDraft?: boolean;
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
 };
 
-export default function RecipeCard({
-  item,
-  imageUrl,
-  name,
-  calories,
-  servingSize,
-  tags = [],
-  isDraft = false,
-  isSelected,
-  onSelect,
-  onOpen,
-}: RecipeCardProps) {
+export default function RecipeCard({ item, isSelected, onSelect, onOpen }: RecipeCardProps) {
   const [editMode, setEditMode] = useState(false);
-  const caloriesText = calories != null ? `${calories} cal` : null;
 
-  const servingText = servingSize != null ? `${servingSize}` : null;
-
-  const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
-
-  const primaryTag = tags[0]; // TODO: will need to change
-  const tagStyle = (primaryTag && TAG_STYLES[primaryTag]) ?? TAG_STYLES.fallback;
+  const tagStyle = TAG_STYLES[item.category];
+  const metaText = `${item.nutritional_info.calories} cal / ${item.serving}`;
 
   return (
     <div
       onClick={onOpen}
-      className={`flex items-center gap-3 md:gap-4 rounded-lg md:rounded-xl border-2 border-gray-300 bg-white py-6 md:py-10 px-4 md:px-5 transition hover:shadow-md cursor-pointer ${isSelected ? "border-3 border-radish-900" : isDraft ? "border-dashed" : ""}`}
+      className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 border-gray-300 bg-white px-4 py-6 transition hover:shadow-md md:gap-4 md:rounded-xl md:px-5 md:py-10 ${
+        isSelected ? "border-3 border-radish-900" : item.isDraft ? "border-dashed" : ""
+      }`}
     >
-      <div className="relative shrink-0 h-16 md:h-20 w-16 md:w-20 overflow-hidden rounded-md bg-gray-100">
-        {imageUrl ? <Image src={imageUrl} alt={name} fill sizes="80px" className="object-cover" /> : null}
+      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-gray-100 md:h-20 md:w-20">
+        {item.imageUrl ? (
+          <Image src={item.imageUrl} alt={item.name} fill sizes="80px" className="object-cover" />
+        ) : null}
       </div>
 
-      <div className="flex-1 min-w-0">
-        <h3 className="truncate text-lg md:text-xl font-bold font-montserrat" title={name}>
-          {name}
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate font-montserrat text-lg font-bold md:text-xl" title={item.name}>
+          {item.name}
         </h3>
-        {metaText ? <p className="text-sm md:text-base font-medium font-montserrat">{metaText}</p> : null}
+
+        <p className="font-montserrat text-sm font-medium md:text-base">{metaText}</p>
       </div>
 
-      {primaryTag ? (
-        <span
-          className={`shrink-0 w-16 md:w-20 rounded-md text-center px-2 md:px-3 py-1 md:py-1.5 text-xs md:text-base font-medium font-montserrat ${tagStyle}`}
-        >
-          {primaryTag}
-        </span>
-      ) : null}
+      <span
+        className={`w-16 shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:w-20 md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
+      >
+        {item.category}
+      </span>
 
-      {isDraft && <Pencil className="cursor-pointer shrink-0 h-5 w-5" onClick={() => setEditMode((prev) => !prev)} />}
+      {item.isDraft && (
+        <Pencil
+          className="h-5 w-5 shrink-0 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditMode((prev) => !prev);
+          }}
+        />
+      )}
 
-      {editMode === true && (
+      {editMode && (
         <CreateRecipePopUp
           onClose={() => setEditMode(false)}
           item={item}
@@ -76,7 +64,7 @@ export default function RecipeCard({
         />
       )}
 
-      {isDraft && onSelect && (
+      {item.isDraft && onSelect && (
         <input
           type="checkbox"
           checked={!!isSelected}
@@ -84,8 +72,8 @@ export default function RecipeCard({
             e.stopPropagation();
             onSelect?.();
           }}
-          onClick={(e) => e.stopPropagation()} // to prevent checkbox from triggering popUp component
-          className="h-5 w-5 bg-white rounded-xs border-2 accent-radish-900 cursor-pointer shrink-0"
+          onClick={(e) => e.stopPropagation()}
+          className="h-5 w-5 shrink-0 cursor-pointer rounded-xs border-2 bg-white accent-radish-900"
         />
       )}
     </div>

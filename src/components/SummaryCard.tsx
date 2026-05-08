@@ -2,22 +2,7 @@
 
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-
-// TODO: this could go in types.ts
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+import { MONTHS } from "@/lib/types";
 
 interface DonutChartProps {
   value: number;

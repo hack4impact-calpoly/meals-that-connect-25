@@ -2,47 +2,45 @@
 
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import { TAG_STYLES } from "@/lib/types";
-
-export type CalendarMealCategory = "entrees" | "sides" | "fruits";
+import { RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
 
 export type WeekMealCardData = {
-  id: string; // TODO: this might need to be _id?
+  _id: string;
   name: string;
   calories?: number;
   servingSize?: string;
-  tag?: "Entree" | "Entrée" | "Sides" | "Side" | "Fruit" | string; // TODO: fix this
-  calendarDayId?: string;
-  calendarCategory?: CalendarMealCategory;
+  category: RecipeCategory;
+  calendarDayId: string;
+  calendarBucket: RecipeBucket;
 };
 
 type WeekMealCardProps = WeekMealCardData;
 
 export default function WeekMealCard({
-  id,
+  _id,
   name,
   calories,
   servingSize,
-  tag,
+  category,
   calendarDayId,
-  calendarCategory,
+  calendarBucket,
 }: WeekMealCardProps) {
-  const dragId = `calendar-${calendarDayId ?? "unknown"}-${calendarCategory ?? "unknown"}-${id}`;
-  const tagClassName = tag ? (TAG_STYLES[tag] ?? TAG_STYLES.fallback) : TAG_STYLES.fallback;
+  const dndId = `calendar-${calendarDayId}-${calendarBucket}-${_id}`;
+  const tagClassName = TAG_STYLES[category];
 
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: dragId, // TODO: this seems to be an ID for dnd-kit, unrelated to _id
-    disabled: !calendarDayId || !calendarCategory,
+    id: dndId,
     data: {
       type: "recipe",
       source: "calendar",
-      recipeId: id,
+      itemType: "recipe",
+      recipeId: _id,
       dayId: calendarDayId,
-      category: calendarCategory,
+      bucket: calendarBucket,
+      category,
+      recipeCategory: category,
       name,
       servingSize,
-      tags: tag ? [tag] : [],
-      primaryTag: tag,
     },
   });
 
