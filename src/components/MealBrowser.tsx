@@ -104,20 +104,6 @@ export default function MealBrowser({
         {topRightChildren}
       </div>
 
-      {/* <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <CategoryToggle<CategoryValue>
-          options={categoryOptions}
-          selectedCategories={selectedCategories}
-          onToggle={toggleCategory}
-        />
-        <PaginationDisplay
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => setCurrentPage(page)}
-          disabled={loading}
-        />
-      </div> */}
-
       <div className="flex flex-col md:gap-3">
         <div className="flex flex-row items-center gap-2 md:gap-3">
           {filterButton && <div className="hidden md:block">{filterButton}</div>}
