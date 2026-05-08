@@ -4,12 +4,17 @@ import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import ViewRecipePopUp from "@/components/ViewRecipePopUp";
 import CreateRecipePopUp from "@/components/CreateRecipePopUp";
-import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
+import {
+  CategoryDisplayType,
+  CategoryValue,
+  COMBO_CATEGORY_DISPLAY,
+  EMPTY_FILTERS,
+  FilterSelections,
+} from "@/lib/types";
 import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
-import { CreateRecipeType } from "@/components/CreateRecipePopUp";
-import { Menu, Utensils, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
@@ -31,7 +36,7 @@ export default function RecipePageClient() {
   const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
-  const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
+  const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
 
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
@@ -49,7 +54,7 @@ export default function RecipePageClient() {
   const handleOpenItem = (item: Recipe | Combo) => {
     setSelectedItem(item);
     setIsOpen(true);
-    setActiveType(isComboMode ? { id: "Combo", label: "Add Combo", icon: Utensils } : null);
+    setActiveType(isComboMode ? COMBO_CATEGORY_DISPLAY : null);
   };
 
   useEffect(() => {

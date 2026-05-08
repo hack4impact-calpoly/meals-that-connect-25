@@ -62,11 +62,6 @@ export default function CardGrid({
         <RecipeCard
           key={recipe._id}
           item={recipe}
-          name={recipe.name}
-          imageUrl={recipe.imageUrl}
-          servingSize={recipe.serving.toString()}
-          tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
-          isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}
           onOpen={() => onOpenItem?.(recipe)}

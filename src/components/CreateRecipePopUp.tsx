@@ -19,7 +19,7 @@ import {
 import { FILTER_SECTIONS } from "./FilterMenu";
 import Image from "next/image";
 
-// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
+// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents and helpers should be moved to helpers.ts
 
 type Props = {
   item: Recipe | Combo | null;
@@ -204,7 +204,7 @@ function DropdownField({
 }
 
 export default function CreateRecipePopUp({ item, open, onClose, recipeType, editMode }: Props) {
-  const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
+  const createLabel = recipeType?.label ?? "Recipe";
   const isCombo = recipeType?.category === "Combo" || (!!item && !isRecipeItem(item));
 
   const [selectedEntrees, setSelectedEntree] = useState<RecipePreview[]>([]);
@@ -618,7 +618,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
     // check if valid deletion can occur - no recipe should be able to be deleted if it's being used in an existing combo, but combos can be deleted regardless
     if (!isCombo) {
-      // TODO: we are checking client side every single combo ever created???
+      // FIXME: we are checking client side every single combo ever created???
       // this doesn't currently work anyway due to pagination.
       const res = await fetch(`/api/combos`, { method: "GET" });
       if (!res.ok) {

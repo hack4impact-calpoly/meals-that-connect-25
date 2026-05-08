@@ -220,12 +220,47 @@ export const GRAIN_ICON = Wheat;
 export const FILTER_ICON = Tag;
 export const ALLERGEN_ICON = CircleAlert;
 
+export const COMBO_CATEGORY_DISPLAY = {
+  category: "Combo",
+  label: "Combo",
+  plural: "Combos",
+  icon: COMBO_ICON,
+} satisfies CategoryDisplayType;
+
+export const ENTREE_CATEGORY_DISPLAY = {
+  category: "Entree",
+  label: "Entrée",
+  plural: "Entrées",
+  icon: ENTREE_ICON,
+} satisfies CategoryDisplayType;
+
+export const VEGETABLE_CATEGORY_DISPLAY = {
+  category: "Vegetable",
+  label: "Vegetable",
+  plural: "Vegetables",
+  icon: VEGETABLE_ICON,
+} satisfies CategoryDisplayType;
+
+export const FRUIT_CATEGORY_DISPLAY = {
+  category: "Fruit",
+  label: "Fruit",
+  plural: "Fruits",
+  icon: FRUIT_ICON,
+} satisfies CategoryDisplayType;
+
+export const GRAIN_CATEGORY_DISPLAY = {
+  category: "Grain",
+  label: "Grain",
+  plural: "Grains",
+  icon: GRAIN_ICON,
+} satisfies CategoryDisplayType;
+
 export const CATEGORY_DISPLAY = [
-  { category: "Combo", label: "Combo", plural: "Combos", icon: COMBO_ICON },
-  { category: "Entree", label: "Entrée", plural: "Entrées", icon: ENTREE_ICON },
-  { category: "Vegetable", label: "Vegetable", plural: "Vegetables", icon: VEGETABLE_ICON },
-  { category: "Fruit", label: "Fruit", plural: "Fruits", icon: FRUIT_ICON },
-  { category: "Grain", label: "Grain", plural: "Grains", icon: GRAIN_ICON },
+  COMBO_CATEGORY_DISPLAY,
+  ENTREE_CATEGORY_DISPLAY,
+  VEGETABLE_CATEGORY_DISPLAY,
+  FRUIT_CATEGORY_DISPLAY,
+  GRAIN_CATEGORY_DISPLAY,
 ] satisfies CategoryDisplayType[];
 
 /* -------------------------------------------------------------------------- */

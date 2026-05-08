@@ -22,11 +22,11 @@ function RecipeMenuItem({
     <MenuItem>
       <button
         onClick={() => onSelect(type)}
-        className="flex w-full items-center gap-3 px-2 py-2 text-xl font-montserrat font-medium text-pepper
+        className="flex w-full items-center gap-3 px-2 py-2 text-xl font-montserrat text-nowrap font-medium text-pepper
                    data-focus:text-radish-900"
       >
         <Icon size={32} />
-        {type.label}
+        Add {type.label}
       </button>
     </MenuItem>
   );

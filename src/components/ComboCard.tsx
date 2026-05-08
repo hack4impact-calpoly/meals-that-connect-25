@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Pencil, Utensils } from "lucide-react";
-import { Combo, Recipe, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY, Combo, COMBO_CATEGORY_DISPLAY, Recipe, TAG_STYLES } from "@/lib/types";
 import { useEffect, useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 
@@ -75,7 +75,7 @@ export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboC
             onClose={() => setEditMode(false)}
             item={item}
             open={true}
-            recipeType={{ id: "Combo", label: "Add Combo", icon: Utensils }}
+            recipeType={COMBO_CATEGORY_DISPLAY}
             editMode={true}
           />
         )}
