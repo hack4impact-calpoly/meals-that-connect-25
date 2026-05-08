@@ -6,6 +6,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { redirect, usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
+import { useUserRole } from "./UserRoleProvider";
 
 type UserRole = "Admin" | "Dining Site Staff" | "Kitchen Staff";
 
@@ -21,6 +22,7 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const { userRole, setUserRole } = useUserRole();
 
   // cync user to DB on sign-in and fetch their role
   useEffect(() => {
@@ -114,7 +116,10 @@ export default function Navbar() {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-40 rounded-lg border border-medium-gray bg-white shadow-md z-50">
               <button
-                onClick={() => signOut({ redirectUrl: "/sign-in" })}
+                onClick={() => {
+                  setUserRole(null);
+                  signOut({ redirectUrl: "/sign-in" });
+                }}
                 className="w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-pepper hover:bg-light-gray transition-colors"
               >
                 Log out
@@ -195,6 +200,7 @@ export default function Navbar() {
                 <div className="absolute bottom-20 mt-2 w-20 rounded-lg border border-medium-gray bg-white shadow-md z-50">
                   <button
                     onClick={() => {
+                      setUserRole(null);
                       signOut({ redirectUrl: "/sign-in" });
                       setDrawerOpen(false);
                       setMobileDropdownOpen(false);

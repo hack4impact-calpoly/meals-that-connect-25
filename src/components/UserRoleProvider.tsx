@@ -4,6 +4,7 @@ import { useState, createContext, useContext, useEffect, Dispatch, SetStateActio
 
 type UserRoleContextType = {
   userRole: string | null;
+  setUserRole: Dispatch<SetStateAction<string | null>>;
 };
 
 const UserRoleContext = createContext<UserRoleContextType | null>(null);
@@ -13,17 +14,21 @@ export function UserRoleProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
-      const res = await fetch("/api/users/me");
-      if (res.ok) {
-        const data = await res.json();
-        setUserRole(data.role);
+      try {
+        const res = await fetch("/api/users/me");
+        if (res.ok) {
+          const data = await res.json();
+          setUserRole(data.role);
+        }
+      } catch (error) {
+        setUserRole(null);
       }
     };
 
     fetchCurrentUser();
   }, []);
 
-  return <UserRoleContext.Provider value={{ userRole }}>{children}</UserRoleContext.Provider>;
+  return <UserRoleContext.Provider value={{ userRole, setUserRole }}>{children}</UserRoleContext.Provider>;
 }
 
 export function useUserRole() {
