@@ -126,17 +126,28 @@ export default function RecipeDatabase({
             filters?: string[];
             nutritional_info?: { calories?: number };
             serving?: number;
+            itemType?: "recipe" | "combo";
+            entrees?: string[];
+            sides?: string[];
+            fruits?: string[];
           };
+
+          const itemId = String(displayItem.id ?? displayItem._id ?? "");
+          const itemType = displayItem.itemType ?? (selectedCategories.has("Combo") ? "combo" : "recipe");
 
           return (
             <DraggableRecipeCard
-              recipeId={String(displayItem.id ?? displayItem._id ?? "")}
+              recipeId={itemId}
               key={displayItem.id ?? displayItem._id ?? index}
-              imageUrl={""}
+              imageUrl=""
               name={displayItem.name ?? "Untitled"}
               calories={displayItem.nutritional_info?.calories ?? 0}
               servingSize={displayItem.serving ? `${displayItem.serving}g` : "100g"}
               tags={displayItem.tags ?? displayItem.filters ?? []}
+              itemType={itemType}
+              entrees={displayItem.entrees ?? []}
+              sides={displayItem.sides ?? []}
+              fruits={displayItem.fruits ?? []}
             />
           );
         })}
