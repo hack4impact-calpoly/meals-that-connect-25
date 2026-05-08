@@ -152,7 +152,7 @@ export type Combo = {
 
 export type CalendarDay = {
   _id: string; // YYYYMMDD
-} & RecipeBuckets<string>;
+} & RecipeBuckets<Recipe>;
 
 export const MONTHS = [
   "January",

@@ -165,7 +165,7 @@ export default function MenuPlanning() {
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
 
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -178,7 +178,7 @@ export default function MenuPlanning() {
   const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
 
   const downloadMonthlyMenu = async () => {
-    const baseDate = viewDates[0] ?? today;
+    const baseDate = calendarView === "Month" ? viewDates[10] : viewDates[0];
     const currentMonth = baseDate.getMonth();
     const currentYear = baseDate.getFullYear();
 
@@ -198,28 +198,66 @@ export default function MenuPlanning() {
       dates.forEach((date) => {
         const formattedDate = `${date._id.slice(0, 4)}-${date._id.slice(4, 6)}-${date._id.slice(6, 8)}`;
 
-        data.push({
-          date: formattedDate,
-          bucket: "",
-          recipeId: "",
-        });
+        const allItems = [
+          ...(date.entrees || []),
+          ...(date.vegetables || []),
+          ...(date.fruits || []),
+          ...(date.grains || []),
+        ];
 
-        RECIPE_BUCKETS.forEach((bucket) => {
-          const recipeIds = date[bucket] ?? [];
+        const totals = allItems.reduce(
+          (acc, item) => {
+            acc.calorie += item.nutritional_info.calories || 0;
+            acc.protein += item.nutritional_info.protein || 0;
+            acc.fat += item.nutritional_info.fat || 0;
+            acc.carbs += item.nutritional_info.carbs || 0;
+            acc.fiber += item.nutritional_info.fiber || 0;
+            acc.sodium += item.nutritional_info.sodium || 0;
+            return acc;
+          },
+          {
+            name: formattedDate,
+            serving: "",
+            calorie: 0,
+            protein: 0,
+            fat: 0,
+            carbs: 0,
+            fiber: 0,
+            sodium: 0,
+          },
+        );
 
-          recipeIds.forEach((recipeId) => {
+        data.push(totals);
+
+        const pushItems = (items: Recipe[] = []) => {
+          items.forEach((item) => {
             data.push({
-              date: "",
-              bucket,
-              recipeId,
+              name: item.name,
+              serving: item.serving,
+              calorie: item.nutritional_info.calories,
+              protein: item.nutritional_info.protein,
+              fat: item.nutritional_info.fat,
+              carbs: item.nutritional_info.carbs,
+              fiber: item.nutritional_info.fiber,
+              sodium: item.nutritional_info.sodium,
             });
           });
-        });
+        };
+
+        pushItems(date.entrees);
+        pushItems(date.vegetables);
+        pushItems(date.fruits);
+        pushItems(date.grains);
 
         data.push({
-          date: "",
-          bucket: "",
-          recipeId: "",
+          name: "",
+          serving: "",
+          calorie: "",
+          protein: "",
+          fat: "",
+          carbs: "",
+          fiber: "",
+          sodium: "",
         });
       });
 
@@ -227,9 +265,14 @@ export default function MenuPlanning() {
         {
           sheet: "Menu",
           columns: [
-            { label: "Date", value: "date" },
-            { label: "Bucket", value: "bucket" },
-            { label: "Recipe ID", value: "recipeId" },
+            { label: "Item Name", value: "name" },
+            { label: "Serving", value: "serving" },
+            { label: "Cals (kcal)", value: "calorie" },
+            { label: "Prot (g)", value: "protein" },
+            { label: "Fat (g)", value: "fat" },
+            { label: "Carbs (g)", value: "carbs" },
+            { label: "Fiber (g)", value: "fiber" },
+            { label: "Sodium (mg)", value: "sodium" },
           ],
           content: data,
         },
