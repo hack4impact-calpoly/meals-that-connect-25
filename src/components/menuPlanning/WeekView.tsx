@@ -173,7 +173,11 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger, userRol
                   </div>
                 ) : dayData.meals.length > 0 ? (
                   dayData.meals.map((meal) => (
-                    <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarCategory}-${meal.id}`} {...meal} />
+                    <WeekMealCard
+                      key={`${meal.calendarDayId}-${meal.calendarCategory}-${meal.id}`}
+                      userRole={userRole}
+                      {...meal}
+                    />
                   ))
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
