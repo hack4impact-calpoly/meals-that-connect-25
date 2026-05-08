@@ -17,6 +17,8 @@ const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
 };
 
 function normalizeRecipeCategory(value: string): RecipeCategory | null {
+  // accepts capitalization differences.
+  // e.g, " entree " will normalize to "Entree" for searching
   return RECIPE_CATEGORIES.find((category) => category.toLowerCase() === value.toLowerCase()) ?? null;
 }
 
