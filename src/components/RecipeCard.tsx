@@ -3,6 +3,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 import { Recipe } from "@/lib/types";
+import { TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
@@ -15,14 +16,6 @@ export type RecipeCardProps = {
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
-};
-const TAG_STYLES: Record<string, string> = {
-  Combo: "bg-combo-500 text-combo-900",
-  Side: "bg-sides-500 text-sides-900",
-  Fruit: "bg-fruit-500 text-fruit-900",
-  Entree: "bg-entree-900 text-entree-500",
-  Entrée: "bg-entree-900 text-entree-500",
-  fallback: "bg-gray-100 text-gray-700",
 };
 
 export default function RecipeCard({
