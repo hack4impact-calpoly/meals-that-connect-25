@@ -9,7 +9,6 @@ import { ArrowLeft, Trash2, CircleX, CircleCheck, Menu } from "lucide-react";
 
 import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 import { useMealData } from "@/hooks/useMealData";
-import { useUserRole } from "@/components/UserRoleProvider";
 
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
   const out: FilterSelections = {};
@@ -24,6 +23,7 @@ export default function DraftsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
@@ -44,7 +44,23 @@ export default function DraftsPage() {
     setSelectedNames({});
     setBusy(null);
   }, [isComboMode]);
-  const { userRole } = useUserRole();
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
 
   const toggleSelect = (id: string, name: string) => {
     setSelectedIds((prev) => {

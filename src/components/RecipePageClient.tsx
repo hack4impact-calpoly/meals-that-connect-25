@@ -11,7 +11,6 @@ import { Recipe, Combo } from "@/lib/types";
 import { CreateRecipeType } from "@/components/CreateRecipePopUp";
 import { Menu, Utensils, SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useUserRole } from "./UserRoleProvider";
 
 function cloneFilterSelections(f: FilterSelections): FilterSelections {
   const out: FilterSelections = {};
@@ -33,7 +32,24 @@ export default function RecipePageClient() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
-  const { userRole } = useUserRole();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
 
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);

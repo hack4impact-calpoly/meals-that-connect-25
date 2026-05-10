@@ -17,7 +17,6 @@ import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } fr
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
-import { useUserRole } from "@/components/UserRoleProvider";
 
 interface CalendarDay {
   _id: string;
@@ -187,8 +186,25 @@ export default function MenuPlanning() {
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const { userRole } = useUserRole();
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+    console.log("User role set to:", userRole);
+  }, []);
 
   useEffect(() => {
     setDatesOffset(0);

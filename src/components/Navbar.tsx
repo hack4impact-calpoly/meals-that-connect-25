@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { redirect, usePathname } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
-import { useUserRole } from "./UserRoleProvider";
 
 type UserRole = "Admin" | "Dining Site Staff" | "Kitchen Staff";
 
@@ -22,7 +21,24 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
-  const { userRole, setUserRole } = useUserRole();
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
 
   // cync user to DB on sign-in and fetch their role
   useEffect(() => {
@@ -118,6 +134,7 @@ export default function Navbar() {
               <button
                 onClick={() => {
                   setUserRole(null);
+
                   signOut({ redirectUrl: "/sign-in" });
                 }}
                 className="w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-pepper hover:bg-light-gray transition-colors"

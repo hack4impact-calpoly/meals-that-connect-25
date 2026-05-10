@@ -6,8 +6,13 @@ export default clerkMiddleware(async (auth, request) => {
   const { method, url } = request;
   const pathname = new URL(url).pathname;
 
-  // Allow GET requests to /api/calendar and subroutes without auth
-  if (method === "GET" && /^\/api\/calendar(\/.*)?$/.test(pathname)) {
+  // Allow GET requests to /api/calendar, /api/recipes, and /api/combos and subroutes without auth
+  if (
+    method === "GET" &&
+    (/^\/api\/calendar(\/.*)?$/.test(pathname) ||
+      /^\/api\/recipes(\/.*)?$/.test(pathname) ||
+      /^\/api\/combos(\/.*)?$/.test(pathname))
+  ) {
     return;
   }
 
