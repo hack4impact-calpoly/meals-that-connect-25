@@ -315,7 +315,6 @@ export const TAG_STYLES = {
   Grain: "bg-grain-bg text-grain-text",
 } satisfies Record<CategoryValue, string>;
 
-// TODO: pages that use icons should pull from here, so updating happens across all pages.
 export type CategoryDisplayType = { category: CategoryValue; label: string; plural: string; icon: LucideIcon };
 
 export const COMBO_ICON = Utensils;

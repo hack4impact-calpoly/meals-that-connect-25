@@ -17,7 +17,6 @@ type WeekViewDayData = {
   showNutritionInfoNotMet?: boolean;
 };
 
-// TODO: extract this into a populated type in types.ts and add API support
 type CalendarRecipe = Pick<Recipe, "_id" | "name" | "serving"> & {
   nutritional_info?: Partial<Recipe["nutritional_info"]>;
 };

@@ -136,9 +136,6 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
 
-  // TODO: Ideally the filters are displayedd the same way. Make a "flattenFilters" helper
-  // to flatten the filter object to a list.
-
   useEffect(() => {
     if (open && item?.serving) {
       setServings(item.serving);
