@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
+import { RecipeBuckets } from "@/lib/types";
+import { deriveComboDataFromRecipeIds, getFinalRecipeBuckets } from "@/lib/server/comboHelpers";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -35,7 +37,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: "Combo ID is required" }, { status: 400 });
   }
 
-  let updates = {};
+  let updates: Record<string, unknown>;
+
   try {
     updates = await req.json();
   } catch {
@@ -44,9 +47,31 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   try {
     await connectDB();
+
+    const existingCombo = await Combo.findById(id)
+      .select("entrees vegetables fruits grains")
+      .lean<RecipeBuckets<string>>();
+
+    if (!existingCombo) {
+      return NextResponse.json({ error: "Combo not found" }, { status: 404 });
+    }
+
+    // get all recipes in this combo, including updates
+    const finalRecipeBuckets = getFinalRecipeBuckets(updates, existingCombo);
+    // aggregate the filters
+    const calculatedFilters = await deriveComboDataFromRecipeIds(finalRecipeBuckets);
+
     const updatedCombo = await Combo.findByIdAndUpdate(
       id,
-      { $set: updates },
+      {
+        $set: {
+          ...updates,
+
+          // The client cannot set the filters directly
+          // here we overwrite any client data with our own calculations
+          ...calculatedFilters,
+        },
+      },
       {
         new: true,
         runValidators: true,
@@ -63,6 +88,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (err?.name === "ValidationError" || err?.name === "StrictModeError") {
       return NextResponse.json({ error: "Invalid Data" }, { status: 400 });
     }
+
+    if (err?.message?.includes("Invalid") || err?.message?.includes("could not be found")) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
+
     console.error("Error updating combo:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

@@ -3,20 +3,13 @@
 import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
-import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
+import { CategoryValue, createEmptyFilterSelections, FilterSelections } from "@/lib/types";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, CircleX, CircleCheck, Menu } from "lucide-react";
 
 import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 import { useMealData } from "@/hooks/useMealData";
-
-function cloneFilterSelections(f: FilterSelections): FilterSelections {
-  const out: FilterSelections = {};
-  for (const key of Object.keys(f)) {
-    out[key] = new Set(f[key]);
-  }
-  return out;
-}
+import { cloneFilterSelections } from "@/lib/helpers";
 
 export default function DraftsPage() {
   const router = useRouter();
@@ -28,7 +21,7 @@ export default function DraftsPage() {
   const [selectedNames, setSelectedNames] = useState<Record<string, string>>({});
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<FilterSelections>(() => createEmptyFilterSelections()); // Lazy initializer, only used on first render.
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData({

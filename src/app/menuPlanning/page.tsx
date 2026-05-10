@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import type { ReactNode } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
@@ -14,7 +14,6 @@ import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from
 import {
   CalendarDay,
   Combo,
-  EMPTY_FILTERS,
   CategoryValue,
   Nutrition,
   Recipe,
@@ -22,13 +21,13 @@ import {
   RecipeCategory,
   RECIPE_BUCKETS,
   SortOption,
+  createEmptyFilterSelections,
 } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
 
-// TODO: too much code in this file, first fix categories. Later will will find a way to improve.
 const today = new Date();
 
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
@@ -40,29 +39,32 @@ const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
   { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
 ];
 
+// TODO: refine this a bit. Currently unsure how this is used
 type ActiveDragData = {
-  id: string;
-  type?: string;
-  source?: "sidebar" | "calendar";
+  id: string; // Not the mongo _id... Probably remove
+  type?: string; // Always "recipe" or "trash", but "trash" is a drop zone, can probably remove.
+
+  source?: "sidebar" | "calendar"; // where the item was dragged from
   itemType?: "recipe" | "combo";
 
   recipeId?: string;
   comboId?: string;
-  dayId?: string;
+  dayId?: string; // Used by the calendar drop zone, can probably remove from here then.
 
   name?: string;
   servingSize?: string;
 
-  bucket?: RecipeBucket;
+  // This is the plural of the category. e.g: "entrees", "vegetables"
+  bucket?: RecipeBucket; // now needed in the drag data, can be derived later
   category?: CategoryValue;
-  recipeCategory?: RecipeCategory;
+  recipeCategory?: RecipeCategory; // Simply excludes "combo" when we know it is a recipe
 
   entrees?: string[];
   vegetables?: string[];
   fruits?: string[];
   grains?: string[];
 
-  item?: Recipe | Combo;
+  item?: Recipe | Combo; // We should honestly just include the item and category and forget about the rest of the attributes.
 };
 
 function TrashDropZone() {
@@ -166,6 +168,7 @@ export default function MenuPlanning() {
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
+  const [filters, setFilters] = useState(() => createEmptyFilterSelections());
 
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -291,7 +294,7 @@ export default function MenuPlanning() {
 
   const { items, loading, error, currentPage, totalPages, setCurrentPage } = useMealData({
     search,
-    filters: EMPTY_FILTERS,
+    filters, // TODO: can add filtering support to recipeDatabase
     selectedCategories,
     draftMode: false,
     sortBy,

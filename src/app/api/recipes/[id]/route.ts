@@ -3,6 +3,7 @@ import connectDB, { getRecipeById } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { RECIPE_CATEGORIES } from "@/lib/types";
 import type { RecipeCategory } from "@/lib/types";
+import { refreshCombosContainingRecipe, updateAffectsComboData } from "@/lib/server/comboHelpers";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -67,6 +68,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
     if (!updatedRecipe) {
       return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    if (updateAffectsComboData(updates)) {
+      // Refresh combos only if this change would actually affect them.
+      // For example, a nutrition change or a filter change.
+      await refreshCombosContainingRecipe(id);
     }
 
     return NextResponse.json(updatedRecipe, { status: 200 });

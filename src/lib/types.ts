@@ -83,7 +83,7 @@ export const BUCKET_TO_CATEGORY = {
   grains: "Grain",
 } as const satisfies Record<RecipeBucket, RecipeCategory>;
 
-export type RecipeBuckets<T> = {
+export type RecipeBuckets<T = string> = {
   // Can be parametrized as strings (for _id), full recipes, or previews.
   entrees: T[];
   vegetables: T[];
@@ -103,9 +103,6 @@ export type Recipe = {
   category: RecipeCategory;
   isSubrecipe: boolean;
 
-  filters: string[];
-  allergens: string[];
-
   ingredients: Ingredient[];
   instructions?: string;
   notes?: string;
@@ -115,36 +112,35 @@ export type Recipe = {
 
   isDraft: boolean;
   nutritional_info: Nutrition;
-};
+} & MealFilterFields;
 
 export type RecipePreview = {
   _id: string;
   name: string;
+  category: RecipeCategory;
 };
 
-export type Combo = {
+export type RecipeMinimal = {
+  _id: string;
+  name: string;
+};
+
+// Takes the type of the recipe buckets.
+// By default should be string IDs, but can request Recipe or RecipePreviews from the API as well.
+// TODO: add a "populate" parameter to the combo schema that will also preview the recipes
+// This would cut the fetches required for the recipes page by 90%.
+export type Combo<T = string> = {
   _id: string;
   name: string;
   serving: number;
-
-  filters: string[];
-  allergens: string[];
 
   notes?: string;
   instructions?: string;
   imageUrl?: string;
 
   isDraft: boolean;
-} & RecipeBuckets<string>;
-
-// TODO: add a "populate" parameter to the combo schema that will also preview the recipes
-// This cuts the fetches required for the recipes page by 90%.
-// export type PopulatedCombo = Omit<Combo, "entrees" | "vegetables" | "fruits" | "grains"> & {
-//   entrees: RecipePreview[];
-//   vegetables: RecipePreview[];
-//   fruits: RecipePreview[];
-//   grains: RecipePreview[];
-// };
+} & MealFilterFields &
+  RecipeBuckets<T>;
 
 /* -------------------------------------------------------------------------- */
 /* Calendar and date types                                                    */
@@ -174,15 +170,125 @@ export type Month = (typeof MONTHS)[number];
 /* Filtering                                                                  */
 /* -------------------------------------------------------------------------- */
 
-export type FilterSelections = Record<string, Set<string>>;
+export const PROTEIN_SOURCES = ["Chicken", "Beef", "Fish", "Tofu", "Beans"] as const;
+export type ProteinSource = (typeof PROTEIN_SOURCES)[number];
 
-export const EMPTY_FILTERS: FilterSelections = {
-  allergens: new Set(),
-  proteins: new Set(),
-  vitamins: new Set(),
-  dietary: new Set(),
-  serving: new Set(),
+export const DIETARY_KEYS = ["vegetarian", "vegan", "halal", "kosher"] as const;
+export type DietaryKey = (typeof DIETARY_KEYS)[number];
+
+export const EXCLUSION_KEYS = ["dairyFree", "glutenFree", "nutFree", "soyFree", "shellfishFree"] as const;
+export type ExclusionKey = (typeof EXCLUSION_KEYS)[number];
+
+export const SERVING_FILTER_KEYS = ["single-serving", "small-serving", "family-serving", "party-serving"] as const;
+export type ServingFilterKey = (typeof SERVING_FILTER_KEYS)[number];
+
+export const ADDITIONAL_FILTER_KEYS = ["isSubrecipe"] as const;
+export type AdditionalFilterKey = (typeof ADDITIONAL_FILTER_KEYS)[number];
+
+export type DietaryFlags = Record<DietaryKey, boolean>;
+export type ExclusionFlags = Record<ExclusionKey, boolean>;
+
+export type MealFilterFields = {
+  proteinSources: ProteinSource[];
+  dietary: DietaryFlags;
+  exclusions: ExclusionFlags;
 };
+
+export type FilterOptionId = ExclusionKey | DietaryKey | ProteinSource | ServingFilterKey | AdditionalFilterKey;
+export type FilterSelections = {
+  proteinSources: Set<FilterOptionId>;
+  dietary: Set<FilterOptionId>;
+  exclusions: Set<FilterOptionId>;
+  servings: Set<FilterOptionId>;
+  additional: Set<FilterOptionId>;
+};
+export type FilterSectionId = keyof FilterSelections;
+
+export type FilterOption = {
+  id: FilterOptionId;
+  label: string;
+};
+
+export type FilterSection = {
+  id: FilterSectionId;
+  label: string;
+  options: FilterOption[];
+};
+
+export const EMPTY_DIETARY_FLAGS: DietaryFlags = {
+  vegetarian: false,
+  vegan: false,
+  halal: false,
+  kosher: false,
+};
+
+export const EMPTY_EXCLUSION_FLAGS: ExclusionFlags = {
+  dairyFree: false,
+  glutenFree: false,
+  nutFree: false,
+  soyFree: false,
+  shellfishFree: false,
+};
+
+export function createEmptyFilterSelections(): FilterSelections {
+  return {
+    proteinSources: new Set(),
+    dietary: new Set(),
+    exclusions: new Set(),
+    servings: new Set(),
+    additional: new Set(),
+  };
+}
+
+export const FILTER_SECTIONS: FilterSection[] = [
+  {
+    id: "exclusions",
+    label: "Allergens / Exclusions",
+    options: [
+      { id: "dairyFree", label: "Dairy-Free" },
+      { id: "glutenFree", label: "Gluten-Free" },
+      { id: "nutFree", label: "Nut-Free" },
+      { id: "soyFree", label: "Soy-Free" },
+      { id: "shellfishFree", label: "Shellfish-Free" },
+    ],
+  },
+  {
+    id: "proteinSources",
+    label: "Proteins",
+    options: [
+      { id: "Chicken", label: "Chicken" },
+      { id: "Beef", label: "Beef" },
+      { id: "Fish", label: "Fish" },
+      { id: "Tofu", label: "Tofu" },
+      { id: "Beans", label: "Beans" },
+    ],
+  },
+  {
+    id: "dietary",
+    label: "Dietary Preferences",
+    options: [
+      { id: "vegetarian", label: "Vegetarian" },
+      { id: "vegan", label: "Vegan" },
+      { id: "halal", label: "Halal" },
+      { id: "kosher", label: "Kosher" },
+    ],
+  },
+  {
+    id: "servings",
+    label: "Serving Size",
+    options: [
+      { id: "single-serving", label: "Single Serving" },
+      { id: "small-serving", label: "Small Serving" },
+      { id: "family-serving", label: "Family Serving" },
+      { id: "party-serving", label: "Party Serving" },
+    ],
+  },
+  {
+    id: "additional",
+    label: "Additional Filters",
+    options: [{ id: "isSubrecipe", label: "Subrecipes Only" }],
+  },
+];
 
 /* -------------------------------------------------------------------------- */
 /* Sorting                                                                    */

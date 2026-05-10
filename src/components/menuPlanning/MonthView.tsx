@@ -41,7 +41,7 @@ export default function MonthView({ monthDates, dateToday }: Props) {
           <div key={wi} className="grid min-h-0 flex-1 grid-cols-7 gap-2">
             {week.map((date, di) => {
               if (!date) {
-                return <div key={`${wi}-${di}`} className="min-h-[90px]" aria-hidden />;
+                return <div key={`${wi}-${di}`} className="min-h-22.5" aria-hidden />;
               }
               const weekend = isWeekend(date);
               const isToday = date.toDateString() === dateToday.toDateString();
@@ -50,7 +50,7 @@ export default function MonthView({ monthDates, dateToday }: Props) {
               return (
                 <div
                   key={`${wi}-${di}`}
-                  className={`relative min-h-[90px] overflow-hidden rounded-[12px] border border-medium-gray ${
+                  className={`relative min-h-22.5 overflow-hidden rounded-xl border border-medium-gray ${
                     weekend ? "bg-medium-gray/35" : "bg-white"
                   } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"}`}
                   data-drop-disabled={weekend ? "true" : undefined}

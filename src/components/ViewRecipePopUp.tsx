@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { TAG_STYLES } from "@/lib/types";
-import type { Combo, CategoryValue, Nutrition, Recipe, RecipeCategory } from "@/lib/types";
+import { DIETARY_KEYS, EXCLUSION_KEYS, FILTER_SECTIONS, TAG_STYLES } from "@/lib/types";
+import type {
+  Combo,
+  CategoryValue,
+  FilterOptionId,
+  MealFilterFields,
+  Nutrition,
+  Recipe,
+  RecipeCategory,
+} from "@/lib/types";
 import {
   ArrowLeft,
   Maximize2,
@@ -112,9 +120,24 @@ function getComboNutrition(comboRecipes: ComboRecipeMap, comboServing: number): 
   return scaleNutrition(nutritionPerServing, Math.max(1, comboServing));
 }
 
+const FILTER_LABEL_BY_ID = new Map(
+  FILTER_SECTIONS.flatMap((section) => section.options.map((option) => [option.id, option.label] as const)),
+);
+
+function getFilterLabel(id: FilterOptionId): string {
+  return FILTER_LABEL_BY_ID.get(id) ?? id;
+}
+
+function selectedFlagLabels<TId extends FilterOptionId>(flags: Record<TId, boolean>, keys: readonly TId[]): string[] {
+  return keys.filter((key) => flags[key]).map(getFilterLabel);
+}
+
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
+
+  // TODO: Ideally the filters are displayedd the same way. Make a "flattenFilters" helper
+  // to flatten the filter object to a list.
 
   useEffect(() => {
     if (open && item?.serving) {
@@ -209,8 +232,7 @@ function RecipeDetails({
         {recipe.isSubrecipe ? <Chip label="Subrecipe" /> : null}
       </LabeledSection>
 
-      <TagListSection label="Filters" icon={<Tag />} items={recipe.filters} />
-      <TagListSection label="Allergens" icon={<CircleAlert />} items={recipe.allergens} />
+      <MealFiltersSection item={recipe} />
 
       {recipe.notes ? (
         <LabeledSection label="Notes" icon={<SquarePen />}>
@@ -302,8 +324,7 @@ function ComboDetails({
       <RecipeGroup label="Fruits" icon={<Apple />} items={comboRecipes.fruits} styleKey="Fruit" />
       <RecipeGroup label="Grains" icon={<Tag />} items={comboRecipes.grains} styleKey="Grain" />
 
-      <TagListSection label="Filters" icon={<Tag />} items={combo.filters} />
-      <TagListSection label="Allergens" icon={<CircleAlert />} items={combo.allergens} />
+      <MealFiltersSection item={combo} />
 
       {combo.notes ? (
         <LabeledSection label="Notes" icon={<SquarePen />}>
@@ -357,6 +378,20 @@ function RecipeGroup({
   );
 }
 
+function MealFiltersSection({ item }: { item: MealFilterFields }) {
+  const proteinSourceLabels = item.proteinSources.map(getFilterLabel);
+  const dietaryLabels = selectedFlagLabels(item.dietary, DIETARY_KEYS);
+  const exclusionLabels = selectedFlagLabels(item.exclusions, EXCLUSION_KEYS);
+
+  return (
+    <>
+      <TagListSection label="Protein Sources" icon={<Tag />} items={proteinSourceLabels} />
+      <TagListSection label="Dietary" icon={<Tag />} items={dietaryLabels} />
+      <TagListSection label="Exclusions" icon={<CircleAlert />} items={exclusionLabels} />
+    </>
+  );
+}
+
 function TagListSection({ label, icon, items }: { label: string; icon: ReactNode; items?: string[] }) {
   if (!items?.length) return null;
 
@@ -374,7 +409,7 @@ function TagListSection({ label, icon, items }: { label: string; icon: ReactNode
 function LabeledSection({ label, icon, children }: { label: string; icon: ReactNode; children: ReactNode }) {
   return (
     <div className="mb-4 flex">
-      <h3 className="flex w-30 shrink-0 gap-2 py-1 font-bold">
+      <h3 className="flex w-42 shrink-0 gap-2 py-1 text-nowrap font-bold">
         {icon}
         {label}
       </h3>

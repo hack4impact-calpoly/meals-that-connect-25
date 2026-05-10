@@ -8,7 +8,7 @@ import {
   CategoryDisplayType,
   CategoryValue,
   COMBO_CATEGORY_DISPLAY,
-  EMPTY_FILTERS,
+  createEmptyFilterSelections,
   FilterSelections,
 } from "@/lib/types";
 import { useEffect, useState } from "react";
@@ -16,20 +16,13 @@ import { useMealData } from "@/hooks/useMealData";
 import { Recipe, Combo } from "@/lib/types";
 import { SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-
-function cloneFilterSelections(f: FilterSelections): FilterSelections {
-  const out: FilterSelections = {};
-  for (const key of Object.keys(f)) {
-    out[key] = new Set(f[key]);
-  }
-  return out;
-}
+import { cloneFilterSelections } from "@/lib/helpers";
 
 export default function RecipePageClient() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
-  const [filters, setFilters] = useState<FilterSelections>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<FilterSelections>(() => createEmptyFilterSelections()); // Lazy initializer, only used on first render.
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");

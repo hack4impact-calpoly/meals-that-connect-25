@@ -39,3 +39,13 @@ export function toggleCategory(
     return next;
   });
 }
+
+export function cloneFilterSelections(f: FilterSelections): FilterSelections {
+  return {
+    proteinSources: new Set(f.proteinSources),
+    dietary: new Set(f.dietary),
+    exclusions: new Set(f.exclusions),
+    servings: new Set(f.servings),
+    additional: new Set(f.additional),
+  };
+}

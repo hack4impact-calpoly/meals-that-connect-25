@@ -1,9 +1,8 @@
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import FilterTag from "./FilterTag";
-import { FILTER_SECTIONS } from "./FilterMenu"; // TODO: if these are types thhey should go in types.ts
-import type { FilterOption } from "./FilterMenu";
-import type { FilterSelections } from "@/lib/types";
+import { FILTER_SECTIONS } from "@/lib/types";
+import type { FilterOption, FilterSelections } from "@/lib/types";
 
 type MobileFilterDisplayProps = {
   selections: FilterSelections;
