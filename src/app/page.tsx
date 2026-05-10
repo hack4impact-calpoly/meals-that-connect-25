@@ -17,8 +17,12 @@ export default function Home() {
 
           {/* Right – Summary Cards */}
           <div className="flex flex-col gap-4">
-            <SummaryCard title="Meals Planned Summary" value={15} total={30} labelSuffix="Meals Planned" />
-            <SummaryCard title="Nutrition Summary" value={15} total={15} labelSuffix="Meals Met Nutrition Quota" />
+            <SummaryCard title="Meals Planned Summary" labelSuffix="Meals Planned" summaryType="meals-planned" />
+            <SummaryCard
+              title="Nutrition Summary"
+              labelSuffix="Meals Met Nutrition Quota"
+              summaryType="nutrition-quota"
+            />
           </div>
         </div>
       </div>

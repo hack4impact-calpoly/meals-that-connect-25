@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { countMealPlannedDates, countNutritionQuotaMetDates } from "@/lib/helpers";
+import type { DashboardCalendarDate } from "@/lib/helpers";
 
 const MONTHS = [
   "January",
@@ -60,15 +62,46 @@ function DonutChart({ value, total }: DonutChartProps) {
 
 interface SummaryCardProps {
   title: string;
-  value: number;
-  total: number;
   labelSuffix: string;
+  summaryType: "meals-planned" | "nutrition-quota";
 }
 
-export default function SummaryCard({ title, value, total, labelSuffix }: SummaryCardProps) {
-  const currentMonthIndex = new Date().getMonth();
-  const [selectedMonth, setSelectedMonth] = useState(currentMonthIndex);
+function getDaysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+export default function SummaryCard({ title, labelSuffix, summaryType }: SummaryCardProps) {
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [value, setValue] = useState(0);
+  const total = getDaysInMonth(currentYear, selectedMonth);
+
+  useEffect(() => {
+    async function fetchCalendarSummary() {
+      try {
+        const response = await fetch(`/api/calendar?year=${currentYear}&month=${selectedMonth + 1}`);
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch calendar summary");
+        }
+
+        const calendarDates = (await response.json()) as DashboardCalendarDate[];
+
+        setValue(
+          summaryType === "meals-planned"
+            ? countMealPlannedDates(calendarDates)
+            : countNutritionQuotaMetDates(calendarDates),
+        );
+      } catch (error) {
+        console.error(error);
+        setValue(0);
+      }
+    }
+
+    fetchCalendarSummary();
+  }, [currentYear, selectedMonth, summaryType]);
 
   return (
     <div className="bg-white rounded-2xl p-5 font-montserrat">
