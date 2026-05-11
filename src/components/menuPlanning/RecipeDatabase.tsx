@@ -1,24 +1,12 @@
 "use client";
 
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
-import { useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe } from "@/lib/types";
-
-type SortOption = "lastUpdated" | "createdDate" | "aToZ" | "zToA";
-
-interface RecipeDatabaseItem {
-  _id?: string;
-  id?: string;
-  name: string;
-  serving?: number;
-  tags?: string[];
-  itemType?: "recipe" | "combo";
-}
+import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, SORT_OPTIONS, SortOption } from "@/lib/types";
 
 interface RecipeDatabaseProps {
   items: Recipe[] | Combo[];
@@ -33,20 +21,6 @@ interface RecipeDatabaseProps {
   totalPages: number;
   onPageChange: (page: number) => void;
 }
-
-const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "Combo", label: "Combos" },
-  { value: "Entree", label: "Entrées" },
-  { value: "Side", label: "Sides" },
-  { value: "Fruit", label: "Fruits" },
-];
-
-const sortOptions: Array<{ value: SortOption; label: string }> = [
-  { value: "lastUpdated", label: "Last Updated" },
-  { value: "createdDate", label: "Created Date" },
-  { value: "aToZ", label: "A to Z" },
-  { value: "zToA", label: "Z to A" },
-];
 
 function SortCircle({ selected }: { selected: boolean }) {
   return (
@@ -70,8 +44,8 @@ export default function RecipeDatabase({
   onPageChange,
 }: RecipeDatabaseProps) {
   return (
-    <div className="p-6 h-full">
-      <div className="text-xl font-semibold mb-6">Recipe Database</div>
+    <div className="flex flex-col p-6 overflow-auto">
+      <div className="mb-6 text-xl font-semibold">Recipe Database</div>
 
       <div className="flex flex-row items-center gap-4">
         <SearchBarClient placeholder="Search a recipe" onSearch={onSearch} />
@@ -92,7 +66,7 @@ export default function RecipeDatabase({
             <div className="mb-2 text-sm font-semibold text-pepper">Sort by:</div>
 
             <div className="flex flex-col gap-2">
-              {sortOptions.map((option) => (
+              {SORT_OPTIONS.map((option) => (
                 <MenuItem key={option.value}>
                   <button
                     type="button"
@@ -110,50 +84,22 @@ export default function RecipeDatabase({
       </div>
 
       <div className="my-4">
-        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={onToggleCategory} />
+        <CategoryToggle
+          options={CATEGORY_DISPLAY}
+          selectedCategories={selectedCategories}
+          onToggle={onToggleCategory}
+        />
       </div>
 
       {loading && <div>Loading...</div>}
       {error && <div>{error}</div>}
 
-      <div className="flex flex-col gap-4">
-        {items.map((item, index) => {
-          const displayItem = item as {
-            id?: string;
-            _id?: string;
-            name?: string;
-            tags?: string[];
-            filters?: string[];
-            nutritional_info?: { calories?: number };
-            serving?: number;
-            itemType?: "recipe" | "combo";
-            entrees?: string[];
-            sides?: string[];
-            fruits?: string[];
-          };
-
-          const itemId = String(displayItem.id ?? displayItem._id ?? "");
-          const itemType = displayItem.itemType ?? (selectedCategories.has("Combo") ? "combo" : "recipe");
-
-          return (
-            <DraggableRecipeCard
-              recipeId={itemId}
-              key={displayItem.id ?? displayItem._id ?? index}
-              imageUrl=""
-              name={displayItem.name ?? "Untitled"}
-              calories={displayItem.nutritional_info?.calories ?? 0}
-              servingSize={displayItem.serving ? `${displayItem.serving}g` : "100g"}
-              tags={displayItem.tags ?? displayItem.filters ?? []}
-              itemType={itemType}
-              entrees={displayItem.entrees ?? []}
-              sides={displayItem.sides ?? []}
-              fruits={displayItem.fruits ?? []}
-            />
-          );
-        })}
+      <div className="flex flex-col min-h-0 gap-4 overflow-auto">
+        {items.map((item) => (
+          <DraggableRecipeCard key={item._id} item={item} />
+        ))}
       </div>
-
-      <div className="flex justify-center mt-4">
+      <div className="mt-4 flex justify-center">
         <PaginationDisplay
           currentPage={currentPage}
           totalPages={totalPages}

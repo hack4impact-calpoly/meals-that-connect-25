@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
+import { getNormalizedParams } from "@/lib/server/searchParams";
+import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_BUCKETS } from "@/lib/types";
+import { deriveComboDataFromRecipeIds, getRecipeBucketsFromBody } from "@/lib/server/comboHelpers";
 
 type ServingRange = {
   min: number;
@@ -21,15 +24,29 @@ export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams;
 
     const name = searchParams.get("name")?.trim();
-    const page = Number(searchParams.get("page") ?? 1);
-    const limit = Number(searchParams.get("limit") ?? 10);
+
+    const pageParam = Number(searchParams.get("page") ?? 1);
+    const limitParam = Number(searchParams.get("limit") ?? 10);
+
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? limitParam : 10;
+
     const isDraftParam = searchParams.get("isDraft");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
+    const populate = searchParams.get("populate");
 
-    const tagParams = searchParams
-      .getAll("filters")
-      .map((t) => t.trim().toLowerCase())
-      .filter(Boolean);
+    const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
+
+    const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
+
+    const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
+
+    const populateSelectMap = {
+      // "all" just populates everything, no map needed
+      preview: "_id name category",
+      nutrition: "_id name category serving nutritional_info",
+      filters: "_id name serving category proteinSources dietary exclusions",
+    } as const;
 
     const servingParams = searchParams
       .getAll("servings")
@@ -42,10 +59,30 @@ export async function GET(req: NextRequest) {
       filter.name = { $regex: name, $options: "i" };
     }
 
-    if (tagParams.length > 0) {
-      filter.filters = {
-        $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-      };
+    const andClauses: any[] = [];
+
+    if (proteinSourceParams.length > 0) {
+      // proteinSources=Chicken&proteinSources=Tofu
+      // means Chicken OR Tofu
+      andClauses.push({
+        proteinSources: { $in: proteinSourceParams },
+      });
+    }
+
+    // These are AND filters.
+    // dietary=halal&dietary=vegetarian means halal AND vegetarian.
+    for (const dietaryKey of dietaryParams) {
+      andClauses.push({
+        [`dietary.${dietaryKey}`]: true,
+      });
+    }
+
+    // exclusions=glutenFree&exclusions=nutFree
+    // means glutenFree AND nutFree.
+    for (const exclusionKey of exclusionParams) {
+      andClauses.push({
+        [`exclusions.${exclusionKey}`]: true,
+      });
     }
 
     const servingRanges = servingParams
@@ -53,9 +90,17 @@ export async function GET(req: NextRequest) {
       .filter((range): range is ServingRange => Boolean(range));
 
     if (servingRanges.length > 0) {
-      filter.$or = servingRanges.map((range) =>
-        range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
-      );
+      andClauses.push({
+        $or: servingRanges.map((range) =>
+          range.max != null ? { serving: { $gte: range.min, $lte: range.max } } : { serving: { $gte: range.min } },
+        ),
+      });
+    }
+
+    if (andClauses.length > 1) {
+      filter.$and = andClauses;
+    } else if (andClauses.length === 1) {
+      Object.assign(filter, andClauses[0]);
     }
 
     if (isDraftParam === "true") {
@@ -88,6 +133,16 @@ export async function GET(req: NextRequest) {
       .skip((page - 1) * limit)
       .limit(limit);
 
+    if (populate === "all") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket);
+      });
+    } else if (populate === "preview" || populate === "nutrition" || populate === "filters") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket, populateSelectMap[populate]);
+      });
+    }
+
     if (sortBy === "aToZ" || sortBy === "zToA") {
       query = query.collation({ locale: "en", strength: 2 });
     }
@@ -111,18 +166,40 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  let comboData: Record<string, unknown>;
+
   try {
-    const comboData = await req.json();
+    comboData = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  try {
     await connectDB();
-    console.log(comboData, "COMBO DATA!");
-    const combo = new Combo(comboData);
+
+    const recipeBuckets = getRecipeBucketsFromBody(comboData);
+    const calculatedFilters = await deriveComboDataFromRecipeIds(recipeBuckets);
+
+    const combo = new Combo({
+      ...comboData,
+
+      // Filters are always derived in the backend.
+      // Here we overwrite anything the frontend may have sent.
+      ...calculatedFilters,
+    });
+
     await combo.save();
 
     return NextResponse.json(combo, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
-      return NextResponse.json({ error: "invalid data" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
+
+    if (err?.message?.includes("Invalid") || err?.message?.includes("could not be found")) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
+
     console.error("Error creating combo:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import WeekMealCard, { type CalendarMealCategory, type WeekMealCardData } from "./WeekMealCard";
+import WeekMealCard from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
-import { NutritionSummary } from "@/lib/nutrition";
+import { RECIPE_BUCKETS } from "@/lib/types";
+import type { Recipe, RecipeBuckets } from "@/lib/types";
+import type { NutritionSummary } from "@/lib/nutrition";
 
 interface WeekViewProps {
   dateToday: Date;
@@ -14,34 +16,13 @@ interface WeekViewProps {
 }
 
 type WeekViewDayData = {
-  meals: WeekMealCardData[];
+  meals: Recipe[];
   showNutritionInfoNotMet?: boolean;
-};
-
-type CalendarRecipe = {
-  _id: string;
-  name: string;
-  serving?: number;
-  nutritional_info?: {
-    calories?: number;
-  };
 };
 
 type CalendarDayResponse = {
   _id: string;
-  entrees?: CalendarRecipe[];
-  fruits?: CalendarRecipe[];
-  sides?: CalendarRecipe[];
-};
-
-const CALENDAR_SECTIONS: Array<{
-  category: CalendarMealCategory;
-  tag: WeekMealCardData["tag"];
-}> = [
-  { category: "entrees", tag: "Entree" },
-  { category: "sides", tag: "Sides" },
-  { category: "fruits", tag: "Fruit" },
-];
+} & RecipeBuckets<Recipe>;
 
 const EMPTY_DAY: WeekViewDayData = {
   meals: [],
@@ -56,29 +37,8 @@ function formatCalendarDayId(date: Date) {
   return `${year}${month}${day}`;
 }
 
-function mapCalendarRecipesToMeals(
-  recipes: CalendarRecipe[] | undefined,
-  tag: WeekMealCardData["tag"],
-  calendarCategory: CalendarMealCategory,
-  calendarDayId: string,
-): WeekMealCardData[] {
-  return (recipes ?? []).map((recipe) => ({
-    id: recipe._id,
-    name: recipe.name,
-    calories: recipe.nutritional_info?.calories,
-    servingSize: recipe.serving != null ? `${recipe.serving}` : undefined,
-    tag,
-    calendarCategory,
-    calendarDayId,
-  }));
-}
-
-function mapCalendarDayToMeals(calendarDay: CalendarDayResponse, fallbackDayId: string): WeekMealCardData[] {
-  const calendarDayId = calendarDay._id || fallbackDayId;
-
-  return CALENDAR_SECTIONS.flatMap(({ category, tag }) =>
-    mapCalendarRecipesToMeals(calendarDay[category], tag, category, calendarDayId),
-  );
+function mapCalendarDayToMeals(calendarDay: CalendarDayResponse): Recipe[] {
+  return RECIPE_BUCKETS.flatMap((bucket) => calendarDay[bucket] ?? []);
 }
 
 async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promise<WeekViewDayData> {
@@ -98,7 +58,7 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   const calendarDay: CalendarDayResponse = await response.json();
 
   return {
-    meals: mapCalendarDayToMeals(calendarDay, dayId),
+    meals: mapCalendarDayToMeals(calendarDay),
     showNutritionInfoNotMet: false,
   };
 }
@@ -156,11 +116,11 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger, nutriti
 
         return (
           <div key={dayId} className="flex min-w-0 flex-col items-center">
-            <span className="text-xs font-montserrat font-medium tracking-[0.12em] text-pepper">
+            <span className="font-montserrat text-xs font-medium tracking-[0.12em] text-pepper">
               {date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
             </span>
 
-            <span className={`mb-2 text-2xl font-montserrat font-bold ${isToday ? "text-radish-900" : "text-pepper"}`}>
+            <span className={`mb-2 font-montserrat text-2xl font-bold ${isToday ? "text-radish-900" : "text-pepper"}`}>
               {String(date.getDate()).padStart(2, "0")}
             </span>
 
@@ -175,9 +135,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger, nutriti
                     Loading meals...
                   </div>
                 ) : dayData.meals.length > 0 ? (
-                  dayData.meals.map((meal) => (
-                    <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarCategory}-${meal.id}`} {...meal} />
-                  ))
+                  dayData.meals.map((meal) => <WeekMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
                     Drop recipe here

@@ -1,5 +1,7 @@
 import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
+import { getNormalizedParams } from "@/lib/server/searchParams";
+import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 type ServingRange = {
@@ -24,18 +26,19 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const isSubrecipeParam = searchParams.get("isSubrecipe");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
       .getAll("filters")
       .concat(searchParams.getAll("tags"))
-      .map((t) => t.trim().toLowerCase())
+      .map((tag) => tag.trim().toLowerCase())
       .filter(Boolean);
 
-    const categoryParams = searchParams
-      .getAll("categories")
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean);
+    const categoryParams = getNormalizedParams(searchParams, "categories", RECIPE_CATEGORIES);
+    const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
+    const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
+    const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
 
     const servingParams = searchParams
       .getAll("servings")
@@ -58,11 +61,27 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    if (proteinSourceParams.length > 0) {
+      andClauses.push({
+        proteinSources: { $in: proteinSourceParams },
+      });
+    }
+
+    for (const dietaryKey of dietaryParams) {
+      andClauses.push({
+        [`dietary.${dietaryKey}`]: true,
+      });
+    }
+
+    for (const exclusionKey of exclusionParams) {
+      andClauses.push({
+        [`exclusions.${exclusionKey}`]: true,
+      });
+    }
+
     if (categoryParams.length > 0) {
       andClauses.push({
-        $or: categoryParams.map((category) => ({
-          filters: { $elemMatch: { $regex: category, $options: "i" } },
-        })),
+        category: { $in: categoryParams },
       });
     }
 
@@ -88,6 +107,12 @@ export async function GET(req: NextRequest) {
       filter.isDraft = true;
     } else if (isDraftParam === "false") {
       filter.isDraft = false;
+    }
+
+    if (isSubrecipeParam === "true") {
+      filter.isSubrecipe = true;
+    } else if (isSubrecipeParam === "false") {
+      filter.isSubrecipe = false;
     }
 
     let sort: Record<string, 1 | -1> = { createdAt: -1 };
@@ -139,11 +164,13 @@ export async function POST(req: NextRequest) {
   try {
     const recipeData = await req.json();
     const response = await postRecipe(recipeData);
+
     return NextResponse.json(response, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
+
     console.error("Error creating recipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

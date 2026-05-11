@@ -1,19 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
+import "@/database/RecipeSchema";
 import Calendar from "@/database/CalendarSchema";
-import Recipe from "@/database/RecipeSchema";
-import Combo from "@/database/ComboSchema";
 import { getCalendarNutritionSummaries } from "@/database/calendarNutrition";
 import { normalizeNutrition } from "@/lib/nutrition";
+import { RECIPE_BUCKETS } from "@/lib/types";
+import type { Nutrition, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
 
 type Params = {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }> | { id: string };
 };
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+type CalendarRecipePreview = {
+  _id: string;
+  name: string;
+  category: RecipeCategory;
+  serving?: number;
+  nutritional_info?: Nutrition;
+};
+
+type CalendarDayResponse = {
+  _id: string;
+  nutritional_info: Nutrition;
+  quotaMet: boolean;
+} & RecipeBuckets<CalendarRecipePreview>;
+
+const populateBucketPaths = RECIPE_BUCKETS.map((bucket) => ({
+  path: bucket,
+  select: "_id name category serving nutritional_info",
+}));
+
+async function getRouteParams(params: Params["params"]) {
+  return await params;
+}
+
+function isRecipeBucket(value: unknown): value is RecipeBucket {
+  return typeof value === "string" && RECIPE_BUCKETS.includes(value as RecipeBucket);
+}
+
+function getBucketIds(calendarDay: { get: (path: string) => unknown }, bucket: RecipeBucket): string[] {
+  const value = calendarDay.get(bucket);
+
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((id) => id.toString());
+}
+
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -22,62 +58,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     await connectDB();
 
-    const calendarDay = await Calendar.findById(id).exec();
+    const calendarDay = await Calendar.findById(id).populate(populateBucketPaths).lean<CalendarDayResponse>().exec();
 
     if (!calendarDay) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });
     }
 
-    const allIds = Array.from(
-      new Set([...(calendarDay.entrees || []), ...(calendarDay.fruits || []), ...(calendarDay.sides || [])]),
-    );
-
-    const [recipeDocs, comboDocs] = await Promise.all([
-      Recipe.find({ _id: { $in: allIds } })
-        .lean()
-        .exec(),
-      Combo.find({ _id: { $in: allIds } })
-        .lean()
-        .exec(),
-    ]);
-
-    const itemLookup = new Map<string, { _id: string; name: string; serving?: number; nutritional_info: any }>();
-
-    recipeDocs.forEach((doc) => {
-      if (doc._id) {
-        itemLookup.set(doc._id.toString(), {
-          _id: doc._id.toString(),
-          name: doc.name,
-          serving: doc.serving,
-          nutritional_info: normalizeNutrition(doc.nutritional_info),
-        });
-      }
-    });
-
-    comboDocs.forEach((doc) => {
-      if (doc._id) {
-        itemLookup.set(doc._id.toString(), {
-          _id: doc._id.toString(),
-          name: doc.name,
-          serving: doc.serving,
-          nutritional_info: normalizeNutrition(doc.nutritional_info),
-        });
-      }
-    });
-
-    const resolveItems = (ids: string[] = []) =>
-      ids.map(
-        (id) => itemLookup.get(id) ?? { _id: id, name: id, serving: undefined, nutritional_info: normalizeNutrition() },
-      );
     const [nutritionSummary] = await getCalendarNutritionSummaries([id]);
 
     return NextResponse.json(
       {
-        _id: calendarDay._id,
-        entrees: resolveItems(calendarDay.entrees),
-        fruits: resolveItems(calendarDay.fruits),
-        sides: resolveItems(calendarDay.sides),
-        nutritional_info: nutritionSummary?.nutritional_info ?? normalizeNutrition(),
+        ...calendarDay,
+        nutritional_info: nutritionSummary?.nutritional_info ?? normalizeNutrition(calendarDay.nutritional_info),
         quotaMet: nutritionSummary?.quotaMet ?? false,
       },
       { status: 200 },
@@ -89,7 +81,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -103,16 +95,19 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "recipeId and category are required" }, { status: 400 });
     }
 
-    if (!["entrees", "sides", "fruits"].includes(category)) {
+    if (!isRecipeBucket(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
     await connectDB();
 
-    const update = { $addToSet: { [category]: recipeId } };
-    await Calendar.findOneAndUpdate({ _id: id }, update, { upsert: true });
+    await Calendar.findOneAndUpdate(
+      { _id: id },
+      { $addToSet: { [category]: recipeId } },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
+    );
 
-    const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
+    const updatedDay = await Calendar.findById(id).populate(populateBucketPaths).exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
   } catch (err) {
@@ -122,7 +117,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -130,13 +125,13 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   try {
     const body = await req.json();
-    const { recipeId, category } = body;
+    const { recipeId, category: bucket } = body;
 
-    if (!recipeId || !category) {
+    if (!recipeId || !bucket) {
       return NextResponse.json({ error: "recipeId and category are required" }, { status: 400 });
     }
 
-    if (!["entrees", "sides", "fruits"].includes(category)) {
+    if (!isRecipeBucket(bucket)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
@@ -148,11 +143,16 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });
     }
 
-    calendarDay[category] = calendarDay[category].filter((itemId: string) => itemId !== recipeId);
+    const currentIds = getBucketIds(calendarDay, bucket);
+
+    calendarDay.set(
+      bucket,
+      currentIds.filter((itemId) => itemId !== recipeId),
+    );
 
     await calendarDay.save();
 
-    const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
+    const updatedDay = await Calendar.findById(id).populate(populateBucketPaths).exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
   } catch (err) {

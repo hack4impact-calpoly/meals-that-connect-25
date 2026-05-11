@@ -1,4 +1,5 @@
-import { FilterSelections } from "./types";
+import { Dispatch, SetStateAction } from "react";
+import { CategoryValue, FilterSelections } from "./types";
 
 export function buildFilterTags(filters: FilterSelections) {
   const out: string[] = [];
@@ -10,4 +11,41 @@ export function buildFilterTags(filters: FilterSelections) {
   }
 
   return Array.from(new Set(out));
+}
+
+export function toggleCategory(
+  category: CategoryValue,
+  setSelectedCategories: Dispatch<SetStateAction<Set<CategoryValue>>>,
+) {
+  setSelectedCategories((prev) => {
+    if (category === "Combo") {
+      return new Set<CategoryValue>(["Combo"]);
+    }
+
+    const next = new Set<CategoryValue>(prev);
+
+    next.delete("Combo");
+
+    if (next.has(category)) {
+      next.delete(category);
+    } else {
+      next.add(category);
+    }
+
+    if (next.size === 0) {
+      return new Set<CategoryValue>(["Combo"]);
+    }
+
+    return next;
+  });
+}
+
+export function cloneFilterSelections(f: FilterSelections): FilterSelections {
+  return {
+    proteinSources: new Set(f.proteinSources),
+    dietary: new Set(f.dietary),
+    exclusions: new Set(f.exclusions),
+    servings: new Set(f.servings),
+    additional: new Set(f.additional),
+  };
 }
