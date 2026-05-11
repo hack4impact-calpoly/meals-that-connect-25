@@ -9,7 +9,7 @@ interface WeeklyMenuProps {
 
 interface MealItem {
   name: string;
-  type: string;
+  category: string;
   calories: number;
   serving: string;
 }
@@ -139,7 +139,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
         ) : (
           meals.map((meal, idx) => {
             console.log("Meal:", meal);
-            const style = TAG_STYLES[meal.type] ?? "bg-pepper text-black";
+            const style = TAG_STYLES[meal.category] ?? "bg-pepper text-black";
             return (
               <div key={idx} className={`rounded-lg px-4 py-3 ${style}`}>
                 <p className="font-bold text-sm leading-tight">{meal.name}</p>

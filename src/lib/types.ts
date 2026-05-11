@@ -17,7 +17,7 @@ export type Recipe = {
   item: any;
   _id: string;
   name: string;
-  type: string;
+  category: string;
   serving: number;
   filters: string[]; // never empty bc it will automatically contain Entree/Side/Fruit
   allergens?: string[];

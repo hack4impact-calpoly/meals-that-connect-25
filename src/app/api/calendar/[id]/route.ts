@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const itemLookup = new Map<
       string,
-      { _id: string; name: string; type: string; serving?: number; calories?: number }
+      { _id: string; name: string; category: string; serving?: number; calories?: number }
     >();
 
     recipeDocs.forEach((doc) => {
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         itemLookup.set(doc._id.toString(), {
           _id: doc._id.toString(),
           name: doc.name,
-          type: doc.type,
+          category: doc.category,
           serving: doc.serving,
           calories: doc.nutritional_info.calories,
         });
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         itemLookup.set(doc._id.toString(), {
           _id: doc._id.toString(),
           name: doc.name,
-          type: doc.type,
+          category: doc.category,
           serving: doc.serving,
           calories: doc.nutritional_info.calories,
         });
@@ -75,7 +75,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const resolveItems = (ids: string[] = []) =>
       ids.map(
-        (id) => itemLookup.get(id) ?? { _id: id, name: id, type: undefined, serving: undefined, calories: undefined },
+        (id) =>
+          itemLookup.get(id) ?? { _id: id, name: id, category: undefined, serving: undefined, calories: undefined },
       );
 
     return NextResponse.json(
