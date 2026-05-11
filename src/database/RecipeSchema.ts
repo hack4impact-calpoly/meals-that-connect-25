@@ -1,23 +1,58 @@
 import mongoose, { Schema } from "mongoose";
 import Ingredient from "./IngredientSchema";
 import Nutrition from "./NutritionSchema";
+import { PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 
 const RecipeSchema = new Schema(
   {
     _id: { type: String, required: true },
     name: { type: String, required: true, unique: false },
 
+    isSubrecipe: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+
     serving: {
       type: Number,
       required: true,
     },
 
-    allergens: { type: [String], required: false },
-    filters: { type: [String], required: false },
+    category: {
+      type: String,
+      enum: RECIPE_CATEGORIES,
+      required: true,
+    },
+
+    proteinSources: {
+      type: [
+        {
+          type: String,
+          enum: PROTEIN_SOURCES,
+        },
+      ],
+      default: [],
+    },
+
+    dietary: {
+      vegetarian: { type: Boolean, default: false },
+      vegan: { type: Boolean, default: false },
+      halal: { type: Boolean, default: false },
+      kosher: { type: Boolean, default: false },
+    },
+
+    exclusions: {
+      dairyFree: { type: Boolean, default: false },
+      glutenFree: { type: Boolean, default: false },
+      nutFree: { type: Boolean, default: false },
+      soyFree: { type: Boolean, default: false },
+      shellfishFree: { type: Boolean, default: false },
+    },
 
     ingredients: {
       type: [Ingredient.schema],
-      required: false,
+      required: true,
     },
 
     instructions: { type: String, required: false },

@@ -32,6 +32,9 @@ export default function PermissionsClient() {
     loadAll();
   }, []);
 
+  /* TODO: Delete this local filtering/pagination once permissions are fetched from the API.
+   * Eventually the API should receive: search, selectedRoles, currentPage, PAGE_SIZE.
+   */
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return usersList;

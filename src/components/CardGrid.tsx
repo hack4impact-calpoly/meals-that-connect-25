@@ -1,23 +1,22 @@
-"use client";
-
 import RecipeCard from "@/components/RecipeCard";
 import ComboCard from "@/components/ComboCard";
 import DraftEntryCard from "@/components/DraftEntryCard";
 
-import { Recipe, Combo } from "@/lib/types";
+import { Recipe, Combo, RecipePreview } from "@/lib/types";
 
 type Props = {
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
-  items: Recipe[] | Combo[];
+  items: Recipe[] | Combo<RecipePreview>[];
   draftMode: boolean;
   draftCount: number;
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
-  onOpenItem?: (item: Recipe | Combo) => void;
+  onOpenItem?: (item: Recipe | Combo<RecipePreview>) => void;
 };
 
+// FIXME: layouts are currently sortof broken (max 2 cols for some reason). Figure out why
 export default function CardGrid({
   loading,
   error,
@@ -40,17 +39,10 @@ export default function CardGrid({
       <div className="grid grid-cols-2 gap-3 md:gap-6 md:max-w-3xl">
         {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
 
-        {(items as Combo[]).map((combo) => (
+        {(items as Combo<RecipePreview>[]).map((combo) => (
           <ComboCard
-            item={combo}
             key={combo._id}
-            name={combo.name}
-            imageUrl={combo.imageUrl}
-            entrees={combo.entrees ?? []}
-            sides={combo.sides ?? []}
-            fruits={combo.fruits ?? []}
-            serving={combo.serving}
-            isDraft={combo.isDraft}
+            item={combo}
             isSelected={selectedIds?.has(combo._id)}
             onSelect={() => onToggleSelect?.(combo._id, combo.name)}
             onOpen={() => onOpenItem?.(combo)}
@@ -70,11 +62,6 @@ export default function CardGrid({
         <RecipeCard
           key={recipe._id}
           item={recipe}
-          name={recipe.name}
-          imageUrl={recipe.imageUrl}
-          servingSize={recipe.serving.toString()}
-          tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
-          isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}
           onOpen={() => onOpenItem?.(recipe)}

@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { ListFilter } from "lucide-react";
@@ -53,7 +52,7 @@ export default function SortPermissionsButton({
   return (
     <>
       <Menu as="div" className="relative">
-        <MenuButton className="w-10 w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
+        <MenuButton className="w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
           <ListFilter className="text-pepper" />
         </MenuButton>
         <MenuItems
