@@ -34,8 +34,11 @@ import { DropdownField } from "./createRecipe/DropdownField";
 
 // TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents and helpers should be moved to helpers.ts
 
+type EditableCombo = Combo<Recipe>;
+type EditableItem = Recipe | EditableCombo;
+
 type Props = {
-  item: Recipe | Combo | null;
+  item: EditableItem | null;
   open: boolean;
   onClose: () => void;
   recipeType: CategoryDisplayType | null;
@@ -48,8 +51,15 @@ type InputPair = {
   units: string;
 };
 
-function isRecipeItem(item: Recipe | Combo): item is Recipe {
+function isRecipeItem(item: EditableItem): item is Recipe {
   return "category" in item;
+}
+
+function toRecipeMinimal(recipes: Recipe[] = []): RecipeMinimal[] {
+  return recipes.map((recipe) => ({
+    _id: recipe._id,
+    name: recipe.name,
+  }));
 }
 
 function comboHasRecipe(combo: Combo, recipeId: string) {
@@ -179,12 +189,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     setIngredientInputs(updated);
   };
 
-  async function getRecipe(id: string): Promise<Recipe> {
-    const res = await fetch(`/api/recipes/${id}`);
-    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
-    return res.json();
-  }
-
   useEffect(() => {
     if (!open) return;
 
@@ -243,41 +247,11 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           fiber: item.nutritional_info.fiber.toString(),
           sodium: item.nutritional_info.sodium.toString(),
         });
-      } else if (isCombo && isRecipeItem(item) === false) {
-        const loadAll = async () => {
-          const [entreeNames, vegetableNames, fruitNames, grainNames] = await Promise.all([
-            Promise.all(
-              (item.entrees ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.vegetables ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.fruits ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.grains ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-          ]);
-
-          setSelectedEntree(entreeNames);
-          setSelectedVegetables(vegetableNames);
-          setSelectedFruit(fruitNames);
-          setSelectedGrains(grainNames);
-        };
-        loadAll();
+      } else if (isCombo && !isRecipeItem(item)) {
+        setSelectedEntree(toRecipeMinimal(item.entrees));
+        setSelectedVegetables(toRecipeMinimal(item.vegetables));
+        setSelectedFruit(toRecipeMinimal(item.fruits));
+        setSelectedGrains(toRecipeMinimal(item.grains));
       }
 
       setId(item._id);

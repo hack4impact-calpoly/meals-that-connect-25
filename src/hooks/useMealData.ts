@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
 
+type ComboPopulate = "all" | "preview" | "nutrition" | "filters";
+
 type Params = {
   search: string;
   filters: FilterSelections;
@@ -8,10 +10,11 @@ type Params = {
   draftMode: boolean;
   sortBy?: SortOption;
   pageSize?: number;
+  comboPopulate?: ComboPopulate;
 };
 
-type Return = {
-  items: Recipe[] | Combo[];
+type Return<TComboRecipe = string> = {
+  items: Recipe[] | Combo<TComboRecipe>[]; // This hook can optionally populate the combos with the recipe data.
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
@@ -28,17 +31,18 @@ function appendSetParams(params: URLSearchParams, key: string, values?: Set<unkn
   });
 }
 
-export function useMealData({
+export function useMealData<TComboRecipe = string>({
   search,
   filters,
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
   pageSize = 11,
-}: Params): Return {
+  comboPopulate,
+}: Params): Return<TComboRecipe> {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [combos, setCombos] = useState<Combo[]>([]);
+  const [combos, setCombos] = useState<Combo<TComboRecipe>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftCount, setDraftCount] = useState(0);
@@ -86,6 +90,11 @@ export function useMealData({
         appendSetParams(params, "dietary", filters.dietary);
         appendSetParams(params, "exclusions", filters.exclusions);
         appendSetParams(params, "servings", filters.servings);
+
+        // Combo-only population parameter
+        if (isComboMode && comboPopulate) {
+          params.append("populate", comboPopulate);
+        }
 
         // Recipe-only filter.
         if (!isComboMode && isSubrecipeOnly) {
@@ -165,6 +174,7 @@ export function useMealData({
     refreshKey,
     isSubrecipeOnly,
     pageSize,
+    comboPopulate,
   ]);
 
   const items = isComboMode ? combos : recipes;

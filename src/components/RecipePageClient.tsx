@@ -10,6 +10,7 @@ import {
   COMBO_CATEGORY_DISPLAY,
   createEmptyFilterSelections,
   FilterSelections,
+  RecipePreview,
 } from "@/lib/types";
 import { useEffect, useState } from "react";
 import { useMealData } from "@/hooks/useMealData";
@@ -18,41 +19,79 @@ import { SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { cloneFilterSelections } from "@/lib/helpers";
 
+type BrowserItem = Recipe | Combo<RecipePreview>;
+type SelectedItem = Recipe | Combo<Recipe>;
+
+function isRecipe(item: BrowserItem | SelectedItem): item is Recipe {
+  return "category" in item;
+}
+
 export default function RecipePageClient() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
-  const [filters, setFilters] = useState<FilterSelections>(() => createEmptyFilterSelections()); // Lazy initializer, only used on first render.
+  const [filters, setFilters] = useState<FilterSelections>(() => createEmptyFilterSelections());
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [search, setSearch] = useState("");
-  const [selectedItem, setSelectedItem] = useState<Recipe | Combo | null>(null);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
 
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
-    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to get individual recipe (${res.status})`);
+    }
+
     return res.json();
   }
 
-  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } = useMealData({
-    search,
-    filters,
-    selectedCategories,
-    draftMode: false,
-  });
+  async function getCombo(id: string): Promise<Combo<Recipe>> {
+    const res = await fetch(`/api/combos/${id}?populate=all`);
 
-  const handleOpenItem = (item: Recipe | Combo) => {
-    setSelectedItem(item);
-    setIsOpen(true);
-    setActiveType(isComboMode ? COMBO_CATEGORY_DISPLAY : null);
+    if (!res.ok) {
+      throw new Error(`Failed to get individual combo (${res.status})`);
+    }
+
+    return res.json();
+  }
+
+  const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage } =
+    useMealData<RecipePreview>({
+      search,
+      filters,
+      selectedCategories,
+      draftMode: false,
+      comboPopulate: "preview",
+    });
+
+  const handleOpenItem = async (item: BrowserItem) => {
+    setMode("view");
+
+    if (isRecipe(item)) {
+      setSelectedItem(item);
+      setActiveType(null);
+      setIsOpen(true);
+      return;
+    }
+
+    try {
+      const combo = await getCombo(item._id);
+
+      setSelectedItem(combo);
+      setActiveType(COMBO_CATEGORY_DISPLAY);
+      setIsOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
-    if (!id || id === "") return;
-    // fetch recipe item
+    if (!id) return;
+
     getRecipe(id)
       .then((recipe) => {
         setSelectedItem(recipe);
@@ -64,6 +103,8 @@ export default function RecipePageClient() {
         console.error(err);
       });
   }, [id]);
+
+  const selectedItemIsCombo = selectedItem ? !isRecipe(selectedItem) : isComboMode;
 
   return (
     <main className="relative flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-5 md:flex-row">
@@ -116,7 +157,7 @@ export default function RecipePageClient() {
           open={isOpen}
           onClose={setIsOpen}
           item={selectedItem}
-          isComboMode={isComboMode}
+          isComboMode={selectedItemIsCombo}
           changeMode={(e) => setMode(e)}
         />
       ) : (
