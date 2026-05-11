@@ -1,3 +1,4 @@
+import PillToggle from "@/components/PillToggle";
 import { CategoryDisplayType, CategoryValue } from "@/lib/types";
 
 export default function CategoryToggle({
@@ -9,27 +10,14 @@ export default function CategoryToggle({
   selectedCategories: Set<CategoryValue>;
   onToggle: (category: CategoryValue) => void;
 }) {
-  const baseClass =
-    "inline-flex items-center rounded-full border border-radish-900 px-3 py-1 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-radish-900";
-  const unselectedClass = "bg-white text-radish-900 hover:bg-radish-100";
-  const selectedClass = "bg-radish-900 text-white";
-
   return (
-    <div className="flex flex-wrap gap-2">
-      {options.map((option) => {
-        const selected = selectedCategories.has(option.category);
-
-        return (
-          <button
-            key={option.category}
-            type="button"
-            onClick={() => onToggle(option.category)}
-            className={`${baseClass} ${selected ? selectedClass : unselectedClass}`}
-          >
-            {option.plural}
-          </button>
-        );
-      })}
-    </div>
+    <PillToggle
+      options={options.map((option) => ({
+        value: option.category,
+        label: option.plural,
+      }))}
+      selectedValues={selectedCategories}
+      onToggle={onToggle}
+    />
   );
 }
