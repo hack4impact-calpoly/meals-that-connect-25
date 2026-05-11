@@ -26,35 +26,6 @@ interface CalendarDay {
 }
 
 const today = new Date();
-const SAMPLE_RECIPES: Recipe[] = [
-  {
-    item: null,
-    _id: "oo",
-    name: "Chicken Tikka Masala",
-    serving: 150,
-    filters: ["Entree"],
-    isDraft: false,
-    nutritional_info: { calories: 225, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-mango-cup",
-    name: "Mango Cup",
-    serving: 100,
-    filters: ["Fruit"],
-    isDraft: false,
-    nutritional_info: { calories: 100, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-brown-rice",
-    name: "Brown Rice",
-    serving: 150,
-    filters: ["Sides"],
-    isDraft: false,
-    nutritional_info: { calories: 200, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-];
 
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
