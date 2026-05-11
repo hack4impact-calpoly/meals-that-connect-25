@@ -7,6 +7,7 @@ type Params = {
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
   sortBy?: SortOption;
+  pageSize?: number;
 };
 
 type Return = {
@@ -21,7 +22,6 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 5;
 function appendSetParams(params: URLSearchParams, key: string, values?: Set<unknown>) {
   values?.forEach((value) => {
     params.append(key, String(value));
@@ -34,6 +34,7 @@ export function useMealData({
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
+  pageSize = 11,
 }: Params): Return {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -75,7 +76,7 @@ export function useMealData({
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
         params.append("page", String(currentPage));
-        params.append("limit", String(draftMode ? PAGE_SIZE - 1 : PAGE_SIZE));
+        params.append("limit", String(draftMode ? pageSize - 1 : pageSize));
 
         if (trimmed) {
           params.append("name", trimmed);
@@ -163,6 +164,7 @@ export function useMealData({
     sortBy,
     refreshKey,
     isSubrecipeOnly,
+    pageSize,
   ]);
 
   const items = isComboMode ? combos : recipes;

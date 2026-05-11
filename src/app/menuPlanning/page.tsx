@@ -8,7 +8,7 @@ import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
-import DayView from "@/components/menuPlanning/DayView";
+import DayView, { DayMealCardPreview } from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
 import {
@@ -23,11 +23,14 @@ import {
   SortOption,
   createEmptyFilterSelections,
   CATEGORY_TO_BUCKET,
+  RecipeNutritionOnly,
 } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
+import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
+import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 
 const today = new Date();
 
@@ -54,7 +57,7 @@ export type SidebarDragData =
 
 export type CalendarDragData = {
   source: "calendar";
-  item: Recipe;
+  item: RecipeNutritionOnly;
   dayId: string;
 };
 
@@ -79,14 +82,16 @@ function TrashDropZone() {
   });
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
-        isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
-      }`}
-      aria-label="Trash"
-    >
-      <Trash2 size={24} strokeWidth={2.2} />
+    // some padding around the button to make the droppable area larger
+    <div ref={setNodeRef} className="flex h-24 w-24 items-center justify-center" aria-label="Trash drop zone">
+      <div
+        className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
+          isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
+        }`}
+        aria-label="Trash"
+      >
+        <Trash2 size={24} strokeWidth={2.2} />
+      </div>
     </div>
   );
 }
@@ -98,7 +103,7 @@ function SidebarDropZone({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div ref={setNodeRef} className="w-90">
+    <div ref={setNodeRef} className="flex flex-col w-90">
       {children}
     </div>
   );
@@ -199,7 +204,7 @@ export default function MenuPlanning() {
         throw new Error(`Failed to fetch monthly menu: ${res.status}`);
       }
 
-      const dates: CalendarDay[] = await res.json();
+      const dates: CalendarDay<RecipeNutritionOnly>[] = await res.json();
       const data: IContent[] = [];
 
       dates.forEach((date) => {
@@ -236,7 +241,7 @@ export default function MenuPlanning() {
 
         data.push(totals);
 
-        const pushItems = (items: Recipe[] = []) => {
+        const pushItems = (items: RecipeNutritionOnly[] = []) => {
           items.forEach((item) => {
             data.push({
               name: item.name,
@@ -421,10 +426,10 @@ export default function MenuPlanning() {
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <main className="flex flex-row">
-        <div className="flex flex-1 items-center justify-center bg-gray-100">
-          <div className="flex h-full w-260 flex-col">
-            <div className="mt-4 flex items-center justify-between">
+      <main className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 justify-center pt-4 bg-gray-100 overflow-auto">
+          <div className="flex w-260 flex-col">
+            <div className="flex items-center justify-between">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
 
@@ -499,8 +504,8 @@ export default function MenuPlanning() {
             </div>
 
             {calendarView === "Month" && (
-              <div className="flex min-h-0 flex-1 flex-col">
-                <MonthView monthDates={viewDates} dateToday={today} />
+              <>
+                <MonthView monthDates={viewDates} dateToday={today} refetchTrigger={recipeDropTrigger} />
 
                 <div className="mt-2">
                   <WarningQuotaMonthly />
@@ -509,7 +514,7 @@ export default function MenuPlanning() {
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
-              </div>
+              </>
             )}
 
             {calendarView === "Week" && (
@@ -524,7 +529,16 @@ export default function MenuPlanning() {
               </>
             )}
 
-            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
+            {calendarView === "Day" && (
+              <>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+                <div className="mt-2 flex justify-end">
+                  <TrashDropZone />
+                </div>
+
+                <DailyNutritionSummary recipes={[]} />
+              </>
+            )}
           </div>
         </div>
 
@@ -547,9 +561,15 @@ export default function MenuPlanning() {
 
       <DragOverlay>
         {activeId ? (
-          <div className="rotate-3 opacity-90">
+          <div className="opacity-80">
             {activeDragData?.source === "calendar" ? (
-              <CalendarDragPreview {...activeDragData} />
+              calendarView === "Month" ? (
+                <MonthMealCardPreview item={activeDragData.item} />
+              ) : calendarView === "Day" ? (
+                <DayMealCardPreview item={activeDragData.item} />
+              ) : (
+                <CalendarDragPreview {...activeDragData} />
+              )
             ) : activeDragData?.item ? (
               <DraggableRecipeCard item={activeDragData.item} disabled />
             ) : null}
