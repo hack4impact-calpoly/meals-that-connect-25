@@ -584,7 +584,12 @@ export default function MenuPlanning() {
 
             {calendarView === "Month" && (
               <div className="flex min-h-0 flex-1 flex-col">
-                <MonthView monthDates={viewDates} dateToday={today} nutritionByDate={nutritionByDate} />
+                <MonthView
+                  monthDates={viewDates}
+                  dateToday={today}
+                  nutritionByDate={nutritionByDate}
+                  refetchTrigger={recipeDropTrigger}
+                />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
