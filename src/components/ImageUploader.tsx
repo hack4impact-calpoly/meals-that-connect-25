@@ -1,10 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
-"use client";
-
 import { useRef, useState } from "react";
 import { storage } from "@/lib/firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { Plus } from "lucide-react";
+import Image from "next/image";
 
 type Props = {
   onUpload?: (url: string) => void;
@@ -92,7 +90,7 @@ export default function ImageUploader({ onUpload }: Props) {
       {/* AFTER UPLOAD (image preview replaces box) */}
       {preview && (
         <div className="relative">
-          <img src={preview} alt="preview" className="h-40 w-full rounded-lg object-cover" />
+          <Image src={preview} alt="preview" className="h-40 w-full rounded-lg object-cover" />
 
           {/* Change button */}
           <button

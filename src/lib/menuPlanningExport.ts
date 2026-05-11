@@ -1,12 +1,14 @@
-import { Nutrition, Recipe } from "@/lib/types";
+import { Nutrition, RecipeNutritionOnly } from "@/lib/types";
 
 export type MenuExportFormat = "Display" | "Nutritional";
 
 export type CalendarDayExport = {
   _id: string;
-  entrees?: Recipe[];
-  fruits?: Recipe[];
-  sides?: Recipe[];
+  entrees?: RecipeNutritionOnly[];
+  vegetables?: RecipeNutritionOnly[];
+  fruits?: RecipeNutritionOnly[];
+  grains?: RecipeNutritionOnly[];
+  sides?: RecipeNutritionOnly[];
 };
 
 type ExcelValue = string | number | null | undefined;
@@ -589,7 +591,9 @@ function emptyCalendarDay(id: string): CalendarDayExport {
   return {
     _id: id,
     entrees: [],
+    vegetables: [],
     fruits: [],
+    grains: [],
     sides: [],
   };
 }
@@ -600,7 +604,13 @@ function getCalendarDay(dayMap: Map<string, CalendarDayExport>, date: Date) {
 }
 
 function getDayItems(day: CalendarDayExport | undefined) {
-  return [...(day?.entrees ?? []), ...(day?.sides ?? []), ...(day?.fruits ?? [])];
+  return [
+    ...(day?.entrees ?? []),
+    ...(day?.vegetables ?? []),
+    ...(day?.fruits ?? []),
+    ...(day?.grains ?? []),
+    ...(day?.sides ?? []),
+  ];
 }
 
 function numberOrZero(value: number | undefined) {
@@ -611,7 +621,7 @@ function round(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function sumNutrition(items: Recipe[]): Nutrition {
+function sumNutrition(items: RecipeNutritionOnly[]): Nutrition {
   return items.reduce(
     (total, item) => ({
       calories: total.calories + numberOrZero(item.nutritional_info?.calories),

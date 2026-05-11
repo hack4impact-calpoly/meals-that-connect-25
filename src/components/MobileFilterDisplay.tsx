@@ -1,11 +1,8 @@
-"use client";
-
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import FilterTag from "./FilterTag";
-import { FILTER_SECTIONS } from "./FilterMenu";
-import type { FilterOption } from "./FilterMenu";
-import type { FilterSelections } from "@/lib/types";
+import { FILTER_SECTIONS } from "@/lib/types";
+import type { FilterOption, FilterSelections } from "@/lib/types";
 
 type MobileFilterDisplayProps = {
   selections: FilterSelections;
@@ -35,7 +32,7 @@ export default function MobileFilterDisplay({ selections, onFilterChange }: Mobi
       <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-2">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-full whitespace-nowrap flex-shrink-0"
+          className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-full whitespace-nowrap shrink-0"
         >
           <SlidersHorizontal className="h-4 w-4 text-gray-700" />
           <span className="text-sm text-gray-900">Filters</span>
