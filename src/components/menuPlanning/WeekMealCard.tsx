@@ -57,7 +57,7 @@ export default function WeekMealCard({
       ref={setNodeRef}
       className={`flex cursor-move items-center gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
         isDragging ? "opacity-40" : ""
-      }`}
+      } ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"}`}
       {...attributes}
       {...listeners}
     >

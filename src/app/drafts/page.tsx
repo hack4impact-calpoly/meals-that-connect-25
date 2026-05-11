@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, redirect } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import { CategoryValue, EMPTY_FILTERS, FilterSelections } from "@/lib/types";
@@ -60,6 +60,10 @@ export default function DraftsPage() {
       }
     }
     getUserRole();
+
+    if (userRole !== "Admin" && userRole !== "Kitchen Staff") {
+      redirect("/recipe");
+    }
   }, []);
 
   const toggleSelect = (id: string, name: string) => {
