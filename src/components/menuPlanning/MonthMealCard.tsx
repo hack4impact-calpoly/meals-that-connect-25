@@ -5,6 +5,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CATEGORY_TO_BUCKET, TAG_STYLES } from "@/lib/types";
 import type { RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
+import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 
 type MonthMealCardProps = {
   item: RecipeNutritionOnly;
@@ -50,17 +51,21 @@ export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex max-w-full cursor-move items-center gap-1.5 rounded-md px-2 py-1 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
+      className={`group flex max-w-full cursor-move flex-col gap-0.5 rounded-md px-2 py-1.5 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
         isDragging ? "opacity-40" : ""
       }`}
       {...attributes}
       {...listeners}
     >
-      <p className="min-w-0 flex-1 truncate leading-tight" title={item.name}>
-        {item.name}
-      </p>
+      <div className="flex min-w-0 items-center gap-1">
+        <p className="min-w-0 flex-1 truncate leading-tight" title={item.name}>
+          {item.name}
+        </p>
 
-      <GripVertical className="h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true" />
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true" />
+      </div>
+
+      <RecipeSeeMorePopover recipeId={item._id} variant="compact" />
     </div>
   );
 }
