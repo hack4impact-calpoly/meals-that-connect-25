@@ -67,7 +67,13 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   };
 }
 
-export default function WeekView({ dateToday, weekDates, refetchTrigger, nutritionByDate, selectedDate= null }: WeekViewProps) {
+export default function WeekView({
+  dateToday,
+  weekDates,
+  refetchTrigger,
+  nutritionByDate = {},
+  selectedDate,
+}: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
