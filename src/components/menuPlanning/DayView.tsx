@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
+import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 import { CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
 import type { Recipe, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
@@ -93,16 +94,18 @@ function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
+      className={`group flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
         isDragging ? "opacity-40" : ""
       }`}
     >
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <h3 className="truncate font-montserrat text-xl font-bold" title={item.name}>
           {item.name}
         </h3>
 
         {metaText ? <p className="font-montserrat text-base font-medium text-pepper/70">{metaText}</p> : null}
+
+        <RecipeSeeMorePopover recipeId={item._id} variant="default" />
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
