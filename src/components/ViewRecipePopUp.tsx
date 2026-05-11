@@ -22,18 +22,7 @@ import type {
   RecipeBuckets,
   RecipeCategory,
 } from "@/lib/types";
-import {
-  ArrowLeft,
-  Maximize2,
-  Pencil,
-  Ellipsis,
-  Tag,
-  CircleAlert,
-  SquarePen,
-  Minus,
-  Plus,
-  ArrowUpRight,
-} from "lucide-react";
+import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
 
@@ -149,7 +138,6 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
               <div className="flex flex-row gap-4">
                 <Pencil className="cursor-pointer" onClick={() => changeMode("edit")} />
-                <Ellipsis className="cursor-pointer" />
               </div>
             </div>
 
