@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import MonthMealCard from "./MonthMealCard";
 import { RECIPE_BUCKETS } from "@/lib/types";
-import type { CalendarDay, NutrientDisplay, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
+import type { CalendarDay, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 
 const WEEKDAY_LABELS = ["SUN", "MON", "TUE", "WED", "THUR", "FRI", "SAT"] as const;
 
@@ -13,6 +13,9 @@ type Props = {
   monthDates: Date[];
   dateToday: Date;
   refetchTrigger?: number;
+  /** Calendar day picked in month view; used when switching to week/day on the parent. */
+  selectedDate: Date | null;
+  onDaySelect: (date: Date) => void;
 };
 
 function isWeekend(d: Date): boolean {
@@ -22,6 +25,10 @@ function isWeekend(d: Date): boolean {
 
 function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function formatCalendarDayId(date: Date) {
@@ -50,7 +57,7 @@ function getVisibleMonthMeals(meals: RecipeNutritionOnly[]) {
   };
 }
 
-export default function MonthView({ monthDates, dateToday, refetchTrigger }: Props) {
+export default function MonthView({ monthDates, dateToday, refetchTrigger, selectedDate, onDaySelect }: Props) {
   const [mealsByDayId, setMealsByDayId] = useState<Record<string, RecipeNutritionOnly[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -140,6 +147,7 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger }: Pro
               const weekend = isWeekend(date);
               const isToday = date.toDateString() === dateToday.toDateString();
               const inMonth = isSameMonth(date, focusDate);
+              const isDaySelected = selectedDate ? isSameCalendarDay(date, selectedDate) : false;
               const meals = mealsByDayId[dayId] ?? [];
               const { visibleMeals, hiddenCount } = getVisibleMonthMeals(meals);
 
@@ -163,15 +171,34 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger }: Pro
                 </div>
               );
 
+              const selectDay = () => {
+                onDaySelect(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
+              };
+
               return (
                 <div
                   key={dayId}
-                  className={`relative min-h-22.5 overflow-hidden rounded-xl border border-medium-gray ${
+                  role="button"
+                  tabIndex={0}
+                  onClick={selectDay}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      selectDay();
+                    }
+                  }}
+                  className={`relative min-h-22.5 overflow-visible rounded-xl border border-medium-gray ${
                     weekend ? "bg-medium-gray/35" : "bg-white"
-                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"}`}
+                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80" : ""} ${
+                    isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
+                  } ${inMonth ? "" : "opacity-60"} cursor-pointer`}
                   data-drop-disabled={weekend ? "true" : undefined}
-                  aria-disabled={weekend}
-                  title={weekend ? "Weekends — meals cannot be placed here" : undefined}
+                  aria-pressed={isDaySelected}
+                  title={
+                    weekend
+                      ? "Weekends — meals cannot be placed here. Click to select this day."
+                      : "Click to select this day"
+                  }
                 >
                   <span className="absolute top-2 right-2 z-10 font-montserrat text-sm font-normal text-dark-gray">
                     {String(date.getDate()).padStart(2, "0")}
