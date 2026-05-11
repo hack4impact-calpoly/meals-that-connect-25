@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+import { ClerkProvider, Show } from "@clerk/nextjs";
 import Navbar from "@/components/Navbar";
 
 //! Update metadata to match your project
@@ -17,9 +17,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en" className="h-full">
         <body className="flex flex-col h-full bg-light-gray">
-          <header>
-            <Navbar />
-          </header>
+          <Show when="signed-in">
+            <header>
+              <Navbar />
+            </header>
+          </Show>
           {children}
         </body>
       </html>
