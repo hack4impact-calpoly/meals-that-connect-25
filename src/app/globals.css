@@ -38,4 +38,8 @@
 
   --color-entree-900: var(--color-brown);
   --color-entree-500: #ffffff;
+
+  --color-vegetable-900: var(--color-lime);
+
+  --color-grain-900: #e6bb72;
 }

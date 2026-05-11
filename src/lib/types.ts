@@ -67,5 +67,7 @@ export const TAG_STYLES: Record<string, string> = {
   Fruit: "bg-fruit-500 text-fruit-900",
   Entree: "bg-entree-900 text-entree-500",
   Entrée: "bg-entree-900 text-entree-500",
+  Vegetable: "bg-vegetable-900 text-vegetable-500",
+  Grain: "bg-grain-900 text-grain-500",
   fallback: "bg-gray-100 text-gray-700",
 };
