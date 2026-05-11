@@ -1,5 +1,3 @@
-"use client";
-
 import RecipeCard from "@/components/RecipeCard";
 import ComboCard from "@/components/ComboCard";
 import DraftEntryCard from "@/components/DraftEntryCard";
@@ -18,6 +16,7 @@ type Props = {
   onOpenItem?: (item: Recipe | Combo) => void;
 };
 
+// FIXME: layouts are currently sortof broken (max 2 cols for some reason). Figure out why
 export default function CardGrid({
   loading,
   error,
@@ -42,15 +41,8 @@ export default function CardGrid({
 
         {(items as Combo[]).map((combo) => (
           <ComboCard
-            item={combo}
             key={combo._id}
-            name={combo.name}
-            imageUrl={combo.imageUrl}
-            entrees={combo.entrees ?? []}
-            sides={combo.sides ?? []}
-            fruits={combo.fruits ?? []}
-            serving={combo.serving}
-            isDraft={combo.isDraft}
+            item={combo}
             isSelected={selectedIds?.has(combo._id)}
             onSelect={() => onToggleSelect?.(combo._id, combo.name)}
             onOpen={() => onOpenItem?.(combo)}
@@ -70,11 +62,6 @@ export default function CardGrid({
         <RecipeCard
           key={recipe._id}
           item={recipe}
-          name={recipe.name}
-          imageUrl={recipe.imageUrl}
-          servingSize={recipe.serving.toString()}
-          tags={[...(recipe.filters ?? []), ...(recipe.allergens ?? [])]}
-          isDraft={recipe.isDraft}
           isSelected={selectedIds?.has(recipe._id)}
           onSelect={() => onToggleSelect?.(recipe._id, recipe.name)}
           onOpen={() => onOpenItem?.(recipe)}

@@ -1,9 +1,11 @@
 "use client";
+
 import { useEffect, useState, useCallback } from "react";
 import { Trash2 } from "lucide-react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
-import { Nutrition } from "@/lib/types";
+import { BUCKET_TO_CATEGORY, Nutrition, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
+import type { RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
 
 interface DayViewProps {
   date: Date;
@@ -14,8 +16,8 @@ type DayMeal = {
   id: string;
   name: string;
   servingSize?: string;
-  tag: "Entree" | "Sides" | "Fruit" | string;
-  category: "entrees" | "sides" | "fruits";
+  tag: RecipeCategory;
+  category: RecipeBucket;
 };
 
 type CalendarRecipe = {
@@ -26,28 +28,13 @@ type CalendarRecipe = {
 
 type CalendarDayResponse = {
   _id: string;
-  entrees?: CalendarRecipe[];
-  fruits?: CalendarRecipe[];
-  sides?: CalendarRecipe[];
-};
-
-const TAG_BY_CATEGORY: Record<string, string> = {
-  entrees: "Entree",
-  sides: "Sides",
-  fruits: "Fruit",
-};
-
-const TAG_STYLES: Record<string, string> = {
-  Entree: "bg-entree-900 text-entree-500",
-  Sides: "bg-sides-500 text-sides-900",
-  Fruit: "bg-fruit-500 text-fruit-900",
-  fallback: "bg-gray-100 text-gray-700",
-};
+} & Partial<RecipeBuckets<CalendarRecipe>>;
 
 const formatDayId = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
+
   return `${year}${month}${day}`;
 };
 
@@ -60,6 +47,7 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
 
   const fetchDayMeals = useCallback(async () => {
     setIsLoading(true);
+
     try {
       const response = await fetch(`/api/calendar/${dayId}`);
 
@@ -74,20 +62,20 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
 
       const calendarDay: CalendarDayResponse = await response.json();
 
-      const mapRecipes = (recipes: CalendarRecipe[] | undefined, category: "entrees" | "sides" | "fruits"): DayMeal[] =>
-        (recipes ?? []).map((recipe) => ({
+      const nextMeals = RECIPE_BUCKETS.flatMap((bucket) => {
+        const recipes = calendarDay[bucket] ?? [];
+        const tag = BUCKET_TO_CATEGORY[bucket];
+
+        return recipes.map((recipe) => ({
           id: recipe._id,
           name: recipe.name,
           servingSize: recipe.serving != null ? `${recipe.serving} servings` : undefined,
-          tag: TAG_BY_CATEGORY[category],
-          category,
+          tag,
+          category: bucket,
         }));
+      });
 
-      setMeals([
-        ...mapRecipes(calendarDay.entrees, "entrees"),
-        ...mapRecipes(calendarDay.sides, "sides"),
-        ...mapRecipes(calendarDay.fruits, "fruits"),
-      ]);
+      setMeals(nextMeals);
     } catch (error) {
       console.error("Error fetching day meals:", error);
       setMeals([]);
@@ -102,15 +90,19 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
 
   const handleDelete = async (meal: DayMeal) => {
     setDeletingId(meal.id);
+
     try {
       const response = await fetch(`/api/calendar/${dayId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId: meal.id, category: meal.category }),
+        body: JSON.stringify({
+          recipeId: meal.id,
+          category: meal.category,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to delete recipe from calendar`);
+        throw new Error("Failed to delete recipe from calendar");
       }
 
       setMeals((prev) => prev.filter((m) => !(m.id === meal.id && m.category === meal.category)));
@@ -132,22 +124,24 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
           </div>
         ) : meals.length > 0 ? (
           meals.map((meal) => {
-            const tagStyle = TAG_STYLES[meal.tag] ?? TAG_STYLES.fallback;
+            const tagStyle = TAG_STYLES[meal.tag];
+
             return (
               <div
                 key={`${meal.id}-${meal.category}`}
                 className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md"
               >
-                <div className="flex-1 min-w-0">
-                  <h3 className="truncate text-xl font-bold font-montserrat" title={meal.name}>
+                <div className="min-w-0 flex-1">
+                  <h3 className="truncate font-montserrat text-xl font-bold" title={meal.name}>
                     {meal.name}
                   </h3>
+
                   {meal.servingSize ? (
-                    <p className="text-base font-medium font-montserrat text-pepper/70">{meal.servingSize}</p>
+                    <p className="font-montserrat text-base font-medium text-pepper/70">{meal.servingSize}</p>
                   ) : null}
                 </div>
 
-                <span className={`shrink-0 rounded-md px-3 py-1.5 text-base font-medium font-montserrat ${tagStyle}`}>
+                <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagStyle}`}>
                   {meal.tag}
                 </span>
 

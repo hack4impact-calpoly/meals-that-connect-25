@@ -1,5 +1,7 @@
 import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
+import { RECIPE_CATEGORIES } from "@/lib/types";
+import type { RecipeCategory } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 type ServingRange = {
@@ -14,6 +16,13 @@ const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
   "party-serving": { min: 7 },
 };
 
+function normalizeRecipeCategory(value: string): RecipeCategory | null {
+  // accepts capitalization differences.
+  // e.g, " entree " will normalize to "Entree" for searching
+  return RECIPE_CATEGORIES.find((category) => category.toLowerCase() === value.toLowerCase()) ?? null;
+}
+
+// TODO: For now just update categories, overhaul when updating the filters
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -24,6 +33,7 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const isSubrecipeParam = searchParams.get("isSubrecipe");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
@@ -33,8 +43,8 @@ export async function GET(req: NextRequest) {
 
     const categoryParams = searchParams
       .getAll("categories")
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean);
+      .map((category) => normalizeRecipeCategory(category.trim()))
+      .filter((category): category is RecipeCategory => Boolean(category));
 
     const servingParams = searchParams
       .getAll("servings")
@@ -62,9 +72,7 @@ export async function GET(req: NextRequest) {
 
     if (categoryParams.length > 0) {
       andClauses.push({
-        $or: categoryParams.map((category) => ({
-          filters: { $elemMatch: { $regex: category, $options: "i" } },
-        })),
+        category: { $in: categoryParams },
       });
     }
 
@@ -91,6 +99,12 @@ export async function GET(req: NextRequest) {
     } else if (isDraftParam === "false") {
       filter.isDraft = false;
     }
+
+    if (isSubrecipeParam === "true") {
+      filter.isSubrecipe = true;
+    } else if (isSubrecipeParam === "false") {
+      filter.isSubrecipe = false;
+    } // Undefined means query for a mix
 
     let sort: Record<string, 1 | -1> = { createdAt: -1 };
 
@@ -143,11 +157,13 @@ export async function POST(req: NextRequest) {
   try {
     const recipeData = await req.json();
     const response = await postRecipe(recipeData);
+
     return NextResponse.json(response, { status: 201 });
   } catch (err: any) {
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
+
     console.error("Error creating recipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

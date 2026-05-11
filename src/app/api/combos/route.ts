@@ -7,6 +7,7 @@ type ServingRange = {
   max?: number;
 };
 
+// TODO: overhaul this entire endpoint? not as serious as the recipe one
 const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
   "single-serving": { min: 1, max: 1 },
   "small-serving": { min: 2, max: 3 },

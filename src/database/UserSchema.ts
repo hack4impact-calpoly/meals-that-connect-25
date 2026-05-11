@@ -1,3 +1,4 @@
+import { USER_ROLES } from "@/lib/types";
 import mongoose, { Schema, Document } from "mongoose";
 
 export type UserRole = "Admin" | "Dining Site Staff" | "Kitchen Staff";
@@ -19,7 +20,7 @@ const UserSchema = new Schema<IUser>(
     imageUrl: { type: String, required: false },
     role: {
       type: String,
-      enum: ["Admin", "Dining Site Staff", "Kitchen Staff"],
+      enum: USER_ROLES,
       required: true,
       default: "Kitchen Staff",
     },

@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import WeekMealCard, { type CalendarMealCategory, type WeekMealCardData } from "./WeekMealCard";
+import WeekMealCard, { type WeekMealCardData } from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
+import { BUCKET_TO_CATEGORY, RECIPE_BUCKETS, Recipe, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
 
 interface WeekViewProps {
   dateToday: Date;
@@ -16,30 +17,14 @@ type WeekViewDayData = {
   showNutritionInfoNotMet?: boolean;
 };
 
-type CalendarRecipe = {
-  _id: string;
-  name: string;
-  serving?: number;
-  nutritional_info?: {
-    calories?: number;
-  };
+// TODO: extract this into a populated type in types.ts and add API support
+type CalendarRecipe = Pick<Recipe, "_id" | "name" | "serving"> & {
+  nutritional_info?: Partial<Recipe["nutritional_info"]>;
 };
 
 type CalendarDayResponse = {
   _id: string;
-  entrees?: CalendarRecipe[];
-  fruits?: CalendarRecipe[];
-  sides?: CalendarRecipe[];
-};
-
-const CALENDAR_SECTIONS: Array<{
-  category: CalendarMealCategory;
-  tag: WeekMealCardData["tag"];
-}> = [
-  { category: "entrees", tag: "Entree" },
-  { category: "sides", tag: "Sides" },
-  { category: "fruits", tag: "Fruit" },
-];
+} & RecipeBuckets<CalendarRecipe>;
 
 const EMPTY_DAY: WeekViewDayData = {
   meals: [],
@@ -55,18 +40,18 @@ function formatCalendarDayId(date: Date) {
 }
 
 function mapCalendarRecipesToMeals(
-  recipes: CalendarRecipe[] | undefined,
-  tag: WeekMealCardData["tag"],
-  calendarCategory: CalendarMealCategory,
+  recipes: CalendarRecipe[],
+  category: RecipeCategory,
+  calendarBucket: RecipeBucket,
   calendarDayId: string,
 ): WeekMealCardData[] {
-  return (recipes ?? []).map((recipe) => ({
-    id: recipe._id,
+  return recipes.map((recipe) => ({
+    _id: recipe._id,
     name: recipe.name,
     calories: recipe.nutritional_info?.calories,
     servingSize: recipe.serving != null ? `${recipe.serving}` : undefined,
-    tag,
-    calendarCategory,
+    category,
+    calendarBucket,
     calendarDayId,
   }));
 }
@@ -74,8 +59,8 @@ function mapCalendarRecipesToMeals(
 function mapCalendarDayToMeals(calendarDay: CalendarDayResponse, fallbackDayId: string): WeekMealCardData[] {
   const calendarDayId = calendarDay._id || fallbackDayId;
 
-  return CALENDAR_SECTIONS.flatMap(({ category, tag }) =>
-    mapCalendarRecipesToMeals(calendarDay[category], tag, category, calendarDayId),
+  return RECIPE_BUCKETS.flatMap((bucket) =>
+    mapCalendarRecipesToMeals(calendarDay[bucket] ?? [], BUCKET_TO_CATEGORY[bucket], bucket, calendarDayId),
   );
 }
 
@@ -152,11 +137,11 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
 
         return (
           <div key={dayId} className="flex min-w-0 flex-col items-center">
-            <span className="text-xs font-montserrat font-medium tracking-[0.12em] text-pepper">
+            <span className="font-montserrat text-xs font-medium tracking-[0.12em] text-pepper">
               {date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
             </span>
 
-            <span className={`mb-2 text-2xl font-montserrat font-bold ${isToday ? "text-radish-900" : "text-pepper"}`}>
+            <span className={`mb-2 font-montserrat text-2xl font-bold ${isToday ? "text-radish-900" : "text-pepper"}`}>
               {String(date.getDate()).padStart(2, "0")}
             </span>
 
@@ -172,7 +157,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
                   </div>
                 ) : dayData.meals.length > 0 ? (
                   dayData.meals.map((meal) => (
-                    <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarCategory}-${meal.id}`} {...meal} />
+                    <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarBucket}-${meal._id}`} {...meal} />
                   ))
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">

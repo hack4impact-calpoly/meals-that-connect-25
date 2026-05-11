@@ -135,7 +135,7 @@ export default function DraftsPage() {
         <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
 
         {mobileFiltersOpen ? (
-          <div className="fixed inset-0 z-50 flex h-[100dvh] min-h-0 flex-col bg-white md:hidden">
+          <div className="fixed inset-0 z-50 flex h-dvh min-h-0 flex-col bg-white md:hidden">
             <FilterMenu
               mobileOverlay={{ onClose: () => setMobileFiltersOpen(false) }}
               initialSelections={filters}

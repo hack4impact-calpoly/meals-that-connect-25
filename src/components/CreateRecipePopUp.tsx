@@ -1,32 +1,31 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import {
-  AlignLeft,
-  Apple,
-  Carrot,
-  ChevronDown,
-  CircleAlert,
-  Minus,
-  Plus,
-  Save,
-  Tag,
-  Trash2,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { AlignLeft, ChefHat, ChevronDown, Minus, Plus, Save, Trash2, X, type LucideIcon } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
-import type { Recipe, Combo, Ingredient, RecipeReference } from "@/lib/types";
+import {
+  Recipe,
+  Combo,
+  Ingredient,
+  RecipePreview,
+  RecipeCategory,
+  CategoryDisplayType,
+  ENTREE_ICON,
+  VEGETABLE_ICON,
+  FRUIT_ICON,
+  GRAIN_ICON,
+  FILTER_ICON,
+  ALLERGEN_ICON,
+} from "@/lib/types";
 import { FILTER_SECTIONS } from "./FilterMenu";
 import Image from "next/image";
 
-export type CreateRecipeType = { id: string; label: string; icon: LucideIcon };
+// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents and helpers should be moved to helpers.ts
+
 type Props = {
   item: Recipe | Combo | null;
   open: boolean;
   onClose: () => void;
-  recipeType: CreateRecipeType | null;
+  recipeType: CategoryDisplayType | null;
   editMode: boolean;
 };
 
@@ -35,6 +34,19 @@ type InputPair = {
   quantity: number | "";
   units: string;
 };
+
+function isRecipeItem(item: Recipe | Combo): item is Recipe {
+  return "category" in item;
+}
+
+function comboHasRecipe(combo: Combo, recipeId: string) {
+  return (
+    combo.entrees?.includes(recipeId) ||
+    combo.vegetables?.includes(recipeId) ||
+    combo.fruits?.includes(recipeId) ||
+    combo.grains?.includes(recipeId)
+  );
+}
 
 function NutritionalInfo({
   label,
@@ -48,7 +60,7 @@ function NutritionalInfo({
   onChange: (v: string) => void;
 }) {
   return (
-    <div className="w-[92px] rounded-lg border border-pepper/20 bg-white px-2 py-2">
+    <div className="w-23 rounded-lg border border-pepper/20 bg-white px-2 py-2">
       {/* top row: value + unit */}
       <div className="flex items-center justify-center gap-1">
         <input
@@ -192,16 +204,21 @@ function DropdownField({
 }
 
 export default function CreateRecipePopUp({ item, open, onClose, recipeType, editMode }: Props) {
-  const createLabel = recipeType?.label?.replace(/^Add\s+/i, "") ?? "Recipe";
-  const isCombo = recipeType?.id === "Combo";
-  const [selectedSides, setSelectedSides] = useState<RecipeReference[]>([]);
-  const [selectedFruits, setSelectedFruit] = useState<RecipeReference[]>([]);
-  const [selectedEntrees, setSelectedEntree] = useState<RecipeReference[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<RecipeReference[]>([]);
-  const [selectedAllergens, setSelectedAllergens] = useState<RecipeReference[]>([]);
-  const [entreeOptions, setEntreeOptions] = useState<{ id: string; name: string }[]>([]);
-  const [sideOptions, setSideOptions] = useState<{ id: string; name: string }[]>([]);
-  const [fruitOptions, setFruitOptions] = useState<{ id: string; name: string }[]>([]);
+  const createLabel = recipeType?.label ?? "Recipe";
+  const isCombo = recipeType?.category === "Combo" || (!!item && !isRecipeItem(item));
+
+  const [selectedEntrees, setSelectedEntree] = useState<RecipePreview[]>([]);
+  const [selectedVegetables, setSelectedVegetables] = useState<RecipePreview[]>([]);
+  const [selectedFruits, setSelectedFruit] = useState<RecipePreview[]>([]);
+  const [selectedGrains, setSelectedGrains] = useState<RecipePreview[]>([]);
+  const [selectedFilters, setSelectedFilters] = useState<{ id: string; name: string }[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<{ id: string; name: string }[]>([]);
+  const [isSubrecipe, setIsSubrecipe] = useState(false);
+
+  const [entreeOptions, setEntreeOptions] = useState<RecipePreview[]>([]);
+  const [vegetableOptions, setVegetableOptions] = useState<RecipePreview[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<RecipePreview[]>([]);
+  const [grainOptions, setGrainOptions] = useState<RecipePreview[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -218,6 +235,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       id: option.label,
     })),
   );
+  const subrecipeOptions = [
+    { id: "yes", name: "Yes" },
+    { id: "no", name: "No" },
+  ];
 
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -272,10 +293,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     setIngredientInputs(updated);
   };
 
-  const isRecipe = (item: Recipe | Combo): item is Recipe => {
-    return "ingredients" in item;
-  };
-
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
     if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
@@ -288,11 +305,13 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     if (item == null) {
       setName("");
       setIngredientInputs([{ name: "", quantity: "", units: "" }]);
-      setSelectedSides([]);
-      setSelectedFruit([]);
       setSelectedEntree([]);
+      setSelectedVegetables([]);
+      setSelectedFruit([]);
+      setSelectedGrains([]);
       setSelectedFilters([]);
       setSelectedAllergens([]);
+      setIsSubrecipe(false);
       setNotes("");
       setServings("1");
       setInstructionsText("");
@@ -320,8 +339,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       if (!item) return;
 
-      // if it's entree/side/fruit
-      if (!isCombo && isRecipe(item) === true) {
+      // if it's a recipe
+      if (!isCombo && isRecipeItem(item) === true) {
+        setIsSubrecipe(item.isSubrecipe);
         setIngredientInputs(
           item.ingredients
             ? item.ingredients.map((ingredient: Ingredient) => ({
@@ -340,32 +360,39 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           fiber: item.nutritional_info.fiber.toString(),
           sodium: item.nutritional_info.sodium.toString(),
         });
-      } else if (isCombo && isRecipe(item) === false) {
+      } else if (isCombo && isRecipeItem(item) === false) {
         const loadAll = async () => {
-          const [eM, sN, fN] = await Promise.all([
+          const [entreeNames, vegetableNames, fruitNames, grainNames] = await Promise.all([
             Promise.all(
-              (item.entrees ?? []).map(async (e) => {
-                const r = await getRecipe(e);
-                return { id: r._id, name: r.name };
+              (item.entrees ?? []).map(async (id) => {
+                const recipe = await getRecipe(id);
+                return { _id: recipe._id, name: recipe.name };
               }),
             ),
             Promise.all(
-              (item.sides ?? []).map(async (s) => {
-                const r = await getRecipe(s);
-                return { id: r._id, name: r.name };
+              (item.vegetables ?? []).map(async (id) => {
+                const recipe = await getRecipe(id);
+                return { _id: recipe._id, name: recipe.name };
               }),
             ),
             Promise.all(
-              (item.fruits ?? []).map(async (f) => {
-                const r = await getRecipe(f);
-                return { id: r._id, name: r.name };
+              (item.fruits ?? []).map(async (id) => {
+                const recipe = await getRecipe(id);
+                return { _id: recipe._id, name: recipe.name };
+              }),
+            ),
+            Promise.all(
+              (item.grains ?? []).map(async (id) => {
+                const recipe = await getRecipe(id);
+                return { _id: recipe._id, name: recipe.name };
               }),
             ),
           ]);
 
-          setSelectedSides(sN);
-          setSelectedFruit(fN);
-          setSelectedEntree(eM);
+          setSelectedEntree(entreeNames);
+          setSelectedVegetables(vegetableNames);
+          setSelectedFruit(fruitNames);
+          setSelectedGrains(grainNames);
         };
         loadAll();
       }
@@ -373,7 +400,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       setId(item._id);
       setBusy(null);
     }
-  }, [open]);
+  }, [open, item, isCombo]);
 
   useEffect(() => {
     if (!open) return;
@@ -384,7 +411,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       setLoadingOptions(true);
 
       try {
-        const buildUrl = (category: "entree" | "side" | "fruit") => {
+        const buildUrl = (category: RecipeCategory) => {
           const params = new URLSearchParams({
             categories: category,
             isDraft: "false",
@@ -395,36 +422,48 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           return `/api/recipes?${params.toString()}`;
         };
 
-        const [entreeRes, sideRes, fruitRes] = await Promise.all([
-          fetch(buildUrl("entree"), { signal: controller.signal }),
-          fetch(buildUrl("side"), { signal: controller.signal }),
-          fetch(buildUrl("fruit"), { signal: controller.signal }),
+        const [entreeRes, vegetableRes, fruitRes, grainRes] = await Promise.all([
+          fetch(buildUrl("Entree"), { signal: controller.signal }),
+          fetch(buildUrl("Vegetable"), { signal: controller.signal }),
+          fetch(buildUrl("Fruit"), { signal: controller.signal }),
+          fetch(buildUrl("Grain"), { signal: controller.signal }),
         ]);
 
-        if (!entreeRes.ok || !sideRes.ok || !fruitRes.ok) {
+        if (!entreeRes.ok || !vegetableRes.ok || !fruitRes.ok || !grainRes.ok) {
           throw new Error("Failed to load recipe options");
         }
 
-        const [entreeJson, sideJson, fruitJson]: [{ data?: Recipe[] }, { data?: Recipe[] }, { data?: Recipe[] }] =
-          await Promise.all([entreeRes.json(), sideRes.json(), fruitRes.json()]);
+        const [entreeJson, vegetableJson, fruitJson, grainJson]: [
+          { data?: Recipe[] },
+          { data?: Recipe[] },
+          { data?: Recipe[] },
+          { data?: Recipe[] },
+        ] = await Promise.all([entreeRes.json(), vegetableRes.json(), fruitRes.json(), grainRes.json()]);
 
         const toOptionNames = (recipes: Recipe[] = []) =>
-          /*Array.from(new Set(recipes.map((recipe) => recipe.name.trim()).filter(Boolean))).sort((a, b) =>
-            a.localeCompare(b),
-          );*/
-          Array.from(new Map(recipes.map((r) => [r.name.trim(), { id: r._id, name: r.name.trim() }])).values()).sort(
-            (a, b) => a.name.localeCompare(b.name),
-          );
+          Array.from(
+            new Map(
+              recipes.map((recipe) => [
+                recipe.name.trim(),
+                {
+                  _id: recipe._id,
+                  name: recipe.name.trim(),
+                },
+              ]),
+            ).values(),
+          ).sort((a, b) => a.name.localeCompare(b.name));
 
         setEntreeOptions(toOptionNames(entreeJson.data));
-        setSideOptions(toOptionNames(sideJson.data));
+        setVegetableOptions(toOptionNames(vegetableJson.data));
         setFruitOptions(toOptionNames(fruitJson.data));
+        setGrainOptions(toOptionNames(grainJson.data));
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
         console.error("Failed to load side/fruit recipe options", error);
         setEntreeOptions([]);
-        setSideOptions([]);
+        setVegetableOptions([]);
         setFruitOptions([]);
+        setGrainOptions([]);
       } finally {
         setLoadingOptions(false);
       }
@@ -435,11 +474,12 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     return () => controller.abort();
   }, [open]);
 
-  async function saveRecipe(isDraft: boolean, item_id: String | null) {
+  async function saveRecipe(isDraft: boolean, itemId: String | null) {
     if (!isDraft && !name.trim()) return;
 
     // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
-    if (!isCombo && item_id !== "") {
+    if (!isCombo && isDraft && itemId !== "") {
+      // FIXME: Shoudn't this happen server side? Due to pagination I don't think this works.
       const res = await fetch(`/api/combos`, { method: "GET" });
       if (!res.ok) {
         console.error("Failed to check recipe combos", res.status);
@@ -450,12 +490,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       const json = await res.json();
       const data = json.data;
 
-      const isUsed = data.some(
-        (combo: Combo) =>
-          combo.entrees?.some((e) => e === id) ||
-          combo.sides?.some((s) => s === id) ||
-          combo.fruits?.some((f) => f === id),
-      );
+      const isUsed = data.some((combo: Combo) => id && comboHasRecipe(combo, id));
 
       if (isUsed === true) {
         alert("Failed to save recipe as a draft. Recipe is being used in an existing combo.");
@@ -463,9 +498,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       }
     }
 
-    const tags = [recipeType?.id, ...selectedFilters.map((f) => f.name)]
-      .filter((tag): tag is string => Boolean(tag))
-      .map((tag) => tag.trim().charAt(0).toUpperCase() + tag.trim().slice(1).toLowerCase());
+    const filters = selectedFilters
+      .map((filter) => filter.name)
+      .filter(Boolean)
+      .map((filter) => filter.trim());
 
     let payload;
 
@@ -479,10 +515,11 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           _id: crypto.randomUUID(),
           name: name.trim() || (isDraft ? "Untitled Draft" : ""),
           serving: Number(servings) || 1,
-          entrees: selectedEntrees.map((entree) => entree.id),
-          sides: selectedSides.map((side) => side.id),
-          fruits: selectedFruits.map((fruit) => fruit.id),
-          filters: Array.from(new Set(tags)),
+          entrees: selectedEntrees.map((entree) => entree._id),
+          vegetables: selectedVegetables.map((vegetable) => vegetable._id),
+          fruits: selectedFruits.map((fruit) => fruit._id),
+          grains: selectedGrains.map((grain) => grain._id),
+          filters: Array.from(new Set(filters)),
           notes: notes,
           allergens: selectedAllergens.map((allergen) => allergen.name),
           instructions: instructionsText,
@@ -506,12 +543,22 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           });
         }
       } else {
+        const recipeCategory =
+          item && isRecipeItem(item) ? item.category : recipeType?.category !== "Combo" ? recipeType?.category : null;
+
+        if (!recipeCategory) {
+          alert("Missing recipe category.");
+          return;
+        }
+
         payload = {
           _id: crypto.randomUUID(),
           name: name.trim() || (isDraft ? "Untitled Draft" : ""),
+          isSubrecipe: isSubrecipe,
+          category: recipeCategory,
           serving: Number(servings) || 1,
           allergens: selectedAllergens.map((allergen) => allergen.name),
-          filters: Array.from(new Set(tags)),
+          filters: Array.from(new Set(filters)),
           ingredients:
             ingredientInputs.length > 0
               ? ingredientInputs
@@ -580,6 +627,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
     // check if valid deletion can occur - no recipe should be able to be deleted if it's being used in an existing combo, but combos can be deleted regardless
     if (!isCombo) {
+      // FIXME: we are checking client side every single combo ever created???
+      // this doesn't currently work anyway due to pagination.
       const res = await fetch(`/api/combos`, { method: "GET" });
       if (!res.ok) {
         console.error("Failed to check recipe combos", res.status);
@@ -590,12 +639,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       const json = await res.json();
       const data = json.data;
 
-      const isUsed = data.some(
-        (combo: Combo) =>
-          combo.entrees?.some((e) => e === id) ||
-          combo.sides?.some((s) => s === id) ||
-          combo.fruits?.some((f) => f === id),
-      );
+      const isUsed = data.some((combo: Combo) => comboHasRecipe(combo, id));
 
       if (isUsed === true) {
         alert("Failed to delete. Recipe is being used in an existing combo.");
@@ -713,7 +757,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
           {/* Image Upload */}
           {imageUrl ? (
-            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+            <div className="mt-6 rounded-4xl border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
               <div className="mx-auto max-w-xs text-center">
                 <Image
                   src={imageUrl}
@@ -728,7 +772,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               </div>
             </div>
           ) : (
-            <div className="mt-6 rounded-[32px] border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+            <div className="mt-6 rounded-4xl border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
               <div className="mx-auto max-w-xs text-center">
                 <ImageUploader onUpload={(url) => setImageUrl(url)} />
               </div>
@@ -752,63 +796,94 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             {isCombo && (
               <>
                 <DropdownField
-                  icon={Carrot}
+                  icon={ENTREE_ICON}
                   label="Entree"
-                  options={entreeOptions}
-                  selectedValues={selectedEntrees.map((f) => f.name)}
+                  options={entreeOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  selectedValues={selectedEntrees.map((recipe) => recipe.name)}
                   onSelect={(value) => {
-                    const selectedOption = entreeOptions.find((e) => e.name === value.name);
-
+                    const selectedOption = entreeOptions.find((recipe) => recipe._id === value.id);
                     if (!selectedOption) return;
 
                     setSelectedEntree((prev) =>
-                      prev.some((e) => e.id === selectedOption.id)
-                        ? prev.filter((e) => e.id !== selectedOption.id)
+                      prev.some((recipe) => recipe._id === selectedOption._id)
+                        ? prev.filter((recipe) => recipe._id !== selectedOption._id)
                         : [...prev, selectedOption],
                     );
                   }}
-                  placeholder={loadingOptions ? "Loading sides..." : "Select Entree(s)"}
+                  placeholder={loadingOptions ? "Loading entrees..." : "Select Entree(s)"}
                 />
-                <DropdownField
-                  icon={Carrot}
-                  label="Sides"
-                  options={sideOptions}
-                  selectedValues={selectedSides.map((f) => f.name)}
-                  onSelect={(value) => {
-                    const selectedOption = sideOptions.find((e) => e.name === value.name);
 
+                <DropdownField
+                  icon={VEGETABLE_ICON}
+                  label="Vegetables"
+                  options={vegetableOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  selectedValues={selectedVegetables.map((recipe) => recipe.name)}
+                  onSelect={(value) => {
+                    const selectedOption = vegetableOptions.find((recipe) => recipe._id === value.id);
                     if (!selectedOption) return;
 
-                    setSelectedSides((prev) =>
-                      prev.some((e) => e.id === selectedOption.id)
-                        ? prev.filter((e) => e.id !== selectedOption.id)
+                    setSelectedVegetables((prev) =>
+                      prev.some((recipe) => recipe._id === selectedOption._id)
+                        ? prev.filter((recipe) => recipe._id !== selectedOption._id)
                         : [...prev, selectedOption],
                     );
                   }}
-                  placeholder={loadingOptions ? "Loading sides..." : "Select Side(s)"}
+                  placeholder={loadingOptions ? "Loading vegetables..." : "Select Vegetable(s)"}
                 />
-                <DropdownField
-                  icon={Apple}
-                  label="Fruit"
-                  options={fruitOptions}
-                  selectedValues={selectedFruits.map((f) => f.name)}
-                  onSelect={(value) => {
-                    const selectedOption = fruitOptions.find((e) => e.name === value.name);
 
+                <DropdownField
+                  icon={FRUIT_ICON}
+                  label="Fruit"
+                  options={fruitOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  selectedValues={selectedFruits.map((recipe) => recipe.name)}
+                  onSelect={(value) => {
+                    const selectedOption = fruitOptions.find((recipe) => recipe._id === value.id);
                     if (!selectedOption) return;
 
                     setSelectedFruit((prev) =>
-                      prev.some((e) => e.id === selectedOption.id)
-                        ? prev.filter((e) => e.id !== selectedOption.id)
+                      prev.some((recipe) => recipe._id === selectedOption._id)
+                        ? prev.filter((recipe) => recipe._id !== selectedOption._id)
                         : [...prev, selectedOption],
                     );
                   }}
                   placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
                 />
+
+                <DropdownField
+                  icon={GRAIN_ICON}
+                  label="Grain"
+                  options={grainOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  selectedValues={selectedGrains.map((recipe) => recipe.name)}
+                  onSelect={(value) => {
+                    const selectedOption = grainOptions.find((recipe) => recipe._id === value.id);
+                    if (!selectedOption) return;
+
+                    setSelectedGrains((prev) =>
+                      prev.some((recipe) => recipe._id === selectedOption._id)
+                        ? prev.filter((recipe) => recipe._id !== selectedOption._id)
+                        : [...prev, selectedOption],
+                    );
+                  }}
+                  placeholder={loadingOptions ? "Loading grains..." : "Select Grain(s)"}
+                />
               </>
             )}
+
+            {!isCombo && (
+              <DropdownField
+                icon={ChefHat}
+                label="Is this a Subrecipe?"
+                options={subrecipeOptions}
+                selectedValues={[isSubrecipe ? "Yes" : "No"]}
+                onSelect={(value) => {
+                  setIsSubrecipe(value.id === "yes");
+                }}
+                placeholder="Select Yes or No"
+              />
+            )}
+
             <DropdownField
-              icon={Tag}
+              icon={FILTER_ICON}
               label="Filters"
               options={filterOptions}
               selectedValues={selectedFilters.map((f) => f.name)}
@@ -820,7 +895,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               placeholder="Select Filter(s)"
             />
             <DropdownField
-              icon={CircleAlert}
+              icon={ALLERGEN_ICON}
               label="Allergens"
               options={allergenOptions}
               selectedValues={selectedAllergens.map((f) => f.name)}
@@ -852,7 +927,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     type="number"
                     value={servings || "1"}
                     onChange={(e) => setServings(e.target.value)}
-                    className="max-w-[54px] text-center text-xl font-semibold text-pepper"
+                    className="max-w-13.5 text-center text-xl font-semibold text-pepper"
                   />
 
                   <button
@@ -928,7 +1003,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 onChange={(e) => setInstructionsText(e.target.value)}
                 placeholder="List instructions here"
                 rows={3}
-                className="min-h-[96px] w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
+                className="min-h-24 w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
               />
             </div>
           </div>

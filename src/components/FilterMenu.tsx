@@ -1,5 +1,3 @@
-"use client";
-
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FilterTag from "./FilterTag";
@@ -24,6 +22,7 @@ type FilterMenuProps = {
   mobileOverlay?: { onClose: () => void };
 };
 
+// TODO: these should be enforced by a type in types.ts
 export const FILTER_SECTIONS: FilterSection[] = [
   {
     id: "allergens",
@@ -68,6 +67,11 @@ export const FILTER_SECTIONS: FilterSection[] = [
       { id: "kosher", label: "Kosher" },
       { id: "low-sodium", label: "Low Sodium" },
     ],
+  },
+  {
+    id: "additional",
+    label: "Additional Filters",
+    options: [{ id: "isSubrecipe", label: "Subrecipes Only" }],
   },
 ];
 

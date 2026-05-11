@@ -1,9 +1,11 @@
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe } from "@/lib/types";
+import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe } from "@/lib/types";
+import { toggleCategory } from "@/lib/helpers";
 
 type Props = {
   setSearch: (s: string) => void;
@@ -14,27 +16,20 @@ type Props = {
   draftCount: number;
   currentPage: number;
   totalPages: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentPage: Dispatch<SetStateAction<number>>;
 
   draftMode: boolean;
   selectedCategories: Set<CategoryValue>;
-  setSelectedCategories: React.Dispatch<React.SetStateAction<Set<CategoryValue>>>;
+  setSelectedCategories: Dispatch<SetStateAction<Set<CategoryValue>>>;
 
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
   onOpenItem?: (item: Recipe | Combo) => void;
 
-  topLeftChildren?: React.ReactNode; // top-left slot for an extra button
-  topRightChildren?: React.ReactNode; // for additional buttons after search bar
-  filterButton?: React.ReactNode; // filter button to display on left of controls row
+  topLeftChildren?: ReactNode; // top-left slot for an extra button
+  topRightChildren?: ReactNode; // for additional buttons after search bar
+  filterButton?: ReactNode; // filter button to display on mobile
 };
-
-const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "Combo", label: "Combos" },
-  { value: "Entree", label: "Entrées" },
-  { value: "Side", label: "Sides" },
-  { value: "Fruit", label: "Fruits" },
-];
 
 export default function MealBrowser({
   setSearch,
@@ -56,36 +51,6 @@ export default function MealBrowser({
   onToggleSelect,
   onOpenItem,
 }: Props) {
-  const toggleCategory = (category: CategoryValue) => {
-    setSelectedCategories((prev) => {
-      const next = new Set<CategoryValue>(prev);
-
-      // combo can't ever be de-selected
-      if (category === "Combo") {
-        return new Set<CategoryValue>(["Combo"]);
-      }
-
-      // toggle clicked category
-      if (next.has(category)) {
-        next.delete(category);
-      } else {
-        next.add(category);
-      }
-
-      // automatic setting to combo category if nothing else is selected
-      const hasNonCombo = next.has("Entree") || next.has("Side") || next.has("Fruit");
-
-      if (!hasNonCombo) {
-        return new Set<CategoryValue>(["Combo"]);
-      }
-
-      // if selecting entree/side/fruit, then remove combo option
-      next.delete("Combo");
-
-      return next;
-    });
-  };
-
   return (
     <div className="flex flex-1 flex-col gap-3 md:gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
@@ -106,9 +71,9 @@ export default function MealBrowser({
         <div className="flex items-center gap-2 md:gap-3">
           <div className="flex-1">
             <CategoryToggle
-              options={categoryOptions}
+              options={CATEGORY_DISPLAY}
               selectedCategories={selectedCategories}
-              onToggle={toggleCategory}
+              onToggle={(category) => toggleCategory(category, setSelectedCategories)}
             />
           </div>
 

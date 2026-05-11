@@ -10,51 +10,26 @@ import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
 import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
-import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
-import RecipeDailyCard from "@/components/RecipeDailyCard";
-import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
+import {
+  CalendarDay,
+  Combo,
+  EMPTY_FILTERS,
+  CategoryValue,
+  Nutrition,
+  Recipe,
+  RecipeBucket,
+  RecipeCategory,
+  RECIPE_BUCKETS,
+  SortOption,
+} from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
+import { toggleCategory } from "@/lib/helpers";
 
-interface CalendarDay {
-  _id: string;
-  entrees: Recipe[];
-  fruits: Recipe[];
-  sides: Recipe[];
-}
-
+// TODO: too much code in this file, first fix categories. Later will will find a way to improve.
 const today = new Date();
-const SAMPLE_RECIPES: Recipe[] = [
-  {
-    item: null,
-    _id: "oo",
-    name: "Chicken Tikka Masala",
-    serving: 150,
-    filters: ["Entree"],
-    isDraft: false,
-    nutritional_info: { calories: 225, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-mango-cup",
-    name: "Mango Cup",
-    serving: 100,
-    filters: ["Fruit"],
-    isDraft: false,
-    nutritional_info: { calories: 100, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-brown-rice",
-    name: "Brown Rice",
-    serving: 150,
-    filters: ["Sides"],
-    isDraft: false,
-    nutritional_info: { calories: 200, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-];
 
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
@@ -65,30 +40,29 @@ const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
   { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
 ];
 
-type CalendarItem = {
-  _id?: string;
-  id?: string;
-  name: string;
-  serving?: number;
-  tags?: string[];
-  itemType: "recipe" | "combo";
-  entrees?: string[];
-  sides?: string[];
-  fruits?: string[];
-};
-
 type ActiveDragData = {
   id: string;
+  type?: string;
+  source?: "sidebar" | "calendar";
+  itemType?: "recipe" | "combo";
+
   recipeId?: string;
+  comboId?: string;
+  dayId?: string;
+
   name?: string;
   servingSize?: string;
-  source?: string;
-  tags?: string[];
-  primaryTag?: string;
-  itemType?: "recipe" | "combo";
+
+  bucket?: RecipeBucket;
+  category?: CategoryValue;
+  recipeCategory?: RecipeCategory;
+
   entrees?: string[];
-  sides?: string[];
+  vegetables?: string[];
   fruits?: string[];
+  grains?: string[];
+
+  item?: Recipe | Combo;
 };
 
 function TrashDropZone() {
@@ -123,14 +97,18 @@ function SidebarDropZone({ children }: { children: ReactNode }) {
   );
 }
 
-function CalendarDragPreview({ name, servingSize, primaryTag }: ActiveDragData) {
+function CalendarDragPreview({ name, servingSize, category, recipeCategory }: ActiveDragData) {
+  const displayCategory = category ?? recipeCategory;
+
   return (
     <div className="flex w-56 items-center gap-3 rounded-md bg-radish-900 px-4 py-3 font-montserrat text-white shadow-lg">
       <div className="min-w-0 flex-1">
         <p className="truncate text-[16px] leading-tight font-bold">{name}</p>
         {servingSize ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{servingSize}</p> : null}
       </div>
-      {primaryTag ? <span className="shrink-0 text-xs font-medium">{primaryTag}</span> : null}
+
+      {displayCategory ? <span className="shrink-0 text-xs font-medium">{displayCategory}</span> : null}
+
       <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
     </div>
   );
@@ -153,25 +131,32 @@ const getOffsetDate = (date: Date, offset: number, view: "Month" | "Week" | "Day
 const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
   if (view === "Day") {
     return [today];
-  } else if (view === "Week") {
+  }
+
+  if (view === "Week") {
     const dayOfWeek = today.getDay(); // 0 (Sun) - 6 (Sat)
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - dayOfWeek + 1); // start from Monday
+
     return Array.from({ length: 5 }, (_, i) => {
       const date = new Date(startOfWeek);
       date.setDate(startOfWeek.getDate() + i);
       return date;
     });
-  } else if (view === "Month") {
+  }
+
+  if (view === "Month") {
     // Only in-month dates (1..last). The MonthView adds leading blanks for alignment
     // but does not force a 6x7 (42) grid.
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+
     return Array.from(
       { length: lastDay },
       (_, i) => new Date(startOfMonth.getFullYear(), startOfMonth.getMonth(), i + 1),
     );
   }
+
   return [];
 };
 
@@ -180,9 +165,8 @@ export default function MenuPlanning() {
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
-  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set());
+  const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
 
-  const [recipes, setRecipes] = useState<CalendarItem[]>([]);
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
@@ -191,36 +175,37 @@ export default function MenuPlanning() {
     setDatesOffset(0);
   }, [calendarView]);
 
-  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView); // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
+  // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
+  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
 
   const downloadMonthlyMenu = async () => {
-    let currentMonth: number;
-    let currentYear: number;
-    if (calendarView === "Day") {
-      currentMonth = viewDates[0].getMonth();
-      currentYear = viewDates[0].getFullYear();
-    } else if (calendarView === "Week") {
-      currentMonth = viewDates[0].getMonth();
-      currentYear = viewDates[0].getFullYear();
-    } else {
-      currentMonth = viewDates[10].getMonth();
-      currentYear = viewDates[10].getFullYear();
-    }
+    const baseDate = calendarView === "Month" ? viewDates[10] : viewDates[0];
+    const currentMonth = baseDate.getMonth();
+    const currentYear = baseDate.getFullYear();
 
     try {
       const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth + 1}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
-      const dates = await res.json();
 
+      if (!res.ok) {
+        throw new Error(`Failed to fetch monthly menu: ${res.status}`);
+      }
+
+      const dates: CalendarDay[] = await res.json();
       const data: IContent[] = [];
 
-      dates.forEach((date: CalendarDay) => {
+      dates.forEach((date) => {
         const formattedDate = `${date._id.slice(0, 4)}-${date._id.slice(4, 6)}-${date._id.slice(6, 8)}`;
-        const allItems = [...(date.entrees || []), ...(date.fruits || []), ...(date.sides || [])];
 
-        // Calculate totals
+        const allItems = [
+          ...(date.entrees || []),
+          ...(date.vegetables || []),
+          ...(date.fruits || []),
+          ...(date.grains || []),
+        ];
+
         const totals = allItems.reduce(
           (acc, item) => {
             acc.calorie += item.nutritional_info.calories || 0;
@@ -242,11 +227,11 @@ export default function MenuPlanning() {
             sodium: 0,
           },
         );
+
         data.push(totals);
 
-        // Push individual items
-        const pushItems = (items: Recipe[], type: string) => {
-          items?.forEach((item) => {
+        const pushItems = (items: Recipe[] = []) => {
+          items.forEach((item) => {
             data.push({
               name: item.name,
               serving: item.serving,
@@ -259,11 +244,12 @@ export default function MenuPlanning() {
             });
           });
         };
-        pushItems(date.entrees, "Entree");
-        pushItems(date.fruits, "Fruit");
-        pushItems(date.sides, "Side");
 
-        // spacing
+        pushItems(date.entrees);
+        pushItems(date.vegetables);
+        pushItems(date.fruits);
+        pushItems(date.grains);
+
         data.push({
           name: "",
           serving: "",
@@ -293,29 +279,14 @@ export default function MenuPlanning() {
         },
       ];
 
-      const settings = { fileName: `${currentYear}_${(currentMonth + 1).toString().padStart(2, "0")}_MTC_Menu.xlsx` };
+      const settings = {
+        fileName: `${currentYear}_${(currentMonth + 1).toString().padStart(2, "0")}_MTC_Menu.xlsx`,
+      };
+
       xlsx(sheetData, settings);
     } catch (error) {
       console.error("Error downloading monthly menu:", error);
     }
-  };
-
-  const toggleCategory = (category: CategoryValue) => {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-
-      if (category === "Combo") {
-        if (next.has("Combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["Combo"]);
-      }
-
-      if (next.has("Combo")) next.delete("Combo");
-
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-
-      return next;
-    });
   };
 
   const { items, loading, error, currentPage, totalPages, setCurrentPage } = useMealData({
@@ -326,44 +297,6 @@ export default function MenuPlanning() {
     sortBy,
   });
 
-  useEffect(() => {
-    async function fetchRecipesAndCombos() {
-      try {
-        const [recipesRes, combosRes] = await Promise.all([
-          fetch("/api/recipes?isDraft=false&limit=200"),
-          fetch("/api/combos?isDraft=false&limit=200"),
-        ]);
-
-        if (!recipesRes.ok || !combosRes.ok) {
-          throw new Error("Failed to fetch recipes or combos");
-        }
-
-        const [recipesJson, combosJson] = await Promise.all([recipesRes.json(), combosRes.json()]);
-
-        const recipeItems: CalendarItem[] = (recipesJson.data ?? []).map((recipe: Recipe) => ({
-          ...recipe,
-          itemType: "recipe",
-          tags: recipe.filters ?? ["Entree"],
-        }));
-
-        const comboItems: CalendarItem[] = (combosJson.data ?? []).map((combo: Combo) => ({
-          ...combo,
-          itemType: "combo",
-          tags: ["Combo"],
-          entrees: combo.entrees ?? [],
-          sides: combo.sides ?? [],
-          fruits: combo.fruits ?? [],
-        }));
-
-        setRecipes([...recipeItems, ...comboItems]);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    fetchRecipesAndCombos();
-  }, []);
-
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
     setActiveDragData({
@@ -372,26 +305,20 @@ export default function MenuPlanning() {
     });
   }, []);
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
     setActiveDragData(null);
 
-    if (!over) {
-      return;
-    }
+    if (!over) return;
 
-    const dragData = active.data.current as any;
-    const dropData = over.data.current as any;
+    const dragData = active.data.current as ActiveDragData | undefined;
+    const dropData = over.data.current as { type?: string; dayId?: string } | undefined;
 
-    if (dragData?.type === "recipe" && dropData?.type === "trash") {
-      if (dragData.source !== "calendar") {
-        return;
-      }
+    if (dragData?.type === "recipe" && dragData.source === "calendar" && dropData?.type === "trash") {
+      const { recipeId, dayId, bucket } = dragData;
 
-      const { recipeId, dayId, category } = dragData;
-
-      if (!recipeId || !dayId || !category) {
+      if (!recipeId || !dayId || !bucket) {
         console.error("Invalid calendar recipe drag data:", dragData);
         return;
       }
@@ -402,7 +329,10 @@ export default function MenuPlanning() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ recipeId, category }),
+          body: JSON.stringify({
+            recipeId,
+            category: bucket,
+          }),
         });
 
         if (!response.ok) {
@@ -427,49 +357,23 @@ export default function MenuPlanning() {
       return;
     }
 
-    const { recipeId, tags, primaryTag, itemType, entrees = [], sides = [], fruits = [] } = dragData;
     const { dayId } = dropData;
 
-    if (!recipeId || typeof recipeId !== "string" || recipeId.trim() === "") {
-      console.error("Invalid recipe ID found in drag data:", dragData);
+    if (!dayId) {
+      console.error("Missing calendar day id:", dropData);
       return;
     }
 
-    type CalendarCategory = "entrees" | "sides" | "fruits";
-
-    const rawTags = Array.isArray(tags) ? tags : tags ? [tags] : [primaryTag || "Entree"];
-    const normalizedTags = rawTags.map((tag) => tag?.toString().trim().toLowerCase()).filter(Boolean);
-
-    const mapTagToCategory = (tag: string): CalendarCategory | undefined => {
-      switch (tag) {
-        case "entree":
-        case "entrée":
-        case "entrees":
-          return "entrees";
-        case "side":
-        case "sides":
-          return "sides";
-        case "fruit":
-        case "fruits":
-          return "fruits";
-        default:
-          return undefined;
-      }
-    };
-
-    const calendarItemsToAdd: Array<{ recipeId: string; category: CalendarCategory }> =
-      itemType === "combo"
-        ? [
-            ...entrees.map((id: string) => ({ recipeId: id, category: "entrees" as const })),
-            ...sides.map((id: string) => ({ recipeId: id, category: "sides" as const })),
-            ...fruits.map((id: string) => ({ recipeId: id, category: "fruits" as const })),
-          ].filter((item) => item.recipeId && item.recipeId.trim() !== "")
-        : [
-            {
-              recipeId,
-              category: normalizedTags.map(mapTagToCategory).find(Boolean) ?? "entrees",
-            },
-          ];
+    const calendarItemsToAdd: Array<{ recipeId: string; category: RecipeBucket }> =
+      dragData.itemType === "combo"
+        ? RECIPE_BUCKETS.flatMap((bucket) =>
+            (dragData[bucket] ?? [])
+              .filter((recipeId): recipeId is string => Boolean(recipeId?.trim()))
+              .map((recipeId) => ({ recipeId, category: bucket })),
+          )
+        : dragData.recipeId && dragData.bucket
+          ? [{ recipeId: dragData.recipeId, category: dragData.bucket }]
+          : [];
 
     if (calendarItemsToAdd.length === 0) {
       console.error("No valid recipes found in dragged item:", dragData);
@@ -493,18 +397,18 @@ export default function MenuPlanning() {
       );
 
       const failedResponse = responses.find((response) => !response.ok);
+
       if (failedResponse) {
         const errorData = await failedResponse.json();
         console.error("API error:", errorData);
         throw new Error(`Failed to add recipe to calendar: ${failedResponse.status}`);
       }
 
-      // Trigger refetch in WeekView
       setRecipeDropTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error adding recipe to calendar:", error);
     }
-  }, []);
+  };
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
@@ -514,50 +418,71 @@ export default function MenuPlanning() {
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="flex flex-row">
-        <div className="flex flex-1 justify-center items-center bg-gray-100">
-          <div className="flex flex-col h-full w-260">
-            <div className="flex justify-between items-center mt-4">
+        <div className="flex flex-1 items-center justify-center bg-gray-100">
+          <div className="flex h-full w-260 flex-col">
+            <div className="mt-4 flex items-center justify-between">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
+
                 <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset - 1)}>
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
-                <span className="font-bold text-xl">
+
+                <span className="text-xl font-bold">
                   {calendarView === "Day" &&
-                    `${viewDates[0].toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
+                    `${viewDates[0].toLocaleDateString(undefined, {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}`}
+
                   {calendarView === "Week" &&
                     `${viewDates[0].toLocaleDateString(undefined, { month: "long" })} ${viewDates[0].getDate()} - ${viewDates[4].toLocaleDateString(undefined, { month: "long" })} ${viewDates[4].getDate()}`}
+
                   {calendarView === "Month" &&
-                    viewDates[10].toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+                    viewDates[0].toLocaleDateString(undefined, {
+                      month: "long",
+                      year: "numeric",
+                    })}
                 </span>
+
                 <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset + 1)}>
                   <ChevronRight size={20} strokeWidth={2.5} />
                 </button>
               </div>
 
               <div className="flex flex-row">
-                <div className="flex bg-white rounded-md w-fit">
+                <div className="flex w-fit rounded-md bg-white">
                   <button
-                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold text-black ${calendarView === "Month" ? "bg-radish-900 text-white" : ""}`}
+                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
+                      calendarView === "Month" ? "bg-radish-900 text-white" : ""
+                    }`}
                     onClick={() => setCalendarView("Month")}
                   >
                     Month
                   </button>
+
                   <button
-                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold ${calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"}`}
+                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold ${
+                      calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"
+                    }`}
                     onClick={() => setCalendarView("Week")}
                   >
                     Week
                   </button>
+
                   <button
-                    className={`cursor-pointer px-4 py-1 rounded-md font-semibold text-black ${calendarView === "Day" ? "bg-radish-900 text-white" : ""}`}
+                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
+                      calendarView === "Day" ? "bg-radish-900 text-white" : ""
+                    }`}
                     onClick={() => setCalendarView("Day")}
                   >
                     Day
                   </button>
                 </div>
 
-                <span className="bg-radish-900 rounded-md p-2 ml-2">
+                <span className="ml-2 rounded-md bg-radish-900 p-2">
                   <ArrowDownToLine
                     className="cursor-pointer"
                     color="white"
@@ -572,9 +497,11 @@ export default function MenuPlanning() {
             {calendarView === "Month" && (
               <div className="flex min-h-0 flex-1 flex-col">
                 <MonthView monthDates={viewDates} dateToday={today} />
+
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
+
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
@@ -584,18 +511,16 @@ export default function MenuPlanning() {
             {calendarView === "Week" && (
               <>
                 <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
+
                 <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
               </>
             )}
 
-            {calendarView === "Day" && (
-              <>
-                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
-              </>
-            )}
+            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
           </div>
         </div>
 
@@ -606,7 +531,7 @@ export default function MenuPlanning() {
             error={error}
             onSearch={setSearch}
             selectedCategories={selectedCategories}
-            onToggleCategory={toggleCategory}
+            onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
             sortBy={sortBy}
             onSortChange={setSortBy}
             currentPage={currentPage}
@@ -619,24 +544,11 @@ export default function MenuPlanning() {
       <DragOverlay>
         {activeId ? (
           <div className="rotate-3 opacity-90">
-            {(() => {
-              if (activeDragData?.source === "calendar") {
-                return <CalendarDragPreview {...activeDragData} />;
-              }
-
-              const activeRecipe = recipes.find((r) => (r._id || r.id) === activeId?.replace("recipe-", ""));
-              return activeRecipe ? (
-                <DraggableRecipeCard
-                  recipeId={activeRecipe._id || activeRecipe.id || ""}
-                  imageUrl=""
-                  name={activeRecipe.name}
-                  calories={0}
-                  servingSize={activeRecipe.serving ? `${activeRecipe.serving} servings` : "100g"}
-                  tags={activeRecipe.tags}
-                  disabled={true}
-                />
-              ) : null;
-            })()}
+            {activeDragData?.source === "calendar" ? (
+              <CalendarDragPreview {...activeDragData} />
+            ) : activeDragData?.item ? (
+              <DraggableRecipeCard item={activeDragData.item} disabled />
+            ) : null}
           </div>
         ) : null}
       </DragOverlay>
