@@ -71,7 +71,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
     const getCalendar = async () => {
       try {
         const data = await fetchCalendarById(calendarId);
-        setMeals([...data.entrees, ...data.sides, ...data.fruits]);
+        setMeals([...data.entrees, ...data.fruits, ...data.grains, ...data.vegetables]);
       } catch (err) {
         setMeals([]);
       }
@@ -138,6 +138,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
           <p className="text-dark-gray text-sm text-center my-auto">No meals planned for this day.</p>
         ) : (
           meals.map((meal, idx) => {
+            console.log("Meal:", meal);
             const style = TAG_STYLES[meal.type] ?? "bg-pepper text-black";
             return (
               <div key={idx} className={`rounded-lg px-4 py-3 ${style}`}>

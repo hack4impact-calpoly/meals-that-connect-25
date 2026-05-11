@@ -27,7 +27,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     const allIds = Array.from(
-      new Set([...(calendarDay.entrees || []), ...(calendarDay.fruits || []), ...(calendarDay.sides || [])]),
+      new Set([
+        ...(calendarDay.entrees || []),
+        ...(calendarDay.fruits || []),
+        ...(calendarDay.grains || []),
+        ...(calendarDay.vegetables || []),
+      ]),
     );
 
     const [recipeDocs, comboDocs] = await Promise.all([
@@ -78,7 +83,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         _id: calendarDay._id,
         entrees: resolveItems(calendarDay.entrees),
         fruits: resolveItems(calendarDay.fruits),
-        sides: resolveItems(calendarDay.sides),
+        grains: resolveItems(calendarDay.grains),
+        vegetables: resolveItems(calendarDay.vegetables),
       },
       { status: 200 },
     );
@@ -103,7 +109,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "recipeId and category are required" }, { status: 400 });
     }
 
-    if (!["entrees", "sides", "fruits"].includes(category)) {
+    if (!["entrees", "sides", "fruits", "grains", "vegetables"].includes(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
@@ -112,7 +118,13 @@ export async function POST(req: NextRequest, { params }: Params) {
     const update = { $addToSet: { [category]: recipeId } };
     await Calendar.findOneAndUpdate({ _id: id }, update, { upsert: true });
 
-    const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
+    const updatedDay = await Calendar.findById(id)
+      .populate("entrees")
+      .populate("fruits")
+      .populate("sides")
+      .populate("grains")
+      .populate("vegetables")
+      .exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
   } catch (err) {
@@ -136,7 +148,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       return NextResponse.json({ error: "recipeId and category are required" }, { status: 400 });
     }
 
-    if (!["entrees", "sides", "fruits"].includes(category)) {
+    if (!["entrees", "sides", "fruits", "grains", "vegetables"].includes(category)) {
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
@@ -152,7 +164,12 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
     await calendarDay.save();
 
-    const updatedDay = await Calendar.findById(id).populate("entrees").populate("fruits").populate("sides").exec();
+    const updatedDay = await Calendar.findById(id)
+      .populate("entrees")
+      .populate("fruits")
+      .populate("grains")
+      .populate("vegetables")
+      .exec();
 
     return NextResponse.json(updatedDay, { status: 200 });
   } catch (err) {
