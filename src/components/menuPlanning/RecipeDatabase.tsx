@@ -44,7 +44,7 @@ export default function RecipeDatabase({
   onPageChange,
 }: RecipeDatabaseProps) {
   return (
-    <div className="h-full p-6">
+    <div className="flex flex-col p-6 overflow-auto">
       <div className="mb-6 text-xl font-semibold">Recipe Database</div>
 
       <div className="flex flex-row items-center gap-4">
@@ -94,12 +94,11 @@ export default function RecipeDatabase({
       {loading && <div>Loading...</div>}
       {error && <div>{error}</div>}
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col min-h-0 gap-4 overflow-auto">
         {items.map((item) => (
           <DraggableRecipeCard key={item._id} item={item} />
         ))}
       </div>
-
       <div className="mt-4 flex justify-center">
         <PaginationDisplay
           currentPage={currentPage}

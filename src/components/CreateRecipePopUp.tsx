@@ -3,26 +3,42 @@ import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import { AlignLeft, ChefHat, ChevronDown, Minus, Plus, Save, Trash2, X, type LucideIcon } from "lucide-react";
 import ImageUploader from "@/components/ImageUploader";
 import {
-  Recipe,
-  Combo,
-  Ingredient,
-  RecipePreview,
-  RecipeCategory,
-  CategoryDisplayType,
+  FILTER_SECTIONS,
   ENTREE_ICON,
   VEGETABLE_ICON,
   FRUIT_ICON,
   GRAIN_ICON,
   FILTER_ICON,
   ALLERGEN_ICON,
+  DIETARY_KEYS,
+  EXCLUSION_KEYS,
 } from "@/lib/types";
-import { FILTER_SECTIONS } from "./FilterMenu";
+import type {
+  Recipe,
+  Combo,
+  Ingredient,
+  RecipeMinimal,
+  RecipeCategory,
+  CategoryDisplayType,
+  DietaryKey,
+  ExclusionKey,
+  FilterOption,
+  ProteinSource,
+  FilterOptionId,
+  FilterSectionId,
+} from "@/lib/types";
 import Image from "next/image";
+import { NutritionalInfo } from "./createRecipe/NutritionalInfo";
+import { FieldRow } from "./createRecipe/FieldRow";
+import { DropdownField } from "./createRecipe/DropdownField";
 
 // TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents and helpers should be moved to helpers.ts
 
+type EditableCombo = Combo<Recipe>;
+type EditableItem = Recipe | EditableCombo;
+
 type Props = {
-  item: Recipe | Combo | null;
+  item: EditableItem | null;
   open: boolean;
   onClose: () => void;
   recipeType: CategoryDisplayType | null;
@@ -35,8 +51,15 @@ type InputPair = {
   units: string;
 };
 
-function isRecipeItem(item: Recipe | Combo): item is Recipe {
+function isRecipeItem(item: EditableItem): item is Recipe {
   return "category" in item;
+}
+
+function toRecipeMinimal(recipes: Recipe[] = []): RecipeMinimal[] {
+  return recipes.map((recipe) => ({
+    _id: recipe._id,
+    name: recipe.name,
+  }));
 }
 
 function comboHasRecipe(combo: Combo, recipeId: string) {
@@ -48,197 +71,70 @@ function comboHasRecipe(combo: Combo, recipeId: string) {
   );
 }
 
-function NutritionalInfo({
-  label,
-  unit,
-  value,
-  onChange,
-}: {
-  label: string;
-  unit: string;
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div className="w-23 rounded-lg border border-pepper/20 bg-white px-2 py-2">
-      {/* top row: value + unit */}
-      <div className="flex items-center justify-center gap-1">
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value.replace(/\D/g, ""))}
-          inputMode="numeric"
-          pattern="[0-9]*"
-          placeholder="--"
-          className="w-8 bg-transparent text-center text-sm font-montserrat font-semibold text-pepper outline-none"
-        />
-        <span className="text-sm font-montserrat font-semibold text-pepper/70">{unit}</span>
-      </div>
-
-      {/* bottom row: label */}
-      <div className="mt-1 text-center text-xs font-montserrat font-semibold text-pepper/80">{label}</div>
-    </div>
-  );
+function getFilterSectionOptions(sectionId: FilterSectionId): FilterOption[] {
+  const section = FILTER_SECTIONS.find((section) => section.id === sectionId);
+  return section?.options ?? [];
 }
 
-function FieldRow({
-  icon: Icon,
-  label,
-  value,
-  placeholder,
-  onChange,
-}: {
-  icon: LucideIcon;
-  label: string;
-  value: string;
-  placeholder: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <label className="flex items-center justify-between gap-4 rounded-2xl border border-pepper/20 bg-slate-50 px-4 py-3">
-      <div className="flex items-center gap-3 text-sm font-semibold text-pepper">
-        <Icon className="h-5 w-5 text-pepper" strokeWidth={2.2} />
-        <span>{label}</span>
-      </div>
-      <input
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        className="min-w-0 flex-1 rounded-xl border border-pepper/20 bg-white px-3 py-2 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
-      />
-    </label>
-  );
+function toggleFilterOption(selectedOptions: FilterOption[], option: FilterOption): FilterOption[] {
+  // check the current toggle status for this option
+  const alreadySelected = selectedOptions.some((selectedOption) => selectedOption.id === option.id);
+
+  if (alreadySelected) {
+    // toggle off
+    return selectedOptions.filter((selectedOption) => selectedOption.id !== option.id);
+  }
+
+  // toggle on
+  return [...selectedOptions, option];
 }
 
-function DropdownField({
-  icon: Icon,
-  label,
-  options,
-  selectedValues,
-  onSelect,
-  placeholder,
-}: {
-  icon: LucideIcon;
-  label: string;
-  options: { id: string; name: string }[];
-  selectedValues: string[];
-  onSelect: (option: { id: string; name: string }) => void;
-  placeholder: string;
-}) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-
-  // close automatically when outside container is clicked on
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between gap-4 rounded-2xl border border-pepper/20 bg-slate-50 px-4 py-3"
-      >
-        <div className="flex items-center gap-3">
-          <Icon className="h-5 w-5 text-pepper" strokeWidth={2.2} />
-          <span className="text-sm font-semibold text-pepper">{label}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-pepper/60">
-            {selectedValues.length > 0 ? selectedValues.join(", ") : placeholder}
-          </span>
-          <ChevronDown
-            className={`h-4 w-4 text-pepper transition-transform ${isOpen ? "rotate-180" : ""}`}
-            strokeWidth={2}
-          />
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-full max-h-64 overflow-y-auto rounded-xl border border-pepper/20 bg-white shadow-lg z-10">
-          <div className="p-2">
-            {options.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-pepper/60">{placeholder}</div>
-            ) : (
-              options.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  onClick={() => {
-                    onSelect(option);
-                  }}
-                  className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-montserrat text-left transition ${
-                    selectedValues.includes(option.name)
-                      ? "bg-pepper/10 text-pepper font-semibold"
-                      : "text-pepper/70 hover:bg-pepper/5"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedValues.includes(option.name)}
-                    onChange={() => {}}
-                    className="h-4 w-4"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(option);
-                    }}
-                  />
-                  {option.name}
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
+function optionsToBooleanFlags<TFilterKey extends FilterOptionId>(
+  keys: readonly TFilterKey[],
+  selectedOptions: FilterOption[],
+): Record<TFilterKey, boolean> {
+  const selectedIds = new Set(selectedOptions.map((option) => option.id));
+  return Object.fromEntries(keys.map((key) => [key, selectedIds.has(key)])) as Record<TFilterKey, boolean>;
 }
+
+function flagsToSelectedOptions<TFilterKey extends FilterOptionId>(
+  flags: Partial<Record<TFilterKey, boolean>> | undefined,
+  options: FilterOption[],
+): FilterOption[] {
+  if (!flags) return [];
+
+  return options.filter((option) => flags[option.id as TFilterKey]);
+}
+
+const PROTEIN_SOURCE_OPTIONS = getFilterSectionOptions("proteinSources");
+const DIETARY_OPTIONS = getFilterSectionOptions("dietary");
+const EXCLUSION_OPTIONS = getFilterSectionOptions("exclusions");
+const IS_SUBRECIPE_OPTIONS = [
+  { id: "yes", label: "Yes" },
+  { id: "no", label: "No" },
+];
 
 export default function CreateRecipePopUp({ item, open, onClose, recipeType, editMode }: Props) {
   const createLabel = recipeType?.label ?? "Recipe";
   const isCombo = recipeType?.category === "Combo" || (!!item && !isRecipeItem(item));
 
-  const [selectedEntrees, setSelectedEntree] = useState<RecipePreview[]>([]);
-  const [selectedVegetables, setSelectedVegetables] = useState<RecipePreview[]>([]);
-  const [selectedFruits, setSelectedFruit] = useState<RecipePreview[]>([]);
-  const [selectedGrains, setSelectedGrains] = useState<RecipePreview[]>([]);
-  const [selectedFilters, setSelectedFilters] = useState<{ id: string; name: string }[]>([]);
-  const [selectedAllergens, setSelectedAllergens] = useState<{ id: string; name: string }[]>([]);
+  const [selectedEntrees, setSelectedEntree] = useState<RecipeMinimal[]>([]);
+  const [selectedVegetables, setSelectedVegetables] = useState<RecipeMinimal[]>([]);
+  const [selectedFruits, setSelectedFruit] = useState<RecipeMinimal[]>([]);
+  const [selectedGrains, setSelectedGrains] = useState<RecipeMinimal[]>([]);
+
+  const [selectedProteinSources, setSelectedProteinSources] = useState<FilterOption[]>([]);
+  const [selectedDietary, setSelectedDietary] = useState<FilterOption[]>([]);
+  const [selectedExclusions, setSelectedExclusions] = useState<FilterOption[]>([]);
   const [isSubrecipe, setIsSubrecipe] = useState(false);
 
-  const [entreeOptions, setEntreeOptions] = useState<RecipePreview[]>([]);
-  const [vegetableOptions, setVegetableOptions] = useState<RecipePreview[]>([]);
-  const [fruitOptions, setFruitOptions] = useState<RecipePreview[]>([]);
-  const [grainOptions, setGrainOptions] = useState<RecipePreview[]>([]);
+  const [entreeOptions, setEntreeOptions] = useState<RecipeMinimal[]>([]);
+  const [vegetableOptions, setVegetableOptions] = useState<RecipeMinimal[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<RecipeMinimal[]>([]);
+  const [grainOptions, setGrainOptions] = useState<RecipeMinimal[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const filterOptions = FILTER_SECTIONS.filter((section) => section.id !== "allergens").flatMap((section) =>
-    section.options.map((option) => ({
-      name: option.label,
-      id: option.label,
-    })),
-  );
-  const allergenOptions = FILTER_SECTIONS.filter((section) => section.id == "allergens").flatMap((section) =>
-    section.options.map((option) => ({
-      name: option.label,
-      id: option.label,
-    })),
-  );
-  const subrecipeOptions = [
-    { id: "yes", name: "Yes" },
-    { id: "no", name: "No" },
-  ];
 
   const [name, setName] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
@@ -293,12 +189,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     setIngredientInputs(updated);
   };
 
-  async function getRecipe(id: string): Promise<Recipe> {
-    const res = await fetch(`/api/recipes/${id}`);
-    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
-    return res.json();
-  }
-
   useEffect(() => {
     if (!open) return;
 
@@ -309,8 +199,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       setSelectedVegetables([]);
       setSelectedFruit([]);
       setSelectedGrains([]);
-      setSelectedFilters([]);
-      setSelectedAllergens([]);
+      setSelectedProteinSources([]);
+      setSelectedDietary([]);
+      setSelectedExclusions([]);
+      setImageUrl("");
       setIsSubrecipe(false);
       setNotes("");
       setServings("1");
@@ -321,18 +213,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     } else {
       setName(item.name);
       setServings(item.serving.toString());
-      setSelectedAllergens(
-        (item.allergens ?? []).map((f) => ({
-          id: f.trim(),
-          name: f.trim(),
-        })),
-      );
-      setSelectedFilters(
-        (item.filters ?? []).map((f) => ({
-          id: f.trim(),
-          name: f.trim(),
-        })),
-      );
       setInstructionsText(item.instructions ?? "");
       setNotes(item.notes ?? "");
       setImageUrl(item.imageUrl ?? "");
@@ -341,6 +221,13 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
       // if it's a recipe
       if (!isCombo && isRecipeItem(item) === true) {
+        setSelectedProteinSources(
+          PROTEIN_SOURCE_OPTIONS.filter((option) => item.proteinSources?.includes(option.id as ProteinSource)),
+        );
+
+        setSelectedDietary(flagsToSelectedOptions<DietaryKey>(item.dietary, DIETARY_OPTIONS));
+
+        setSelectedExclusions(flagsToSelectedOptions<ExclusionKey>(item.exclusions, EXCLUSION_OPTIONS));
         setIsSubrecipe(item.isSubrecipe);
         setIngredientInputs(
           item.ingredients
@@ -360,41 +247,11 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           fiber: item.nutritional_info.fiber.toString(),
           sodium: item.nutritional_info.sodium.toString(),
         });
-      } else if (isCombo && isRecipeItem(item) === false) {
-        const loadAll = async () => {
-          const [entreeNames, vegetableNames, fruitNames, grainNames] = await Promise.all([
-            Promise.all(
-              (item.entrees ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.vegetables ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.fruits ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-            Promise.all(
-              (item.grains ?? []).map(async (id) => {
-                const recipe = await getRecipe(id);
-                return { _id: recipe._id, name: recipe.name };
-              }),
-            ),
-          ]);
-
-          setSelectedEntree(entreeNames);
-          setSelectedVegetables(vegetableNames);
-          setSelectedFruit(fruitNames);
-          setSelectedGrains(grainNames);
-        };
-        loadAll();
+      } else if (isCombo && !isRecipeItem(item)) {
+        setSelectedEntree(toRecipeMinimal(item.entrees));
+        setSelectedVegetables(toRecipeMinimal(item.vegetables));
+        setSelectedFruit(toRecipeMinimal(item.fruits));
+        setSelectedGrains(toRecipeMinimal(item.grains));
       }
 
       setId(item._id);
@@ -498,10 +355,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       }
     }
 
-    const filters = selectedFilters
-      .map((filter) => filter.name)
-      .filter(Boolean)
-      .map((filter) => filter.trim());
+    const proteinSources = selectedProteinSources.map((option) => option.id as ProteinSource);
+
+    const dietary = optionsToBooleanFlags(DIETARY_KEYS, selectedDietary);
+    const exclusions = optionsToBooleanFlags(EXCLUSION_KEYS, selectedExclusions);
 
     let payload;
 
@@ -519,9 +376,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           vegetables: selectedVegetables.map((vegetable) => vegetable._id),
           fruits: selectedFruits.map((fruit) => fruit._id),
           grains: selectedGrains.map((grain) => grain._id),
-          filters: Array.from(new Set(filters)),
           notes: notes,
-          allergens: selectedAllergens.map((allergen) => allergen.name),
           instructions: instructionsText,
           isDraft,
           ...(imageUrl ? { imageUrl } : {}),
@@ -557,8 +412,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           isSubrecipe: isSubrecipe,
           category: recipeCategory,
           serving: Number(servings) || 1,
-          allergens: selectedAllergens.map((allergen) => allergen.name),
-          filters: Array.from(new Set(filters)),
+          proteinSources: Array.from(new Set(proteinSources)),
+          dietary,
+          exclusions,
           ingredients:
             ingredientInputs.length > 0
               ? ingredientInputs
@@ -798,7 +654,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <DropdownField
                   icon={ENTREE_ICON}
                   label="Entree"
-                  options={entreeOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  options={entreeOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                   selectedValues={selectedEntrees.map((recipe) => recipe.name)}
                   onSelect={(value) => {
                     const selectedOption = entreeOptions.find((recipe) => recipe._id === value.id);
@@ -816,7 +672,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <DropdownField
                   icon={VEGETABLE_ICON}
                   label="Vegetables"
-                  options={vegetableOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  options={vegetableOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                   selectedValues={selectedVegetables.map((recipe) => recipe.name)}
                   onSelect={(value) => {
                     const selectedOption = vegetableOptions.find((recipe) => recipe._id === value.id);
@@ -834,7 +690,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <DropdownField
                   icon={FRUIT_ICON}
                   label="Fruit"
-                  options={fruitOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  options={fruitOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                   selectedValues={selectedFruits.map((recipe) => recipe.name)}
                   onSelect={(value) => {
                     const selectedOption = fruitOptions.find((recipe) => recipe._id === value.id);
@@ -852,7 +708,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <DropdownField
                   icon={GRAIN_ICON}
                   label="Grain"
-                  options={grainOptions.map((recipe) => ({ id: recipe._id, name: recipe.name }))}
+                  options={grainOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                   selectedValues={selectedGrains.map((recipe) => recipe.name)}
                   onSelect={(value) => {
                     const selectedOption = grainOptions.find((recipe) => recipe._id === value.id);
@@ -870,42 +726,52 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             )}
 
             {!isCombo && (
-              <DropdownField
-                icon={ChefHat}
-                label="Is this a Subrecipe?"
-                options={subrecipeOptions}
-                selectedValues={[isSubrecipe ? "Yes" : "No"]}
-                onSelect={(value) => {
-                  setIsSubrecipe(value.id === "yes");
-                }}
-                placeholder="Select Yes or No"
-              />
+              <>
+                <DropdownField
+                  icon={ChefHat}
+                  label="Is this a Subrecipe?"
+                  options={IS_SUBRECIPE_OPTIONS}
+                  selectedValues={[isSubrecipe ? "Yes" : "No"]}
+                  onSelect={(value) => {
+                    setIsSubrecipe(value.id === "yes");
+                  }}
+                  placeholder="Select Yes or No"
+                />
+                <DropdownField
+                  icon={FILTER_ICON}
+                  label="Protein Sources"
+                  options={PROTEIN_SOURCE_OPTIONS}
+                  selectedValues={selectedProteinSources.map((option) => option.label)}
+                  onSelect={(option) => {
+                    setSelectedProteinSources((prev) => toggleFilterOption(prev, option as FilterOption));
+                  }}
+                  placeholder="Select Protein Source(s)"
+                />
+
+                <DropdownField
+                  icon={FILTER_ICON}
+                  label="Dietary"
+                  options={DIETARY_OPTIONS}
+                  selectedValues={selectedDietary.map((option) => option.label)}
+                  onSelect={(option) => {
+                    setSelectedDietary((prev) => toggleFilterOption(prev, option as FilterOption));
+                  }}
+                  placeholder="Select Dietary Option(s)"
+                />
+
+                <DropdownField
+                  icon={ALLERGEN_ICON}
+                  label="Allergens / Exclusions"
+                  options={EXCLUSION_OPTIONS}
+                  selectedValues={selectedExclusions.map((option) => option.label)}
+                  onSelect={(option) => {
+                    setSelectedExclusions((prev) => toggleFilterOption(prev, option as FilterOption));
+                  }}
+                  placeholder="Select Exclusion(s)"
+                />
+              </>
             )}
 
-            <DropdownField
-              icon={FILTER_ICON}
-              label="Filters"
-              options={filterOptions}
-              selectedValues={selectedFilters.map((f) => f.name)}
-              onSelect={(value) => {
-                setSelectedFilters((prev) =>
-                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
-                );
-              }}
-              placeholder="Select Filter(s)"
-            />
-            <DropdownField
-              icon={ALLERGEN_ICON}
-              label="Allergens"
-              options={allergenOptions}
-              selectedValues={selectedAllergens.map((f) => f.name)}
-              onSelect={(value) => {
-                setSelectedAllergens((prev) =>
-                  prev.some((a) => a.id === value.id) ? prev.filter((a) => a.id !== value.id) : [...prev, value],
-                );
-              }}
-              placeholder="Select Allergen(s)"
-            />
             <FieldRow icon={AlignLeft} label="Notes" value={notes} placeholder="Add notes" onChange={setNotes} />
           </div>
 

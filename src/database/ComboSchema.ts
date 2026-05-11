@@ -1,3 +1,4 @@
+import { PROTEIN_SOURCES } from "@/lib/types";
 import mongoose, { Schema } from "mongoose";
 
 const ComboSchema = new Schema(
@@ -34,16 +35,29 @@ const ComboSchema = new Schema(
       default: [],
     },
 
-    filters: {
-      type: [String],
-      required: true,
+    proteinSources: {
+      type: [
+        {
+          type: String,
+          enum: PROTEIN_SOURCES,
+        },
+      ],
       default: [],
     },
 
-    allergens: {
-      type: [String],
-      required: true,
-      default: [],
+    dietary: {
+      vegetarian: { type: Boolean, default: false },
+      vegan: { type: Boolean, default: false },
+      halal: { type: Boolean, default: false },
+      kosher: { type: Boolean, default: false },
+    },
+
+    exclusions: {
+      dairyFree: { type: Boolean, default: false },
+      glutenFree: { type: Boolean, default: false },
+      nutFree: { type: Boolean, default: false },
+      soyFree: { type: Boolean, default: false },
+      shellfishFree: { type: Boolean, default: false },
     },
 
     notes: { type: String, required: false },

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { buildFilterTags } from "@/lib/helpers";
 import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
+
+type ComboPopulate = "all" | "preview" | "nutrition" | "filters";
 
 type Params = {
   search: string;
@@ -8,10 +9,12 @@ type Params = {
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
   sortBy?: SortOption;
+  pageSize?: number;
+  comboPopulate?: ComboPopulate;
 };
 
-type Return = {
-  items: Recipe[] | Combo[];
+type Return<TComboRecipe = string> = {
+  items: Recipe[] | Combo<TComboRecipe>[]; // This hook can optionally populate the combos with the recipe data.
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
@@ -22,18 +25,24 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 5;
+function appendSetParams(params: URLSearchParams, key: string, values?: Set<unknown>) {
+  values?.forEach((value) => {
+    params.append(key, String(value));
+  });
+}
 
-export function useMealData({
+export function useMealData<TComboRecipe = string>({
   search,
   filters,
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
-}: Params): Return {
+  pageSize = 11,
+  comboPopulate,
+}: Params): Return<TComboRecipe> {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [combos, setCombos] = useState<Combo[]>([]);
+  const [combos, setCombos] = useState<Combo<TComboRecipe>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftCount, setDraftCount] = useState(0);
@@ -45,9 +54,6 @@ export function useMealData({
 
   const isComboMode = selectedCategories.has("Combo");
   const isSubrecipeOnly = filters.additional?.has("isSubrecipe") ?? false;
-
-  // TODO: This is a hopefully temporary hack, new filter schema will support this better.
-  const SPECIAL_FILTERS = new Set(["issubrecipe"]);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -73,44 +79,40 @@ export function useMealData({
 
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
+        params.append("page", String(currentPage));
+        params.append("limit", String(draftMode ? pageSize - 1 : pageSize));
 
-        // If the parameter is present, then filter. Otherwise get any.
-        // Has no effect on combos.
+        if (trimmed) {
+          params.append("name", trimmed);
+        }
+
+        appendSetParams(params, "proteinSources", filters.proteinSources);
+        appendSetParams(params, "dietary", filters.dietary);
+        appendSetParams(params, "exclusions", filters.exclusions);
+        appendSetParams(params, "servings", filters.servings);
+
+        // Combo-only population parameter
+        if (isComboMode && comboPopulate) {
+          params.append("populate", comboPopulate);
+        }
+
+        // Recipe-only filter.
         if (!isComboMode && isSubrecipeOnly) {
           params.append("isSubrecipe", "true");
         }
 
-        if (trimmed) {
-          params.append("name", trimmed);
-        } else {
-          // isSubrecipe should not be a part of the "tags", since it is its own field.
-          const tagParams = buildFilterTags(filters).filter((tag) => !SPECIAL_FILTERS.has(tag));
-          console.log(tagParams);
-          tagParams.forEach((t) => {
-            if (t.includes("serving")) {
-              params.append("servings", t);
-            } else {
-              params.append("filters", t);
-              params.append("allergens", t);
-            }
+        // Recipe-only categories.
+        if (!isComboMode) {
+          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
+
+          categoryParams.forEach((category) => {
+            params.append("categories", category);
           });
         }
 
-        if (!isComboMode) {
-          const categoryParams = Array.from(selectedCategories).filter((category) => category !== "Combo");
-          categoryParams.forEach((category) => params.append("categories", category));
-        }
-
-        const url = `${base}?${params.toString()}`;
-
-        // if in draft view, change PAGE_SIZE to PAGE_SIZE - 1
-        let paginatedUrl;
-        if (draftMode) {
-          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE - 1}`;
-        } else {
-          paginatedUrl = `${url}&page=${currentPage}&limit=${PAGE_SIZE}`;
-        }
-        const res = await fetch(paginatedUrl, { signal: controller.signal });
+        const res = await fetch(`${base}?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         if (!res.ok) {
           throw new Error(`Request failed: ${res.status}`);
@@ -118,6 +120,7 @@ export function useMealData({
 
         const { data, totalCount, totalPages: serverTotalPages } = await res.json();
         const safeTotalPages = Math.max(1, Number(serverTotalPages) || 0);
+
         setTotalPages(safeTotalPages);
 
         if (currentPage > safeTotalPages) {
@@ -136,8 +139,11 @@ export function useMealData({
         } else {
           const draftParams = new URLSearchParams();
           draftParams.append("isDraft", "true");
-          const draftUrl = `${base}?${draftParams.toString()}&limit=1`;
-          const draftRes = await fetch(draftUrl, { signal: controller.signal });
+          draftParams.append("limit", "1");
+
+          const draftRes = await fetch(`${base}?${draftParams.toString()}`, {
+            signal: controller.signal,
+          });
 
           if (!draftRes.ok) {
             throw new Error(`Request failed: ${draftRes.status}`);
@@ -155,6 +161,7 @@ export function useMealData({
     }
 
     load();
+
     return () => controller.abort();
   }, [
     currentPage,
@@ -166,6 +173,8 @@ export function useMealData({
     sortBy,
     refreshKey,
     isSubrecipeOnly,
+    pageSize,
+    comboPopulate,
   ]);
 
   const items = isComboMode ? combos : recipes;

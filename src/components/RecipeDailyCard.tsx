@@ -4,7 +4,7 @@ import { Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
-  onOpen?: () => void; // TODO: is this used for anything?
+  onOpen?: () => void;
 };
 
 export default function RecipeDailyCard({ item, onOpen }: RecipeCardProps) {

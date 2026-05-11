@@ -1,18 +1,15 @@
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import FilterTag from "./FilterTag";
-import { FilterSelections } from "@/lib/types";
-
-export type FilterOption = {
-  id: string;
-  label: string;
-};
-
-export type FilterSection = {
-  id: string;
-  label: string;
-  options: FilterOption[];
-};
+import {
+  createEmptyFilterSelections,
+  FILTER_SECTIONS,
+  FilterOption,
+  FilterOptionId,
+  FilterSection,
+  FilterSectionId,
+  FilterSelections,
+} from "@/lib/types";
 
 type FilterMenuProps = {
   onFilterChange?: (selections: FilterSelections) => void;
@@ -22,74 +19,22 @@ type FilterMenuProps = {
   mobileOverlay?: { onClose: () => void };
 };
 
-// TODO: these should be enforced by a type in types.ts
-export const FILTER_SECTIONS: FilterSection[] = [
-  {
-    id: "allergens",
-    label: "Allergens / Exclusions",
-    options: [
-      { id: "dairy-free", label: "Dairy-Free" },
-      { id: "gluten-free", label: "Gluten-Free" },
-      { id: "nut-free", label: "Nut-Free" },
-      { id: "soy-free", label: "Soy-Free" },
-      { id: "shellfish-free", label: "Shellfish-Free" },
-    ],
-  },
-  {
-    id: "proteins",
-    label: "Proteins",
-    options: [
-      { id: "chicken", label: "Chicken" },
-      { id: "beef", label: "Beef" },
-      { id: "fish", label: "Fish" },
-      { id: "tofu", label: "Tofu" },
-      { id: "beans", label: "Beans" },
-    ],
-  },
-  {
-    id: "vitamins",
-    label: "Vitamins / Minerals",
-    options: [
-      { id: "iron", label: "Iron" },
-      { id: "vitamin-a", label: "Vitamin A" },
-      { id: "vitamin-c", label: "Vitamin C" },
-      { id: "calcium", label: "Calcium" },
-      { id: "potassium", label: "Potassium" },
-    ],
-  },
-  {
-    id: "dietary",
-    label: "Dietary Preferences",
-    options: [
-      { id: "vegetarian", label: "Vegetarian" },
-      { id: "vegan", label: "Vegan" },
-      { id: "halal", label: "Halal" },
-      { id: "kosher", label: "Kosher" },
-      { id: "low-sodium", label: "Low Sodium" },
-    ],
-  },
-  {
-    id: "additional",
-    label: "Additional Filters",
-    options: [{ id: "isSubrecipe", label: "Subrecipes Only" }],
-  },
-];
-
 function emptySelections(): FilterSelections {
-  return FILTER_SECTIONS.reduce<FilterSelections>((acc, section) => {
-    acc[section.id] = new Set();
-    return acc;
-  }, {});
+  return createEmptyFilterSelections();
 }
 
 function mergeSelections(initial?: FilterSelections): FilterSelections {
-  const base = emptySelections();
+  const base = createEmptyFilterSelections();
+
   if (!initial) return base;
-  for (const key of Object.keys(base)) {
-    const s = initial[key];
-    if (s) base[key] = new Set(s);
-  }
-  return base;
+
+  return {
+    proteinSources: new Set(initial.proteinSources),
+    dietary: new Set(initial.dietary),
+    exclusions: new Set(initial.exclusions),
+    servings: new Set(initial.servings),
+    additional: new Set(initial.additional),
+  };
 }
 
 export default function FilterMenu({ onFilterChange, initialSelections, mobileOverlay }: FilterMenuProps) {
@@ -105,7 +50,7 @@ export default function FilterMenu({ onFilterChange, initialSelections, mobileOv
     onFilterChangeRef.current?.(selections);
   }, [mobileOverlay, selections]);
 
-  const handleToggleOption = (sectionId: string, optionId: string) => {
+  const handleToggleOption = (sectionId: FilterSectionId, optionId: FilterOptionId) => {
     setSelections((prev) => {
       const next: FilterSelections = { ...prev };
       const nextSet = new Set(next[sectionId] ?? []);
@@ -117,6 +62,7 @@ export default function FilterMenu({ onFilterChange, initialSelections, mobileOv
       }
 
       next[sectionId] = nextSet;
+
       return next;
     });
   };
@@ -232,9 +178,9 @@ function FilterMenuOption({
 }: {
   label: string;
   options: FilterOption[];
-  selections?: Set<string>;
+  selections?: Set<FilterOptionId>;
   defaultExpanded: boolean;
-  onToggle: (optionId: string) => void;
+  onToggle: (optionId: FilterOptionId) => void;
 }) {
   const [isOpen, setIsOpen] = useState(defaultExpanded);
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import WeekMealCard, { type WeekMealCardData } from "./WeekMealCard";
+import WeekMealCard from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import { BUCKET_TO_CATEGORY, RECIPE_BUCKETS, Recipe, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
@@ -13,18 +13,13 @@ interface WeekViewProps {
 }
 
 type WeekViewDayData = {
-  meals: WeekMealCardData[];
+  meals: Recipe[];
   showNutritionInfoNotMet?: boolean;
-};
-
-// TODO: extract this into a populated type in types.ts and add API support
-type CalendarRecipe = Pick<Recipe, "_id" | "name" | "serving"> & {
-  nutritional_info?: Partial<Recipe["nutritional_info"]>;
 };
 
 type CalendarDayResponse = {
   _id: string;
-} & RecipeBuckets<CalendarRecipe>;
+} & RecipeBuckets<Recipe>;
 
 const EMPTY_DAY: WeekViewDayData = {
   meals: [],
@@ -39,29 +34,8 @@ function formatCalendarDayId(date: Date) {
   return `${year}${month}${day}`;
 }
 
-function mapCalendarRecipesToMeals(
-  recipes: CalendarRecipe[],
-  category: RecipeCategory,
-  calendarBucket: RecipeBucket,
-  calendarDayId: string,
-): WeekMealCardData[] {
-  return recipes.map((recipe) => ({
-    _id: recipe._id,
-    name: recipe.name,
-    calories: recipe.nutritional_info?.calories,
-    servingSize: recipe.serving != null ? `${recipe.serving}` : undefined,
-    category,
-    calendarBucket,
-    calendarDayId,
-  }));
-}
-
-function mapCalendarDayToMeals(calendarDay: CalendarDayResponse, fallbackDayId: string): WeekMealCardData[] {
-  const calendarDayId = calendarDay._id || fallbackDayId;
-
-  return RECIPE_BUCKETS.flatMap((bucket) =>
-    mapCalendarRecipesToMeals(calendarDay[bucket] ?? [], BUCKET_TO_CATEGORY[bucket], bucket, calendarDayId),
-  );
+function mapCalendarDayToMeals(calendarDay: CalendarDayResponse): Recipe[] {
+  return RECIPE_BUCKETS.flatMap((bucket) => calendarDay[bucket] ?? []);
 }
 
 async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promise<WeekViewDayData> {
@@ -81,7 +55,7 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   const calendarDay: CalendarDayResponse = await response.json();
 
   return {
-    meals: mapCalendarDayToMeals(calendarDay, dayId),
+    meals: mapCalendarDayToMeals(calendarDay),
     showNutritionInfoNotMet: false,
   };
 }
@@ -156,9 +130,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
                     Loading meals...
                   </div>
                 ) : dayData.meals.length > 0 ? (
-                  dayData.meals.map((meal) => (
-                    <WeekMealCard key={`${meal.calendarDayId}-${meal.calendarBucket}-${meal._id}`} {...meal} />
-                  ))
+                  dayData.meals.map((meal) => <WeekMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
                     Drop recipe here

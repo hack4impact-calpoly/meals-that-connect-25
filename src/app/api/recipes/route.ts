@@ -1,7 +1,7 @@
 import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
-import { RECIPE_CATEGORIES } from "@/lib/types";
-import type { RecipeCategory } from "@/lib/types";
+import { getNormalizedParams } from "@/lib/server/searchParams";
+import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 type ServingRange = {
@@ -16,13 +16,6 @@ const SERVING_FILTER_RANGES: Record<string, ServingRange> = {
   "party-serving": { min: 7 },
 };
 
-function normalizeRecipeCategory(value: string): RecipeCategory | null {
-  // accepts capitalization differences.
-  // e.g, " entree " will normalize to "Entree" for searching
-  return RECIPE_CATEGORIES.find((category) => category.toLowerCase() === value.toLowerCase()) ?? null;
-}
-
-// TODO: For now just update categories, overhaul when updating the filters
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
@@ -36,15 +29,14 @@ export async function GET(req: NextRequest) {
     const isSubrecipeParam = searchParams.get("isSubrecipe");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
-    const tagParams = searchParams
-      .getAll("filters")
-      .map((t) => t.trim().toLowerCase())
-      .filter(Boolean);
+    // Values that are not recognized will be thrown away.
+    const categoryParams = getNormalizedParams(searchParams, "categories", RECIPE_CATEGORIES);
 
-    const categoryParams = searchParams
-      .getAll("categories")
-      .map((category) => normalizeRecipeCategory(category.trim()))
-      .filter((category): category is RecipeCategory => Boolean(category));
+    const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
+
+    const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
+
+    const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
 
     const servingParams = searchParams
       .getAll("servings")
@@ -59,14 +51,27 @@ export async function GET(req: NextRequest) {
 
     const andClauses: any[] = [];
 
-    if (tagParams.length > 0) {
+    if (proteinSourceParams.length > 0) {
+      // "$in" means something like: proteinSources=Chicken&proteinSources=Tofu
+      // will match recipes with chicken OR tofu OR both.
       andClauses.push({
-        filters: {
-          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-        },
-        allergens: {
-          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-        },
+        proteinSources: { $in: proteinSourceParams },
+      });
+      // If we ever want "chicken AND tofu, should use "$all" instead"
+    }
+
+    // The rest are ANDs. Meaning:
+    // dietary=halal&exclusions=glutenFree
+    // requires halal AND glutenFree
+    for (const dietaryKey of dietaryParams) {
+      andClauses.push({
+        [`dietary.${dietaryKey}`]: true,
+      });
+    }
+
+    for (const exclusionKey of exclusionParams) {
+      andClauses.push({
+        [`exclusions.${exclusionKey}`]: true,
       });
     }
 
