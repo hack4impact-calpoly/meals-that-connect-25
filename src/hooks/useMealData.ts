@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import { CategoryValue, Combo, FilterSelections, Recipe, SortOption } from "@/lib/types";
 
+type ComboPopulate = "all" | "preview" | "nutrition" | "filters";
+
 type Params = {
   search: string;
   filters: FilterSelections;
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
   sortBy?: SortOption;
+  pageSize?: number;
+  comboPopulate?: ComboPopulate;
 };
 
-type Return = {
-  items: Recipe[] | Combo[];
+type Return<TComboRecipe = string> = {
+  items: Recipe[] | Combo<TComboRecipe>[]; // This hook can optionally populate the combos with the recipe data.
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
@@ -21,23 +25,24 @@ type Return = {
   refresh: () => void;
 };
 
-const PAGE_SIZE = 5;
 function appendSetParams(params: URLSearchParams, key: string, values?: Set<unknown>) {
   values?.forEach((value) => {
     params.append(key, String(value));
   });
 }
 
-export function useMealData({
+export function useMealData<TComboRecipe = string>({
   search,
   filters,
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
-}: Params): Return {
+  pageSize = 11,
+  comboPopulate,
+}: Params): Return<TComboRecipe> {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [combos, setCombos] = useState<Combo[]>([]);
+  const [combos, setCombos] = useState<Combo<TComboRecipe>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draftCount, setDraftCount] = useState(0);
@@ -75,7 +80,7 @@ export function useMealData({
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
         params.append("page", String(currentPage));
-        params.append("limit", String(draftMode ? PAGE_SIZE - 1 : PAGE_SIZE));
+        params.append("limit", String(draftMode ? pageSize - 1 : pageSize));
 
         if (trimmed) {
           params.append("name", trimmed);
@@ -85,6 +90,11 @@ export function useMealData({
         appendSetParams(params, "dietary", filters.dietary);
         appendSetParams(params, "exclusions", filters.exclusions);
         appendSetParams(params, "servings", filters.servings);
+
+        // Combo-only population parameter
+        if (isComboMode && comboPopulate) {
+          params.append("populate", comboPopulate);
+        }
 
         // Recipe-only filter.
         if (!isComboMode && isSubrecipeOnly) {
@@ -163,6 +173,8 @@ export function useMealData({
     sortBy,
     refreshKey,
     isSubrecipeOnly,
+    pageSize,
+    comboPopulate,
   ]);
 
   const items = isComboMode ? combos : recipes;

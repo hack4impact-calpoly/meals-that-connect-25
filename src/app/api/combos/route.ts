@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
 import { getNormalizedParams } from "@/lib/server/searchParams";
-import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES } from "@/lib/types";
+import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_BUCKETS } from "@/lib/types";
 import { deriveComboDataFromRecipeIds, getRecipeBucketsFromBody } from "@/lib/server/comboHelpers";
 
 type ServingRange = {
@@ -33,12 +33,20 @@ export async function GET(req: NextRequest) {
 
     const isDraftParam = searchParams.get("isDraft");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
+    const populate = searchParams.get("populate");
 
     const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
 
     const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
 
     const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
+
+    const populateSelectMap = {
+      // "all" just populates everything, no map needed
+      preview: "_id name category",
+      nutrition: "_id name category serving nutritional_info",
+      filters: "_id name serving category proteinSources dietary exclusions",
+    } as const;
 
     const servingParams = searchParams
       .getAll("servings")
@@ -124,6 +132,16 @@ export async function GET(req: NextRequest) {
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (populate === "all") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket);
+      });
+    } else if (populate === "preview" || populate === "nutrition" || populate === "filters") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket, populateSelectMap[populate]);
+      });
+    }
 
     if (sortBy === "aToZ" || sortBy === "zToA") {
       query = query.collation({ locale: "en", strength: 2 });

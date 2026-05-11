@@ -125,6 +125,9 @@ export type RecipeMinimal = {
   name: string;
 };
 
+export type RecipeNutritionOnly = RecipePreview & { serving: number; nutritional_info: Nutrition };
+export type RecipeFiltersOnly = RecipePreview & MealFilterFields;
+
 // Takes the type of the recipe buckets.
 // By default should be string IDs, but can request Recipe or RecipePreviews from the API as well.
 // TODO: add a "populate" parameter to the combo schema that will also preview the recipes
@@ -146,9 +149,9 @@ export type Combo<T = string> = {
 /* Calendar and date types                                                    */
 /* -------------------------------------------------------------------------- */
 
-export type CalendarDay = {
+export type CalendarDay<T = Recipe> = {
   _id: string; // YYYYMMDD
-} & RecipeBuckets<Recipe>;
+} & RecipeBuckets<T>;
 
 export const MONTHS = [
   "January",

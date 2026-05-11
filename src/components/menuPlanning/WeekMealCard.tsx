@@ -2,50 +2,35 @@
 
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import { RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_TO_BUCKET, TAG_STYLES, type Recipe, type RecipeBucket, type RecipeCategory } from "@/lib/types";
+import { ActiveDragData, CalendarDragData } from "@/app/menuPlanning/page";
 
-export type WeekMealCardData = {
-  _id: string;
-  name: string;
-  calories?: number;
-  servingSize?: string;
-  category: RecipeCategory;
-  calendarDayId: string;
-  calendarBucket: RecipeBucket;
+export type WeekMealCardProps = {
+  item: Recipe;
+  dayId: string;
 };
 
-type WeekMealCardProps = WeekMealCardData;
+export default function WeekMealCard({ item, dayId }: WeekMealCardProps) {
+  const bucket = CATEGORY_TO_BUCKET[item.category];
+  const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
+  const tagClassName = TAG_STYLES[item.category];
 
-export default function WeekMealCard({
-  _id,
-  name,
-  calories,
-  servingSize,
-  category,
-  calendarDayId,
-  calendarBucket,
-}: WeekMealCardProps) {
-  const dndId = `calendar-${calendarDayId}-${calendarBucket}-${_id}`;
-  const tagClassName = TAG_STYLES[category];
-
+  const dragData: CalendarDragData = {
+    source: "calendar",
+    item,
+    dayId,
+  };
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: dndId,
-    data: {
-      type: "recipe",
-      source: "calendar",
-      itemType: "recipe",
-      recipeId: _id,
-      dayId: calendarDayId,
-      bucket: calendarBucket,
-      category,
-      recipeCategory: category,
-      name,
-      servingSize,
-    },
+    data: dragData,
   });
 
-  const caloriesText = calories != null ? `${calories} cal` : null;
-  const metaText = caloriesText && servingSize ? `${caloriesText} / ${servingSize}` : caloriesText || servingSize;
+  const calories = item.nutritional_info.calories;
+  const servingSize = item.serving;
+
+  const caloriesText = calories ? `${calories} cal` : null;
+  const metaText =
+    caloriesText && servingSize ? `${caloriesText} / ${servingSize}` : caloriesText || `${servingSize} servings`;
 
   return (
     <div
@@ -57,8 +42,8 @@ export default function WeekMealCard({
       {...listeners}
     >
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[16px] leading-tight font-bold" title={name}>
-          {name}
+        <p className="truncate text-[16px] leading-tight font-bold" title={item.name}>
+          {item.name}
         </p>
 
         {metaText ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{metaText}</p> : null}

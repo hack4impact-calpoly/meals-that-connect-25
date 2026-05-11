@@ -3,7 +3,8 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import { CATEGORY_TO_BUCKET, CategoryValue, Combo, Recipe, TAG_STYLES } from "@/lib/types";
+import { CategoryValue, Combo, Recipe, TAG_STYLES } from "@/lib/types";
+import type { SidebarDragData } from "@/app/menuPlanning/page";
 
 type DraggableRecipeCardProps = {
   item: Recipe | Combo;
@@ -25,34 +26,22 @@ export default function DraggableRecipeCard({ item, disabled = false }: Draggabl
   const servingText = item.serving != null ? `${item.serving}` : null;
   const metaText = caloriesText && servingText ? `${caloriesText} / ${servingText}` : caloriesText || servingText;
 
+  const dragData: SidebarDragData = itemIsRecipe
+    ? {
+        source: "sidebar",
+        itemType: "recipe",
+        item,
+      }
+    : {
+        source: "sidebar",
+        itemType: "combo",
+        item,
+      };
+
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `sidebar-${itemType}-${item._id}`,
     disabled,
-    data: itemIsRecipe
-      ? {
-          type: "recipe",
-          source: "sidebar",
-          itemType: "recipe",
-          recipeId: item._id,
-          name: item.name,
-          bucket: CATEGORY_TO_BUCKET[item.category],
-          category: item.category,
-          recipeCategory: item.category,
-          item,
-        }
-      : {
-          type: "recipe",
-          source: "sidebar",
-          itemType: "combo",
-          comboId: item._id,
-          name: item.name,
-          category: "Combo",
-          entrees: item.entrees,
-          vegetables: item.vegetables,
-          fruits: item.fruits,
-          grains: item.grains,
-          item,
-        },
+    data: dragData,
   });
 
   return (

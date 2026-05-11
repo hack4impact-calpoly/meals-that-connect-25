@@ -4,12 +4,12 @@ import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe } from "@/lib/types";
+import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, RecipePreview } from "@/lib/types";
 import { toggleCategory } from "@/lib/helpers";
 
 type Props = {
   setSearch: (s: string) => void;
-  items: Recipe[] | Combo[];
+  items: Recipe[] | Combo<RecipePreview>[];
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
@@ -24,7 +24,7 @@ type Props = {
 
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
-  onOpenItem?: (item: Recipe | Combo) => void;
+  onOpenItem?: (item: Recipe | Combo<RecipePreview>) => void;
 
   topLeftChildren?: ReactNode; // top-left slot for an extra button
   topRightChildren?: ReactNode; // for additional buttons after search bar

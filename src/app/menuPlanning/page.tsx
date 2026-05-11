@@ -8,7 +8,7 @@ import RecipeDatabase from "@/components/menuPlanning/RecipeDatabase";
 import WeeklyNutritionQuota from "@/components/menuPlanning/WeeklyNutritionQuota";
 import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
-import DayView from "@/components/menuPlanning/DayView";
+import DayView, { DayMealCardPreview } from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
 import {
@@ -22,11 +22,15 @@ import {
   RECIPE_BUCKETS,
   SortOption,
   createEmptyFilterSelections,
+  CATEGORY_TO_BUCKET,
+  RecipeNutritionOnly,
 } from "@/lib/types";
 import { useMealData } from "@/hooks/useMealData";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
+import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
+import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 
 const today = new Date();
 
@@ -39,77 +43,81 @@ const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
   { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
 ];
 
-// TODO: refine this a bit. Currently unsure how this is used
-type ActiveDragData = {
-  id: string; // Not the mongo _id... Probably remove
-  type?: string; // Always "recipe" or "trash", but "trash" is a drop zone, can probably remove.
+export type SidebarDragData =
+  | {
+      source: "sidebar";
+      itemType: "recipe";
+      item: Recipe;
+    }
+  | {
+      source: "sidebar";
+      itemType: "combo";
+      item: Combo;
+    };
 
-  source?: "sidebar" | "calendar"; // where the item was dragged from
-  itemType?: "recipe" | "combo";
-
-  recipeId?: string;
-  comboId?: string;
-  dayId?: string; // Used by the calendar drop zone, can probably remove from here then.
-
-  name?: string;
-  servingSize?: string;
-
-  // This is the plural of the category. e.g: "entrees", "vegetables"
-  bucket?: RecipeBucket; // now needed in the drag data, can be derived later
-  category?: CategoryValue;
-  recipeCategory?: RecipeCategory; // Simply excludes "combo" when we know it is a recipe
-
-  entrees?: string[];
-  vegetables?: string[];
-  fruits?: string[];
-  grains?: string[];
-
-  item?: Recipe | Combo; // We should honestly just include the item and category and forget about the rest of the attributes.
+export type CalendarDragData = {
+  source: "calendar";
+  item: RecipeNutritionOnly;
+  dayId: string;
 };
+
+export type ActiveDragData = SidebarDragData | CalendarDragData;
+
+export type DropZoneData =
+  | {
+      dest: "calendar";
+      dayId: string;
+    }
+  | {
+      dest: "trash";
+    }
+  | {
+      dest: "sidebar";
+    };
 
 function TrashDropZone() {
   const { setNodeRef, isOver } = useDroppable({
-    id: "calendar-trash",
-    data: { type: "trash" },
+    id: "trash",
+    data: { dest: "trash" },
   });
 
   return (
-    <div
-      ref={setNodeRef}
-      className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
-        isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
-      }`}
-      aria-label="Trash"
-    >
-      <Trash2 size={24} strokeWidth={2.2} />
+    // some padding around the button to make the droppable area larger
+    <div ref={setNodeRef} className="flex h-24 w-24 items-center justify-center" aria-label="Trash drop zone">
+      <div
+        className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
+          isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
+        }`}
+        aria-label="Trash"
+      >
+        <Trash2 size={24} strokeWidth={2.2} />
+      </div>
     </div>
   );
 }
 
 function SidebarDropZone({ children }: { children: ReactNode }) {
   const { setNodeRef } = useDroppable({
-    id: "recipe-sidebar",
+    id: "sidebar",
     data: { type: "sidebar" },
   });
 
   return (
-    <div ref={setNodeRef} className="w-90">
+    <div ref={setNodeRef} className="flex flex-col w-90">
       {children}
     </div>
   );
 }
 
-function CalendarDragPreview({ name, servingSize, category, recipeCategory }: ActiveDragData) {
-  const displayCategory = category ?? recipeCategory;
-
+function CalendarDragPreview({ item }: CalendarDragData) {
   return (
     <div className="flex w-56 items-center gap-3 rounded-md bg-radish-900 px-4 py-3 font-montserrat text-white shadow-lg">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[16px] leading-tight font-bold">{name}</p>
-        {servingSize ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{servingSize}</p> : null}
+        <p className="truncate text-[16px] leading-tight font-bold">{item.name}</p>
+        {item.serving ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{item.serving}</p> : null}
       </div>
 
-      {displayCategory ? <span className="shrink-0 text-xs font-medium">{displayCategory}</span> : null}
+      {item.category ? <span className="shrink-0 text-xs font-medium">{item.category}</span> : null}
 
       <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
     </div>
@@ -196,7 +204,7 @@ export default function MenuPlanning() {
         throw new Error(`Failed to fetch monthly menu: ${res.status}`);
       }
 
-      const dates: CalendarDay[] = await res.json();
+      const dates: CalendarDay<RecipeNutritionOnly>[] = await res.json();
       const data: IContent[] = [];
 
       dates.forEach((date) => {
@@ -233,7 +241,7 @@ export default function MenuPlanning() {
 
         data.push(totals);
 
-        const pushItems = (items: Recipe[] = []) => {
+        const pushItems = (items: RecipeNutritionOnly[] = []) => {
           items.forEach((item) => {
             data.push({
               name: item.name,
@@ -303,8 +311,7 @@ export default function MenuPlanning() {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
     setActiveDragData({
-      id: event.active.id as string,
-      ...(event.active.data.current as Omit<ActiveDragData, "id">),
+      ...(event.active.data.current as ActiveDragData),
     });
   }, []);
 
@@ -316,15 +323,14 @@ export default function MenuPlanning() {
     if (!over) return;
 
     const dragData = active.data.current as ActiveDragData | undefined;
-    const dropData = over.data.current as { type?: string; dayId?: string } | undefined;
+    const dropData = over.data.current as DropZoneData | undefined;
 
-    if (dragData?.type === "recipe" && dragData.source === "calendar" && dropData?.type === "trash") {
-      const { recipeId, dayId, bucket } = dragData;
+    if (!dragData || !dropData) {
+      return;
+    }
 
-      if (!recipeId || !dayId || !bucket) {
-        console.error("Invalid calendar recipe drag data:", dragData);
-        return;
-      }
+    if (dragData.source === "calendar" && dropData.dest === "trash") {
+      const { item, dayId } = dragData;
 
       try {
         const response = await fetch(`/api/calendar/${dayId}`, {
@@ -333,8 +339,8 @@ export default function MenuPlanning() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            recipeId,
-            category: bucket,
+            recipeId: item._id,
+            category: CATEGORY_TO_BUCKET[item.category],
           }),
         });
 
@@ -352,15 +358,19 @@ export default function MenuPlanning() {
       return;
     }
 
-    if (dragData?.type !== "recipe" || dropData?.type !== "calendar") {
+    if (dropData.dest !== "calendar") {
+      // dropping into the sidebar does nothing
+      // dopping into trash is handled above, dropping into calendar is handled below
       return;
     }
 
     if (dragData.source === "calendar") {
+      // Dragging from the calendar into anywhere else does nothing.
+      // E.g: cannot move a recipe between different days.
       return;
     }
 
-    const { dayId } = dropData;
+    const { dayId } = dropData; // here we are guaranteed to be dropped into calendar
 
     if (!dayId) {
       console.error("Missing calendar day id:", dropData);
@@ -368,15 +378,14 @@ export default function MenuPlanning() {
     }
 
     const calendarItemsToAdd: Array<{ recipeId: string; category: RecipeBucket }> =
+      // if combo, add the recipes in the combo. Otherwise just add the recipe.
       dragData.itemType === "combo"
         ? RECIPE_BUCKETS.flatMap((bucket) =>
-            (dragData[bucket] ?? [])
+            (dragData.item[bucket] ?? [])
               .filter((recipeId): recipeId is string => Boolean(recipeId?.trim()))
               .map((recipeId) => ({ recipeId, category: bucket })),
           )
-        : dragData.recipeId && dragData.bucket
-          ? [{ recipeId: dragData.recipeId, category: dragData.bucket }]
-          : [];
+        : [{ recipeId: dragData.item._id, category: CATEGORY_TO_BUCKET[dragData.item.category] }];
 
     if (calendarItemsToAdd.length === 0) {
       console.error("No valid recipes found in dragged item:", dragData);
@@ -391,10 +400,7 @@ export default function MenuPlanning() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              recipeId: item.recipeId,
-              category: item.category,
-            }),
+            body: JSON.stringify(item),
           }),
         ),
       );
@@ -420,10 +426,10 @@ export default function MenuPlanning() {
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <main className="flex flex-row">
-        <div className="flex flex-1 items-center justify-center bg-gray-100">
-          <div className="flex h-full w-260 flex-col">
-            <div className="mt-4 flex items-center justify-between">
+      <main className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 justify-center pt-4 bg-gray-100 overflow-auto">
+          <div className="flex w-260 flex-col">
+            <div className="flex items-center justify-between">
               <div className="flex items-center justify-center gap-2">
                 <CurrentDateButton onClick={() => setDatesOffset(0)} />
 
@@ -498,8 +504,8 @@ export default function MenuPlanning() {
             </div>
 
             {calendarView === "Month" && (
-              <div className="flex min-h-0 flex-1 flex-col">
-                <MonthView monthDates={viewDates} dateToday={today} />
+              <>
+                <MonthView monthDates={viewDates} dateToday={today} refetchTrigger={recipeDropTrigger} />
 
                 <div className="mt-2">
                   <WarningQuotaMonthly />
@@ -508,7 +514,7 @@ export default function MenuPlanning() {
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
-              </div>
+              </>
             )}
 
             {calendarView === "Week" && (
@@ -523,7 +529,16 @@ export default function MenuPlanning() {
               </>
             )}
 
-            {calendarView === "Day" && <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />}
+            {calendarView === "Day" && (
+              <>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
+                <div className="mt-2 flex justify-end">
+                  <TrashDropZone />
+                </div>
+
+                <DailyNutritionSummary recipes={[]} />
+              </>
+            )}
           </div>
         </div>
 
@@ -546,9 +561,15 @@ export default function MenuPlanning() {
 
       <DragOverlay>
         {activeId ? (
-          <div className="rotate-3 opacity-90">
+          <div className="opacity-80">
             {activeDragData?.source === "calendar" ? (
-              <CalendarDragPreview {...activeDragData} />
+              calendarView === "Month" ? (
+                <MonthMealCardPreview item={activeDragData.item} />
+              ) : calendarView === "Day" ? (
+                <DayMealCardPreview item={activeDragData.item} />
+              ) : (
+                <CalendarDragPreview {...activeDragData} />
+              )
             ) : activeDragData?.item ? (
               <DraggableRecipeCard item={activeDragData.item} disabled />
             ) : null}

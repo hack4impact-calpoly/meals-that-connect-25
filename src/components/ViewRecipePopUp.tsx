@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { DIETARY_KEYS, EXCLUSION_KEYS, FILTER_SECTIONS, TAG_STYLES } from "@/lib/types";
+import {
+  DIETARY_KEYS,
+  ENTREE_ICON,
+  EXCLUSION_KEYS,
+  FILTER_SECTIONS,
+  FRUIT_ICON,
+  GRAIN_ICON,
+  RECIPE_BUCKETS,
+  TAG_STYLES,
+  VEGETABLE_ICON,
+} from "@/lib/types";
 import type {
   Combo,
   CategoryValue,
@@ -9,6 +19,7 @@ import type {
   MealFilterFields,
   Nutrition,
   Recipe,
+  RecipeBuckets,
   RecipeCategory,
 } from "@/lib/types";
 import {
@@ -16,8 +27,6 @@ import {
   Maximize2,
   Pencil,
   Ellipsis,
-  Carrot,
-  Apple,
   Tag,
   CircleAlert,
   SquarePen,
@@ -31,23 +40,9 @@ import NutritionalInfo from "./NutrionalInfo";
 type Props = {
   open: boolean;
   onClose: (v: boolean) => void;
-  item: Recipe | Combo | null;
+  item: Recipe | Combo<Recipe> | null;
   isComboMode: boolean;
   changeMode: (mode: "view" | "edit") => void;
-};
-
-type ComboRecipeMap = {
-  entrees: Recipe[];
-  vegetables: Recipe[];
-  fruits: Recipe[];
-  grains: Recipe[];
-};
-
-const EMPTY_COMBO_RECIPE_MAP: ComboRecipeMap = {
-  entrees: [],
-  vegetables: [],
-  fruits: [],
-  grains: [],
 };
 
 function emptyNutrition(): Nutrition {
@@ -88,27 +83,8 @@ function formatNutritionValue(value: number, originalServings: number, servings:
   return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
 }
 
-async function getRecipe(id: string, signal?: AbortSignal): Promise<Recipe> {
-  const res = await fetch(`/api/recipes/${id}`, { signal });
-
-  if (!res.ok) {
-    throw new Error(`Failed to get individual recipe (${res.status})`);
-  }
-
-  return res.json();
-}
-
-async function getRecipes(ids: string[] = [], signal?: AbortSignal): Promise<Recipe[]> {
-  return Promise.all(ids.map((id) => getRecipe(id, signal)));
-}
-
-function getComboNutrition(comboRecipes: ComboRecipeMap, comboServing: number): Nutrition {
-  const allRecipes = [
-    ...comboRecipes.entrees,
-    ...comboRecipes.vegetables,
-    ...comboRecipes.fruits,
-    ...comboRecipes.grains,
-  ];
+function getComboNutrition(comboRecipes: RecipeBuckets<Recipe>, comboServing: number): Nutrition {
+  const allRecipes = RECIPE_BUCKETS.flatMap((bucket) => comboRecipes[bucket] ?? []);
 
   const nutritionPerServing = allRecipes.reduce((total, recipe) => {
     const recipeServing = Math.max(1, recipe.serving || 1);
@@ -189,7 +165,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
 
             {isComboMode ? (
               <ComboDetails
-                combo={item as Combo}
+                combo={item as Combo<Recipe>}
                 servings={servings}
                 setServings={setServings}
                 originalServings={originalServings}
@@ -272,54 +248,19 @@ function ComboDetails({
   setServings,
   originalServings,
 }: {
-  combo: Combo;
+  combo: Combo<Recipe>;
   servings: number;
   setServings: React.Dispatch<React.SetStateAction<number>>;
   originalServings: number;
 }) {
-  const [comboRecipes, setComboRecipes] = useState<ComboRecipeMap>(EMPTY_COMBO_RECIPE_MAP);
-
-  const nutrition = useMemo(() => getComboNutrition(comboRecipes, combo.serving), [comboRecipes, combo.serving]);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function loadComboRecipes() {
-      try {
-        setComboRecipes(EMPTY_COMBO_RECIPE_MAP);
-
-        const [entrees, vegetables, fruits, grains] = await Promise.all([
-          getRecipes(combo.entrees, controller.signal),
-          getRecipes(combo.vegetables, controller.signal),
-          getRecipes(combo.fruits, controller.signal),
-          getRecipes(combo.grains, controller.signal),
-        ]);
-
-        setComboRecipes({
-          entrees,
-          vegetables,
-          fruits,
-          grains,
-        });
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-
-        console.error("Failed to load combo recipes:", err);
-        setComboRecipes(EMPTY_COMBO_RECIPE_MAP);
-      }
-    }
-
-    loadComboRecipes();
-
-    return () => controller.abort();
-  }, [combo]);
+  const nutrition = useMemo(() => getComboNutrition(combo, combo.serving), [combo]);
 
   return (
     <>
-      <RecipeGroup label="Entrees" icon={<Carrot />} items={comboRecipes.entrees} styleKey="Entree" />
-      <RecipeGroup label="Vegetables" icon={<Carrot />} items={comboRecipes.vegetables} styleKey="Vegetable" />
-      <RecipeGroup label="Fruits" icon={<Apple />} items={comboRecipes.fruits} styleKey="Fruit" />
-      <RecipeGroup label="Grains" icon={<Tag />} items={comboRecipes.grains} styleKey="Grain" />
+      <RecipeGroup label="Entrees" icon={<ENTREE_ICON />} items={combo.entrees} styleKey="Entree" />
+      <RecipeGroup label="Vegetables" icon={<VEGETABLE_ICON />} items={combo.vegetables} styleKey="Vegetable" />
+      <RecipeGroup label="Fruits" icon={<FRUIT_ICON />} items={combo.fruits} styleKey="Fruit" />
+      <RecipeGroup label="Grains" icon={<GRAIN_ICON />} items={combo.grains} styleKey="Grain" />
 
       <MealFiltersSection item={combo} />
 

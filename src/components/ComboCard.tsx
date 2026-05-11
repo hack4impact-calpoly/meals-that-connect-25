@@ -1,58 +1,57 @@
+"use client";
+
 import Image from "next/image";
 import { Pencil, Utensils } from "lucide-react";
-import { CATEGORY_DISPLAY, Combo, COMBO_CATEGORY_DISPLAY, Recipe, TAG_STYLES } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { COMBO_CATEGORY_DISPLAY, Combo, Recipe, RecipePreview, TAG_STYLES } from "@/lib/types";
+import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 
 type ComboCardProps = {
-  item: Combo;
+  item: Combo<RecipePreview>;
   isSelected?: boolean;
   onSelect?: () => void;
   onOpen?: () => void;
 };
 
-export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboCardProps) {
-  const [editMode, setEditMode] = useState(false);
-  const [entreeMap, setEntreeMap] = useState<string[]>([]);
-  const [vegetableMap, setVegetableMap] = useState<string[]>([]);
-  const [fruitMap, setFruitMap] = useState<string[]>([]);
-  const [grainMap, setGrainMap] = useState<string[]>([]);
+async function getCombo(id: string): Promise<Combo<Recipe>> {
+  const res = await fetch(`/api/combos/${id}?populate=all`);
 
-  const entrees = item.entrees ?? [];
-  const vegetables = item.vegetables ?? [];
-  const fruits = item.fruits ?? [];
-  const grains = item.grains ?? [];
-
-  async function getRecipe(id: string): Promise<Recipe> {
-    const res = await fetch(`/api/recipes/${id}`);
-    if (!res.ok) throw new Error(`Failed to get individual recipe (${res.status})`);
-    return res.json();
+  if (!res.ok) {
+    throw new Error(`Failed to get combo (${res.status})`);
   }
 
-  useEffect(() => {
-    const loadAll = async () => {
-      try {
-        const [entreeNames, vegetableNames, fruitNames, grainNames] = await Promise.all([
-          Promise.all(entrees.map(async (e) => (await getRecipe(e)).name)),
-          Promise.all(vegetables.map(async (v) => (await getRecipe(v)).name)),
-          Promise.all(fruits.map(async (f) => (await getRecipe(f)).name)),
-          Promise.all(grains.map(async (g) => (await getRecipe(g)).name)),
-        ]);
+  return res.json();
+}
 
-        setEntreeMap(entreeNames);
-        setVegetableMap(vegetableNames);
-        setFruitMap(fruitNames);
-        setGrainMap(grainNames);
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        console.error("Failed to load combo recipe names:", err);
-      }
-    };
+export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboCardProps) {
+  const [editMode, setEditMode] = useState(false);
+  const [editItem, setEditItem] = useState<Combo<Recipe> | null>(null);
+  const [isLoadingEditItem, setIsLoadingEditItem] = useState(false);
 
-    loadAll();
-  }, []);
+  const recipes = [...(item.entrees ?? []), ...(item.vegetables ?? []), ...(item.fruits ?? []), ...(item.grains ?? [])];
 
   const servingText = item.serving != null ? `${item.serving}` : null;
+
+  const handleEditClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    if (editItem) {
+      setEditMode(true);
+      return;
+    }
+
+    setIsLoadingEditItem(true);
+
+    try {
+      const fullCombo = await getCombo(item._id);
+      setEditItem(fullCombo);
+      setEditMode(true);
+    } catch (error) {
+      console.error("Failed to load combo for editing:", error);
+    } finally {
+      setIsLoadingEditItem(false);
+    }
+  };
 
   return (
     <div
@@ -70,23 +69,22 @@ export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboC
           <Image src={item.imageUrl} className="h-full w-full object-cover" fill sizes="288px" alt="" />
         ) : null}
 
-        {editMode === true && (
+        {editMode && editItem ? (
           <CreateRecipePopUp
             onClose={() => setEditMode(false)}
-            item={item}
+            item={editItem}
             open={true}
             recipeType={COMBO_CATEGORY_DISPLAY}
             editMode={true}
           />
-        )}
+        ) : null}
 
         {item.isDraft && (
           <Pencil
-            className="absolute top-35 right-4 z-20 h-5 w-5 cursor-pointer rounded-xs accent-radish-900"
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditMode((prev) => !prev);
-            }}
+            className={`absolute top-35 right-4 z-20 h-5 w-5 cursor-pointer rounded-xs accent-radish-900 ${
+              isLoadingEditItem ? "opacity-50" : ""
+            }`}
+            onClick={handleEditClick}
           />
         )}
 
@@ -117,39 +115,14 @@ export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboC
           <p className="mt-3 font-montserrat text-base font-bold">{item.name}</p>
 
           <div className="flex max-h-30 flex-col gap-1.5 overflow-y-auto">
-            {entreeMap.map((i) => (
+            {recipes.map((recipe) => (
               <span
-                key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 font-montserrat text-xs font-medium ${TAG_STYLES.Entree}`}
+                key={`${recipe.category}-${recipe._id}`}
+                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 font-montserrat text-xs font-medium ${
+                  TAG_STYLES[recipe.category]
+                }`}
               >
-                {i}
-              </span>
-            ))}
-
-            {vegetableMap.map((i) => (
-              <span
-                key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 font-montserrat text-xs font-medium ${TAG_STYLES.Vegetable}`}
-              >
-                {i}
-              </span>
-            ))}
-
-            {fruitMap.map((i) => (
-              <span
-                key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 font-montserrat text-xs font-medium ${TAG_STYLES.Fruit}`}
-              >
-                {i}
-              </span>
-            ))}
-
-            {grainMap.map((i) => (
-              <span
-                key={i}
-                className={`inline-flex w-fit shrink-0 rounded-md px-3 py-1.5 font-montserrat text-xs font-medium ${TAG_STYLES.Grain}`}
-              >
-                {i}
+                {recipe.name}
               </span>
             ))}
           </div>

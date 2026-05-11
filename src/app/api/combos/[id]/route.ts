@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
-import { RecipeBuckets } from "@/lib/types";
+import { RECIPE_BUCKETS, RecipeBuckets } from "@/lib/types";
 import { deriveComboDataFromRecipeIds, getFinalRecipeBuckets } from "@/lib/server/comboHelpers";
 
 type Params = {
@@ -17,7 +17,37 @@ export async function GET(req: NextRequest, { params }: Params) {
 
   try {
     await connectDB();
-    const combo = await Combo.findById(id);
+
+    const searchParams = req.nextUrl.searchParams;
+    const populate = searchParams.get("populate");
+
+    const populateSelectMap = {
+      // "all" just populates everything, no map needed
+      preview: "_id name category",
+      nutrition: "_id name category serving nutritional_info",
+      filters: "_id name serving category proteinSources dietary exclusions",
+    } as const;
+
+    const query = Combo.findById(id);
+
+    if (populate === "all") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket);
+      });
+    } else if (populate === "preview" || populate === "nutrition" || populate === "filters") {
+      RECIPE_BUCKETS.forEach((bucket) => {
+        query.populate(bucket, populateSelectMap[populate]);
+      });
+    } else if (populate) {
+      return NextResponse.json(
+        {
+          error: "Invalid populate value. Use all, preview, nutrition, or filters.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const combo = await query.exec();
 
     if (!combo) {
       return NextResponse.json({ error: "Combo not found" }, { status: 404 });
