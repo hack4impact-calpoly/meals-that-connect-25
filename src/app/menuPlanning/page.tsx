@@ -594,7 +594,9 @@ export default function MenuPlanning() {
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
-                <div className="mt-auto flex justify-end pb-4">
+                <div
+                  className={`mt-auto flex justify-end pb-4 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+                >
                   <TrashDropZone />
                 </div>
               </div>
@@ -608,7 +610,9 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   userRole={userRole}
                 />
-                <div className="mt-auto flex justify-end pb-4">
+                <div
+                  className={`mt-auto flex justify-end pb-4 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+                >
                   <TrashDropZone />
                 </div>
                 <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
