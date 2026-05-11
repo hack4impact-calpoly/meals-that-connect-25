@@ -67,7 +67,11 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
   const isToday = (date: Date) => date.toDateString() === todayStr;
 
   useEffect(() => {
-    const calendarId = activeDate.toISOString().slice(0, 10).replace(/-/g, "");
+    const calendarId = [
+      activeDate.getFullYear(),
+      String(activeDate.getMonth() + 1).padStart(2, "0"),
+      String(activeDate.getDate()).padStart(2, "0"),
+    ].join("");
     const getCalendar = async () => {
       try {
         const data = await fetchCalendarById(calendarId);
@@ -138,7 +142,6 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
           <p className="text-dark-gray text-sm text-center my-auto">No meals planned for this day.</p>
         ) : (
           meals.map((meal, idx) => {
-            console.log("Meal:", meal);
             const style = TAG_STYLES[meal.category] ?? "bg-pepper text-black";
             return (
               <div key={idx} className={`rounded-lg px-4 py-3 ${style}`}>
