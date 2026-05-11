@@ -10,12 +10,10 @@ import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
 import DayView from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
-import RecipeMonthlyCard from "@/components/RecipeMonthlyCard";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
-import RecipeDailyCard from "@/components/RecipeDailyCard";
 import { CategoryValue, EMPTY_FILTERS, Nutrition, Recipe, SortOption, Combo } from "@/lib/types";
+import { NutritionSummary, emptyNutrition } from "@/lib/nutrition";
 import { useMealData } from "@/hooks/useMealData";
-import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 
 interface CalendarDay {
@@ -26,44 +24,6 @@ interface CalendarDay {
 }
 
 const today = new Date();
-const SAMPLE_RECIPES: Recipe[] = [
-  {
-    item: null,
-    _id: "oo",
-    name: "Chicken Tikka Masala",
-    serving: 150,
-    filters: ["Entree"],
-    isDraft: false,
-    nutritional_info: { calories: 225, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-mango-cup",
-    name: "Mango Cup",
-    serving: 100,
-    filters: ["Fruit"],
-    isDraft: false,
-    nutritional_info: { calories: 100, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-  {
-    item: null,
-    _id: "sample-brown-rice",
-    name: "Brown Rice",
-    serving: 150,
-    filters: ["Sides"],
-    isDraft: false,
-    nutritional_info: { calories: 200, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  },
-];
-
-// Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
-const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
-  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
-  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
-  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
-  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
-  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
-];
 
 type CalendarItem = {
   _id?: string;
@@ -175,6 +135,13 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
   return [];
 };
 
+const formatCalendarDayId = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+};
+
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
@@ -186,12 +153,58 @@ export default function MenuPlanning() {
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
+  const [nutritionByDate, setNutritionByDate] = useState<Record<string, NutritionSummary>>({});
 
   useEffect(() => {
     setDatesOffset(0);
   }, [calendarView]);
 
   const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView); // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
+  const viewDateIds = viewDates.map(formatCalendarDayId);
+  const viewDateKey = viewDateIds.join(",");
+  const weeklyNutritionTotals: Nutrition[] = viewDateIds.map(
+    (dateId) => nutritionByDate[dateId]?.nutritional_info ?? emptyNutrition(),
+  );
+
+  useEffect(() => {
+    if (!viewDateKey) {
+      setNutritionByDate({});
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchNutrition() {
+      try {
+        const res = await fetch(`/api/calendar/nutrition?ids=${encodeURIComponent(viewDateKey)}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch nutrition totals (${res.status})`);
+        }
+
+        const body: { data?: NutritionSummary[] } = await res.json();
+        const summaries = body.data ?? [];
+
+        if (!controller.signal.aborted) {
+          setNutritionByDate(
+            summaries.reduce<Record<string, NutritionSummary>>((acc, summary) => {
+              acc[summary._id] = summary;
+              return acc;
+            }, {}),
+          );
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Error fetching nutrition totals:", error);
+      }
+    }
+
+    fetchNutrition();
+
+    return () => controller.abort();
+  }, [viewDateKey, recipeDropTrigger]);
 
   const downloadMonthlyMenu = async () => {
     let currentMonth: number;
@@ -571,10 +584,7 @@ export default function MenuPlanning() {
 
             {calendarView === "Month" && (
               <div className="flex min-h-0 flex-1 flex-col">
-                <MonthView monthDates={viewDates} dateToday={today} />
-                <div className="mt-2">
-                  <WarningQuotaMonthly />
-                </div>
+                <MonthView monthDates={viewDates} dateToday={today} nutritionByDate={nutritionByDate} />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
@@ -583,11 +593,16 @@ export default function MenuPlanning() {
 
             {calendarView === "Week" && (
               <>
-                <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <WeekView
+                  dateToday={today}
+                  weekDates={viewDates}
+                  refetchTrigger={recipeDropTrigger}
+                  nutritionByDate={nutritionByDate}
+                />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
-                <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
+                <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
               </>
             )}
 

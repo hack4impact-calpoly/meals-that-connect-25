@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import WeekMealCard, { type CalendarMealCategory, type WeekMealCardData } from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
+import { NutritionSummary } from "@/lib/nutrition";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
   refetchTrigger?: number;
+  nutritionByDate?: Record<string, NutritionSummary>;
 }
 
 type WeekViewDayData = {
@@ -101,7 +103,7 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   };
 }
 
-export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekViewProps) {
+export default function WeekView({ dateToday, weekDates, refetchTrigger, nutritionByDate = {} }: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -149,6 +151,8 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
         const dayId = weekDayIds[index] ?? formatCalendarDayId(date);
         const dayData = weekViewMeals[index] ?? EMPTY_DAY;
         const isToday = date.toDateString() === dateToday.toDateString();
+        const nutritionSummary = nutritionByDate[dayId];
+        const showNutritionWarning = nutritionSummary ? !nutritionSummary.quotaMet : dayData.showNutritionInfoNotMet;
 
         return (
           <div key={dayId} className="flex min-w-0 flex-col items-center">
@@ -181,7 +185,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
                 )}
               </DroppableCalendarArea>
 
-              {!isLoading && dayData.showNutritionInfoNotMet ? <NutritionInfoNotMetCard /> : null}
+              {!isLoading && showNutritionWarning ? <NutritionInfoNotMetCard /> : null}
             </div>
           </div>
         );

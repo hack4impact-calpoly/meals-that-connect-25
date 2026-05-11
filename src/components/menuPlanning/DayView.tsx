@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
 import { Nutrition } from "@/lib/types";
+import { emptyNutrition, normalizeNutrition } from "@/lib/nutrition";
 
 interface DayViewProps {
   date: Date;
@@ -22,6 +23,7 @@ type CalendarRecipe = {
   _id: string;
   name: string;
   serving?: number;
+  nutritional_info?: Nutrition;
 };
 
 type CalendarDayResponse = {
@@ -29,6 +31,7 @@ type CalendarDayResponse = {
   entrees?: CalendarRecipe[];
   fruits?: CalendarRecipe[];
   sides?: CalendarRecipe[];
+  nutritional_info?: Nutrition;
 };
 
 const TAG_BY_CATEGORY: Record<string, string> = {
@@ -53,6 +56,7 @@ const formatDayId = (date: Date) => {
 
 export default function DayView({ date, refetchTrigger }: DayViewProps) {
   const [meals, setMeals] = useState<DayMeal[]>([]);
+  const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -65,6 +69,7 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
 
       if (response.status === 404) {
         setMeals([]);
+        setNutritionTotal(emptyNutrition());
         return;
       }
 
@@ -88,9 +93,11 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
         ...mapRecipes(calendarDay.sides, "sides"),
         ...mapRecipes(calendarDay.fruits, "fruits"),
       ]);
+      setNutritionTotal(normalizeNutrition(calendarDay.nutritional_info));
     } catch (error) {
       console.error("Error fetching day meals:", error);
       setMeals([]);
+      setNutritionTotal(emptyNutrition());
     } finally {
       setIsLoading(false);
     }
@@ -113,15 +120,13 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
         throw new Error(`Failed to delete recipe from calendar`);
       }
 
-      setMeals((prev) => prev.filter((m) => !(m.id === meal.id && m.category === meal.category)));
+      await fetchDayMeals();
     } catch (error) {
       console.error("Error deleting recipe from calendar:", error);
     } finally {
       setDeletingId(null);
     }
   };
-
-  const emptyNutrition: Nutrition[] = [];
 
   return (
     <div className="mt-4 flex flex-col gap-3">
@@ -169,7 +174,7 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
         )}
       </DroppableCalendarArea>
 
-      <DailyNutritionSummary recipes={emptyNutrition} />
+      <DailyNutritionSummary total={nutritionTotal} />
     </div>
   );
 }

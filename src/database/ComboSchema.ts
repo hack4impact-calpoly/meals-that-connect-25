@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import Nutrition from "./NutritionSchema";
 
 const ComboSchema = new Schema(
   {
@@ -14,6 +15,7 @@ const ComboSchema = new Schema(
     instructions: { type: String, required: false },
     imageUrl: { type: String, required: false },
     isDraft: { type: Boolean, required: true, default: true },
+    nutritional_info: { type: Nutrition.schema, required: true, default: () => ({}) },
   },
   {
     timestamps: true,

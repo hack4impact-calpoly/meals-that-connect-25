@@ -1,5 +1,8 @@
 "use client";
 
+import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
+import { NutritionSummary } from "@/lib/nutrition";
+
 const WEEKDAY_LABELS = ["SUN", "MON", "TUE", "WED", "THUR", "FRI", "SAT"] as const;
 
 function isWeekend(d: Date): boolean {
@@ -15,9 +18,17 @@ type Props = {
   /** In-month dates only (1..last day). */
   monthDates: Date[];
   dateToday: Date;
+  nutritionByDate?: Record<string, NutritionSummary>;
 };
 
-export default function MonthView({ monthDates, dateToday }: Props) {
+function formatDayId(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+}
+
+export default function MonthView({ monthDates, dateToday, nutritionByDate = {} }: Props) {
   const focusDate = monthDates[0] ?? new Date();
   const leadingBlanks = focusDate.getDay(); // Sunday-first
   const cells: Array<Date | null> = [...Array.from({ length: leadingBlanks }, () => null), ...monthDates];
@@ -46,6 +57,8 @@ export default function MonthView({ monthDates, dateToday }: Props) {
               const weekend = isWeekend(date);
               const isToday = date.toDateString() === dateToday.toDateString();
               const inMonth = isSameMonth(date, focusDate);
+              const nutritionSummary = nutritionByDate[formatDayId(date)];
+              const showWarning = !weekend && nutritionSummary && !nutritionSummary.quotaMet;
 
               return (
                 <div
@@ -57,6 +70,11 @@ export default function MonthView({ monthDates, dateToday }: Props) {
                   aria-disabled={weekend}
                   title={weekend ? "Weekends — meals cannot be placed here" : undefined}
                 >
+                  {showWarning ? (
+                    <div className="absolute left-2 top-2">
+                      <WarningQuotaMonthly />
+                    </div>
+                  ) : null}
                   <span className="absolute right-2 top-2 font-montserrat text-sm font-normal text-dark-gray">
                     {String(date.getDate()).padStart(2, "0")}
                   </span>

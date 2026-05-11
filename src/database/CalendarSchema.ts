@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import Nutrition from "./NutritionSchema";
 
 const CalendarSchema = new Schema(
   {
@@ -6,6 +7,7 @@ const CalendarSchema = new Schema(
     entrees: { type: [String], ref: "Recipe", required: false },
     fruits: { type: [String], ref: "Recipe", required: false },
     sides: { type: [String], ref: "Recipe", required: false },
+    nutritional_info: { type: Nutrition.schema, required: true, default: () => ({}) },
   },
   {
     timestamps: true,

@@ -2,23 +2,15 @@
 
 import NutritionalInfo from "@/components/NutrionalInfo";
 import { Nutrition } from "@/lib/types";
+import { emptyNutrition, sumNutrition } from "@/lib/nutrition";
 
 interface DailyNutritionSummaryProps {
-  recipes: Nutrition[];
+  recipes?: Nutrition[];
+  total?: Nutrition;
 }
 
-export default function DailyNutritionSummary({ recipes }: DailyNutritionSummaryProps) {
-  const totals = recipes.reduce(
-    (acc, n) => ({
-      calories: acc.calories + (n.calories ?? 0),
-      protein: acc.protein + (n.protein ?? 0),
-      fat: acc.fat + (n.fat ?? 0),
-      carbs: acc.carbs + (n.carbs ?? 0),
-      fiber: acc.fiber + (n.fiber ?? 0),
-      sodium: acc.sodium + (n.sodium ?? 0),
-    }),
-    { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  );
+export default function DailyNutritionSummary({ recipes = [], total }: DailyNutritionSummaryProps) {
+  const totals = total ?? (recipes.length ? sumNutrition(recipes) : emptyNutrition());
 
   return (
     <div className="rounded-xl border border-pepper/20 bg-white p-4 mt-4">

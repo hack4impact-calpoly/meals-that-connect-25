@@ -1,16 +1,7 @@
 "use client";
 
 import { Nutrition } from "@/lib/types";
-
-// Weekly nutrition quota targets (per week across 5 days)
-const WEEKLY_QUOTA: Nutrition = {
-  calories: 3000,
-  protein: 75,
-  fat: 100,
-  carbs: 350,
-  fiber: 40,
-  sodium: 3200,
-};
+import { WEEKLY_NUTRITION_QUOTA, isNutritionQuotaMet, sumNutrition } from "@/lib/nutrition";
 
 const NUTRIENT_LABELS: Array<{ key: keyof Nutrition; label: string; unit: string }> = [
   { key: "calories", label: "Calories", unit: "kcal" },
@@ -27,19 +18,8 @@ interface WeeklyNutritionQuotaProps {
 }
 
 export default function WeeklyNutritionQuota({ dailyTotals }: WeeklyNutritionQuotaProps) {
-  const weeklyTotals = dailyTotals.reduce(
-    (acc, day) => ({
-      calories: acc.calories + (day.calories ?? 0),
-      protein: acc.protein + (day.protein ?? 0),
-      fat: acc.fat + (day.fat ?? 0),
-      carbs: acc.carbs + (day.carbs ?? 0),
-      fiber: acc.fiber + (day.fiber ?? 0),
-      sodium: acc.sodium + (day.sodium ?? 0),
-    }),
-    { calories: 0, protein: 0, fat: 0, carbs: 0, fiber: 0, sodium: 0 },
-  );
-
-  const allMet = NUTRIENT_LABELS.every(({ key }) => weeklyTotals[key] >= WEEKLY_QUOTA[key]);
+  const weeklyTotals = sumNutrition(dailyTotals);
+  const allMet = isNutritionQuotaMet(weeklyTotals, WEEKLY_NUTRITION_QUOTA);
 
   return (
     <div className="rounded-xl border border-pepper/20 bg-white p-4 mt-4">
@@ -57,7 +37,7 @@ export default function WeeklyNutritionQuota({ dailyTotals }: WeeklyNutritionQuo
       <div className="flex flex-col gap-2">
         {NUTRIENT_LABELS.map(({ key, label, unit }) => {
           const current = weeklyTotals[key];
-          const target = WEEKLY_QUOTA[key];
+          const target = WEEKLY_NUTRITION_QUOTA[key];
           const met = current >= target;
           const progress = Math.min((current / target) * 100, 100);
 
