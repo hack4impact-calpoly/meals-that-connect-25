@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import { CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
@@ -108,16 +108,6 @@ function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
         {item.category}
       </span>
-
-      <button
-        type="button"
-        onClick={() => onDelete(item)}
-        disabled={isDeleting}
-        className="shrink-0 rounded-md p-1.5 text-gray-400 transition hover:bg-red-50 hover:text-red-500 disabled:opacity-50"
-        aria-label={`Remove ${item.name}`}
-      >
-        <Trash2 size={18} strokeWidth={1.7} />
-      </button>
 
       <button
         // Only the vertical grip starts a drag, since otherwise the trashcan button would also drag
