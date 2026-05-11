@@ -172,33 +172,36 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger, selec
               );
 
               const selectDay = () => {
+                if (weekend) return;
                 onDaySelect(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
               };
 
               return (
                 <div
                   key={dayId}
-                  role="button"
-                  tabIndex={0}
-                  onClick={selectDay}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      selectDay();
-                    }
-                  }}
+                  role={weekend ? undefined : "button"}
+                  tabIndex={weekend ? undefined : 0}
+                  onClick={weekend ? undefined : selectDay}
+                  onKeyDown={
+                    weekend
+                      ? undefined
+                      : (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            selectDay();
+                          }
+                        }
+                  }
                   className={`relative min-h-22.5 overflow-visible rounded-xl border border-medium-gray ${
                     weekend ? "bg-medium-gray/35" : "bg-white"
                   } ${isToday ? "ring-2 ring-radish-900" : ""} ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80" : ""} ${
                     isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
-                  } ${inMonth ? "" : "opacity-60"} cursor-pointer`}
+                  } ${inMonth ? "" : "opacity-60"} ${
+                    weekend ? "pointer-events-none cursor-default select-none" : "cursor-pointer"
+                  }`}
                   data-drop-disabled={weekend ? "true" : undefined}
-                  aria-pressed={isDaySelected}
-                  title={
-                    weekend
-                      ? "Weekends — meals cannot be placed here. Click to select this day."
-                      : "Click to select this day"
-                  }
+                  aria-pressed={weekend ? undefined : isDaySelected}
+                  title={weekend ? "Weekends — not available for planning or selection." : "Click to select this day"}
                 >
                   <span className="absolute top-2 right-2 z-10 font-montserrat text-sm font-normal text-dark-gray">
                     {String(date.getDate()).padStart(2, "0")}
