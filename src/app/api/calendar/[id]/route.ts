@@ -3,6 +3,8 @@ import connectDB from "@/database/db";
 import Calendar from "@/database/CalendarSchema";
 import Recipe from "@/database/RecipeSchema";
 import Combo from "@/database/ComboSchema";
+import { getCalendarNutritionSummaries } from "@/database/calendarNutrition";
+import { normalizeNutrition } from "@/lib/nutrition";
 
 type Params = {
   params: Promise<{
@@ -39,7 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         .exec(),
     ]);
 
-    const itemLookup = new Map<string, { _id: string; name: string; serving?: number }>();
+    const itemLookup = new Map<string, { _id: string; name: string; serving?: number; nutritional_info: any }>();
 
     recipeDocs.forEach((doc) => {
       if (doc._id) {
@@ -47,6 +49,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           _id: doc._id.toString(),
           name: doc.name,
           serving: doc.serving,
+          nutritional_info: normalizeNutrition(doc.nutritional_info),
         });
       }
     });
@@ -57,12 +60,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           _id: doc._id.toString(),
           name: doc.name,
           serving: doc.serving,
+          nutritional_info: normalizeNutrition(doc.nutritional_info),
         });
       }
     });
 
     const resolveItems = (ids: string[] = []) =>
-      ids.map((id) => itemLookup.get(id) ?? { _id: id, name: id, serving: undefined });
+      ids.map(
+        (id) => itemLookup.get(id) ?? { _id: id, name: id, serving: undefined, nutritional_info: normalizeNutrition() },
+      );
+    const [nutritionSummary] = await getCalendarNutritionSummaries([id]);
 
     return NextResponse.json(
       {
@@ -70,6 +77,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         entrees: resolveItems(calendarDay.entrees),
         fruits: resolveItems(calendarDay.fruits),
         sides: resolveItems(calendarDay.sides),
+        nutritional_info: nutritionSummary?.nutritional_info ?? normalizeNutrition(),
+        quotaMet: nutritionSummary?.quotaMet ?? false,
       },
       { status: 200 },
     );
