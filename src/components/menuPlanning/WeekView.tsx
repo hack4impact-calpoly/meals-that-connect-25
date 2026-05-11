@@ -4,12 +4,17 @@ import { useEffect, useState } from "react";
 import WeekMealCard from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
-import { BUCKET_TO_CATEGORY, RECIPE_BUCKETS, Recipe, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
+import { RECIPE_BUCKETS, Recipe, RecipeBuckets } from "@/lib/types";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
   refetchTrigger?: number;
+  selectedDate: Date | null;
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 type WeekViewDayData = {
@@ -60,7 +65,7 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   };
 }
 
-export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekViewProps) {
+export default function WeekView({ dateToday, weekDates, refetchTrigger, selectedDate }: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -108,6 +113,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
         const dayId = weekDayIds[index] ?? formatCalendarDayId(date);
         const dayData = weekViewMeals[index] ?? EMPTY_DAY;
         const isToday = date.toDateString() === dateToday.toDateString();
+        const isDaySelected = selectedDate ? isSameCalendarDay(date, selectedDate) : false;
 
         return (
           <div key={dayId} className="flex min-w-0 flex-col items-center">
@@ -122,7 +128,9 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger }: WeekV
             <div
               className={`flex min-h-105 w-full flex-1 flex-col gap-3 rounded-[14px] p-3 ${
                 isToday ? "border-2 border-radish-900" : "border border-medium-gray/35"
-              } bg-white`}
+              } bg-white ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80 ring-offset-2 ring-offset-gray-100" : ""} ${
+                isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
+              }`}
             >
               <DroppableCalendarArea dayId={dayId}>
                 {isLoading ? (
