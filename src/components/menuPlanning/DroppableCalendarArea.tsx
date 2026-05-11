@@ -1,4 +1,5 @@
 "use client";
+import type { DropZoneData } from "@/app/menuPlanning/page";
 import { useDroppable } from "@dnd-kit/core";
 import { ReactNode } from "react";
 
@@ -9,12 +10,13 @@ interface DroppableCalendarAreaProps {
 }
 // TODO: figure out how this looks and if I can reuse it
 export default function DroppableCalendarArea({ dayId, children }: DroppableCalendarAreaProps) {
+  const dropData: DropZoneData = {
+    dest: "calendar",
+    dayId,
+  };
   const { setNodeRef, isOver } = useDroppable({
     id: `droppable-${dayId}`,
-    data: {
-      type: "calendar",
-      dayId,
-    },
+    data: dropData,
   });
 
   return (

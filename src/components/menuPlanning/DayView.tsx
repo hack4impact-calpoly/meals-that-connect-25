@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
 import { BUCKET_TO_CATEGORY, Nutrition, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
-import type { RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
+import type { Recipe, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
 
 interface DayViewProps {
   date: Date;
@@ -20,15 +20,9 @@ type DayMeal = {
   category: RecipeBucket;
 };
 
-type CalendarRecipe = {
-  _id: string;
-  name: string;
-  serving?: number;
-};
-
 type CalendarDayResponse = {
   _id: string;
-} & Partial<RecipeBuckets<CalendarRecipe>>;
+} & RecipeBuckets<Recipe>;
 
 const formatDayId = (date: Date) => {
   const year = date.getFullYear();
