@@ -4,15 +4,9 @@ import { ArrowUpRight } from "lucide-react";
 
 type RecipeSeeMorePopoverProps = {
   recipeId: string;
-  /** Tighter row for month cells */
   variant?: "compact" | "default";
 };
 
-/**
- * “See More” sits in normal layout at the bottom of the recipe card (not floating above it).
- * Shown when the card (`group`) is hovered so the cursor never leaves the hover region to click.
- * Opens `/recipe?id=` in a new tab (RecipePageClient).
- */
 export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: RecipeSeeMorePopoverProps) {
   const href = `/recipe?id=${encodeURIComponent(recipeId)}`;
   const textSize = variant === "compact" ? "text-[11px]" : "text-xs";
