@@ -2,26 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
 import "@/database/RecipeSchema";
 import Calendar from "@/database/CalendarSchema";
+import { getCalendarNutritionSummaries } from "@/database/calendarNutrition";
+import { normalizeNutrition } from "@/lib/nutrition";
 import { RECIPE_BUCKETS } from "@/lib/types";
-import type { Recipe, RecipeBucket, RecipeBuckets } from "@/lib/types";
+import type { Nutrition, RecipeBucket, RecipeBuckets, RecipeCategory } from "@/lib/types";
 
 type Params = {
-  params: Promise<{
-    id: string;
-  }>;
+  params: Promise<{ id: string }> | { id: string };
 };
 
 type CalendarRecipePreview = {
   _id: string;
   name: string;
+  category: RecipeCategory;
   serving?: number;
+  nutritional_info?: Nutrition;
 };
 
 type CalendarDayResponse = {
   _id: string;
+  nutritional_info: Nutrition;
+  quotaMet: boolean;
 } & RecipeBuckets<CalendarRecipePreview>;
 
-const populateBucketPaths = RECIPE_BUCKETS.map((bucket) => ({ path: bucket }));
+const populateBucketPaths = RECIPE_BUCKETS.map((bucket) => ({
+  path: bucket,
+  select: "_id name category serving nutritional_info",
+}));
+
+async function getRouteParams(params: Params["params"]) {
+  return await params;
+}
 
 function isRecipeBucket(value: unknown): value is RecipeBucket {
   return typeof value === "string" && RECIPE_BUCKETS.includes(value as RecipeBucket);
@@ -38,9 +49,7 @@ function getBucketIds(calendarDay: { get: (path: string) => unknown }, bucket: R
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  // Returns the fully populated calendar day.
-  // Buckets contain the entire recipe data, not just strings or preview.
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -49,13 +58,22 @@ export async function GET(_req: NextRequest, { params }: Params) {
   try {
     await connectDB();
 
-    const calendarDay = await Calendar.findById(id).populate(populateBucketPaths).lean().exec();
+    const calendarDay = await Calendar.findById(id).populate(populateBucketPaths).lean<CalendarDayResponse>().exec();
 
     if (!calendarDay) {
       return NextResponse.json({ error: "Calendar day not found" }, { status: 404 });
     }
 
-    return NextResponse.json(calendarDay, { status: 200 });
+    const [nutritionSummary] = await getCalendarNutritionSummaries([id]);
+
+    return NextResponse.json(
+      {
+        ...calendarDay,
+        nutritional_info: nutritionSummary?.nutritional_info ?? normalizeNutrition(calendarDay.nutritional_info),
+        quotaMet: nutritionSummary?.quotaMet ?? false,
+      },
+      { status: 200 },
+    );
   } catch (err) {
     console.error("Error fetching calendar day:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
@@ -63,7 +81,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function POST(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });
@@ -83,7 +101,11 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     await connectDB();
 
-    await Calendar.findOneAndUpdate({ _id: id }, { $addToSet: { [category]: recipeId } }, { upsert: true });
+    await Calendar.findOneAndUpdate(
+      { _id: id },
+      { $addToSet: { [category]: recipeId } },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true },
+    );
 
     const updatedDay = await Calendar.findById(id).populate(populateBucketPaths).exec();
 
@@ -95,7 +117,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Calendar ID is required" }, { status: 400 });

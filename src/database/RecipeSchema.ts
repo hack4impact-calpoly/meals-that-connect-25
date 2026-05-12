@@ -22,6 +22,7 @@ const RecipeSchema = new Schema(
     category: {
       type: String,
       enum: RECIPE_CATEGORIES,
+      default: "Entree",
       required: true,
     },
 
@@ -50,18 +51,23 @@ const RecipeSchema = new Schema(
       shellfishFree: { type: Boolean, default: false },
     },
 
+    allergens: { type: [String], required: false, default: [] },
+    tags: { type: [String], required: false, default: [] },
+    filters: { type: [String], required: false, default: [] },
+
     ingredients: {
       type: [Ingredient.schema],
       required: true,
     },
 
     instructions: { type: String, required: false },
+    comments: { type: String, required: false },
     notes: { type: String, required: false },
     imageUrl: { type: String, required: false },
     lastVerified: { type: Date, required: false },
     verifiedBy: { type: String, required: false },
     isDraft: { type: Boolean, required: true, default: true },
-    nutritional_info: { type: Nutrition.schema, required: true },
+    nutritional_info: { type: Nutrition.schema, required: true, default: () => ({}) },
   },
   {
     timestamps: true,

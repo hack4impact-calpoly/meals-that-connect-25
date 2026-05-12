@@ -5,11 +5,15 @@ import { RECIPE_BUCKETS, RecipeBuckets } from "@/lib/types";
 import { deriveComboDataFromRecipeIds, getFinalRecipeBuckets } from "@/lib/server/comboHelpers";
 
 type Params = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }> | { id: string };
 };
 
+async function getRouteParams(params: Params["params"]) {
+  return await params;
+}
+
 export async function GET(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Combo ID is required" }, { status: 400 });
@@ -60,8 +64,8 @@ export async function GET(req: NextRequest, { params }: Params) {
   }
 }
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export async function PATCH(req: NextRequest, { params }: Params) {
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Combo ID is required" }, { status: 400 });
@@ -129,7 +133,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Missing Combo ID" }, { status: 400 });

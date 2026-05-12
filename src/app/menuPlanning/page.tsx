@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
@@ -18,30 +18,19 @@ import {
   Nutrition,
   Recipe,
   RecipeBucket,
-  RecipeCategory,
   RECIPE_BUCKETS,
   SortOption,
   createEmptyFilterSelections,
   CATEGORY_TO_BUCKET,
   RecipeNutritionOnly,
 } from "@/lib/types";
+import { NutritionSummary, emptyNutrition } from "@/lib/nutrition";
 import { useMealData } from "@/hooks/useMealData";
-import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
-import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
 import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 
 const today = new Date();
-
-// Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
-const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
-  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
-  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
-  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
-  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
-  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
-];
 
 export type SidebarDragData =
   | {
@@ -170,24 +159,76 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
   return [];
 };
 
+const formatCalendarDayId = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
+};
+
 export default function MenuPlanning() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
-  const [filters, setFilters] = useState(() => createEmptyFilterSelections());
+  const [filters] = useState(() => createEmptyFilterSelections());
 
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
+  const [nutritionByDate, setNutritionByDate] = useState<Record<string, NutritionSummary>>({});
 
   useEffect(() => {
     setDatesOffset(0);
   }, [calendarView]);
 
-  // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
   const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
+  const viewDateIds = viewDates.map(formatCalendarDayId);
+  const viewDateKey = viewDateIds.join(",");
+  const weeklyNutritionTotals: Nutrition[] = viewDateIds.map(
+    (dateId) => nutritionByDate[dateId]?.nutritional_info ?? emptyNutrition(),
+  );
+
+  useEffect(() => {
+    if (!viewDateKey) {
+      setNutritionByDate({});
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchNutrition() {
+      try {
+        const res = await fetch(`/api/calendar/nutrition?ids=${encodeURIComponent(viewDateKey)}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch nutrition totals (${res.status})`);
+        }
+
+        const body: { data?: NutritionSummary[] } = await res.json();
+        const summaries = body.data ?? [];
+
+        if (!controller.signal.aborted) {
+          setNutritionByDate(
+            summaries.reduce<Record<string, NutritionSummary>>((acc, summary) => {
+              acc[summary._id] = summary;
+              return acc;
+            }, {}),
+          );
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Error fetching nutrition totals:", error);
+      }
+    }
+
+    fetchNutrition();
+
+    return () => controller.abort();
+  }, [viewDateKey, recipeDropTrigger]);
 
   const downloadMonthlyMenu = async () => {
     const baseDate = calendarView === "Month" ? viewDates[10] : viewDates[0];
@@ -505,12 +546,12 @@ export default function MenuPlanning() {
 
             {calendarView === "Month" && (
               <>
-                <MonthView monthDates={viewDates} dateToday={today} refetchTrigger={recipeDropTrigger} />
-
-                <div className="mt-2">
-                  <WarningQuotaMonthly />
-                </div>
-
+                <MonthView
+                  monthDates={viewDates}
+                  dateToday={today}
+                  nutritionByDate={nutritionByDate}
+                  refetchTrigger={recipeDropTrigger}
+                />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
@@ -519,13 +560,16 @@ export default function MenuPlanning() {
 
             {calendarView === "Week" && (
               <>
-                <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
-
+                <WeekView
+                  dateToday={today}
+                  weekDates={viewDates}
+                  refetchTrigger={recipeDropTrigger}
+                  nutritionByDate={nutritionByDate}
+                />
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
-
-                <WeeklyNutritionQuota dailyTotals={DUMMY_WEEKLY_NUTRITION} />
+                <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
               </>
             )}
 
@@ -535,8 +579,6 @@ export default function MenuPlanning() {
                 <div className="mt-2 flex justify-end">
                   <TrashDropZone />
                 </div>
-
-                <DailyNutritionSummary recipes={[]} />
               </>
             )}
           </div>

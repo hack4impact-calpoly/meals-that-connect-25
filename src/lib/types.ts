@@ -142,6 +142,7 @@ export type Combo<T = string> = {
   imageUrl?: string;
 
   isDraft: boolean;
+  nutritional_info: Nutrition;
 } & MealFilterFields &
   RecipeBuckets<T>;
 
