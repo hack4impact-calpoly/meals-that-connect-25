@@ -12,7 +12,6 @@ import DayView, { DayMealCardPreview } from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
 import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
 import {
-  CalendarDay,
   Combo,
   CategoryValue,
   Nutrition,
@@ -26,6 +25,8 @@ import {
 } from "@/lib/types";
 import { NutritionSummary, emptyNutrition } from "@/lib/nutrition";
 import { useMealData } from "@/hooks/useMealData";
+import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
+import { downloadMenuPlanningExportForView } from "@/lib/menuPlanningExport";
 import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
 import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
@@ -173,6 +174,7 @@ export default function MenuPlanning() {
   const [datesOffset, setDatesOffset] = useState(0);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [filters] = useState(() => createEmptyFilterSelections());
+  const [exportFormat, setExportFormat] = useState<"Display" | "Nutritional">("Nutritional");
 
   const [recipeDropTrigger, setRecipeDropTrigger] = useState(0);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -231,111 +233,8 @@ export default function MenuPlanning() {
   }, [viewDateKey, recipeDropTrigger]);
 
   const downloadMonthlyMenu = async () => {
-    const baseDate = calendarView === "Month" ? viewDates[10] : viewDates[0];
-    const currentMonth = baseDate.getMonth();
-    const currentYear = baseDate.getFullYear();
-
     try {
-      const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth + 1}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to fetch monthly menu: ${res.status}`);
-      }
-
-      const dates: CalendarDay<RecipeNutritionOnly>[] = await res.json();
-      const data: IContent[] = [];
-
-      dates.forEach((date) => {
-        const formattedDate = `${date._id.slice(0, 4)}-${date._id.slice(4, 6)}-${date._id.slice(6, 8)}`;
-
-        const allItems = [
-          ...(date.entrees || []),
-          ...(date.vegetables || []),
-          ...(date.fruits || []),
-          ...(date.grains || []),
-        ];
-
-        const totals = allItems.reduce(
-          (acc, item) => {
-            acc.calorie += item.nutritional_info.calories || 0;
-            acc.protein += item.nutritional_info.protein || 0;
-            acc.fat += item.nutritional_info.fat || 0;
-            acc.carbs += item.nutritional_info.carbs || 0;
-            acc.fiber += item.nutritional_info.fiber || 0;
-            acc.sodium += item.nutritional_info.sodium || 0;
-            return acc;
-          },
-          {
-            name: formattedDate,
-            serving: "",
-            calorie: 0,
-            protein: 0,
-            fat: 0,
-            carbs: 0,
-            fiber: 0,
-            sodium: 0,
-          },
-        );
-
-        data.push(totals);
-
-        const pushItems = (items: RecipeNutritionOnly[] = []) => {
-          items.forEach((item) => {
-            data.push({
-              name: item.name,
-              serving: item.serving,
-              calorie: item.nutritional_info.calories,
-              protein: item.nutritional_info.protein,
-              fat: item.nutritional_info.fat,
-              carbs: item.nutritional_info.carbs,
-              fiber: item.nutritional_info.fiber,
-              sodium: item.nutritional_info.sodium,
-            });
-          });
-        };
-
-        pushItems(date.entrees);
-        pushItems(date.vegetables);
-        pushItems(date.fruits);
-        pushItems(date.grains);
-
-        data.push({
-          name: "",
-          serving: "",
-          calorie: "",
-          protein: "",
-          fat: "",
-          carbs: "",
-          fiber: "",
-          sodium: "",
-        });
-      });
-
-      const sheetData: IJsonSheet[] = [
-        {
-          sheet: "Menu",
-          columns: [
-            { label: "Item Name", value: "name" },
-            { label: "Serving", value: "serving" },
-            { label: "Cals (kcal)", value: "calorie" },
-            { label: "Prot (g)", value: "protein" },
-            { label: "Fat (g)", value: "fat" },
-            { label: "Carbs (g)", value: "carbs" },
-            { label: "Fiber (g)", value: "fiber" },
-            { label: "Sodium (mg)", value: "sodium" },
-          ],
-          content: data,
-        },
-      ];
-
-      const settings = {
-        fileName: `${currentYear}_${(currentMonth + 1).toString().padStart(2, "0")}_MTC_Menu.xlsx`,
-      };
-
-      xlsx(sheetData, settings);
+      await downloadMenuPlanningExportForView({ calendarView, viewDates, format: exportFormat });
     } catch (error) {
       console.error("Error downloading monthly menu:", error);
     }
@@ -532,15 +431,25 @@ export default function MenuPlanning() {
                   </button>
                 </div>
 
-                <span className="ml-2 rounded-md bg-radish-900 p-2">
-                  <ArrowDownToLine
-                    className="cursor-pointer"
-                    color="white"
-                    size={20}
-                    strokeWidth={2.5}
-                    onClick={downloadMonthlyMenu}
-                  />
-                </span>
+                <div className="flex gap-2 ml-2 items-center">
+                  <select
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value as "Display" | "Nutritional")}
+                    className="bg-white rounded-md px-3 py-2 font-semibold text-black border border-gray-300 cursor-pointer"
+                  >
+                    <option value="Nutritional">Nutritional</option>
+                    <option value="Display">Display</option>
+                  </select>
+                  <span className="bg-radish-900 rounded-md p-2">
+                    <ArrowDownToLine
+                      className="cursor-pointer"
+                      color="white"
+                      size={20}
+                      strokeWidth={2.5}
+                      onClick={downloadMonthlyMenu}
+                    />
+                  </span>
+                </div>
               </div>
             </div>
 
