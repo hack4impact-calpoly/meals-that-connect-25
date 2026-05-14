@@ -47,7 +47,7 @@ function mapCalendarDayToMeals(calendarDay: CalendarDay<RecipeNutritionOnly>): R
 }
 
 function getVisibleMonthMeals(meals: RecipeNutritionOnly[]) {
-  if (meals.length <= 2) {
+  if (meals.length <= 1) {
     return {
       visibleMeals: meals,
       hiddenCount: 0,
