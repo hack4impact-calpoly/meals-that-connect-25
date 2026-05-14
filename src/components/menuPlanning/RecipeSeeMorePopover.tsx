@@ -19,7 +19,7 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className={`pointer-events-none inline-flex w-fit max-w-full items-center gap-0.5 font-montserrat font-semibold text-current opacity-0 underline decoration-current/40 underline-offset-2 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100 hover:decoration-current ${textSize}`}
+        className={`inline-flex w-fit max-w-full items-center gap-0.5 font-montserrat font-semibold text-current underline decoration-current/40 underline-offset-2 hover:decoration-current ${textSize}`}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => e.stopPropagation()}
         aria-label="See More: open recipe in new tab"
