@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
@@ -31,8 +31,6 @@ import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
 import DailyNutritionSummary from "@/components/menuPlanning/DailyNutritionSummary";
 import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
-
-const today = new Date();
 
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
@@ -171,10 +169,13 @@ const getCurrentViewDates = (today: Date, view: "Month" | "Week" | "Day") => {
 };
 
 export default function MenuPlanning() {
+  const [planningRoot] = useState(() => new Date());
+  const dateToday = new Date();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
+  const [pickedDateFromMonth, setPickedDateFromMonth] = useState<Date | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [filters, setFilters] = useState(() => createEmptyFilterSelections());
 
@@ -182,15 +183,46 @@ export default function MenuPlanning() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
 
-  useEffect(() => {
-    setDatesOffset(0);
-  }, [calendarView]);
+  const previousCalendarView = useRef(calendarView);
 
-  // Day: 1 day, Week: 5 days, Month: 35 days (including prev/next month)
-  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
+  useEffect(() => {
+    const prev = previousCalendarView.current;
+    previousCalendarView.current = calendarView;
+
+    if (calendarView === "Month" && prev !== "Month" && pickedDateFromMonth) {
+      const p = pickedDateFromMonth;
+      const monthDiff = (p.getFullYear() - planningRoot.getFullYear()) * 12 + (p.getMonth() - planningRoot.getMonth());
+      setDatesOffset(monthDiff);
+      return;
+    }
+
+    if (prev !== calendarView) {
+      setDatesOffset(0);
+    }
+  }, [calendarView, pickedDateFromMonth, planningRoot]);
+
+  const offsetAnchor = getOffsetDate(planningRoot, datesOffset, calendarView);
+  const monthAnchor = getOffsetDate(planningRoot, datesOffset, "Month");
+  const weekDayAnchor =
+    (calendarView === "Week" || calendarView === "Day") && pickedDateFromMonth ? pickedDateFromMonth : offsetAnchor;
+
+  const viewDates =
+    calendarView === "Month"
+      ? getCurrentViewDates(monthAnchor, "Month")
+      : getCurrentViewDates(weekDayAnchor, calendarView);
+
+  const bumpDatesOffset = (delta: number) => {
+    setPickedDateFromMonth(null);
+    setDatesOffset((d) => d + delta);
+  };
+
+  const resetToPlanningToday = () => {
+    setPickedDateFromMonth(null);
+    setDatesOffset(0);
+  };
 
   const downloadMonthlyMenu = async () => {
-    const baseDate = calendarView === "Month" ? viewDates[10] : viewDates[0];
+    const baseDate = viewDates[0] ?? planningRoot;
     const currentMonth = baseDate.getMonth();
     const currentYear = baseDate.getFullYear();
 
@@ -431,9 +463,9 @@ export default function MenuPlanning() {
           <div className="flex w-260 flex-col">
             <div className="flex items-center justify-between">
               <div className="flex items-center justify-center gap-2">
-                <CurrentDateButton onClick={() => setDatesOffset(0)} />
+                <CurrentDateButton onClick={resetToPlanningToday} />
 
-                <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset - 1)}>
+                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(-1)}>
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
 
@@ -456,7 +488,7 @@ export default function MenuPlanning() {
                     })}
                 </span>
 
-                <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset + 1)}>
+                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(1)}>
                   <ChevronRight size={20} strokeWidth={2.5} />
                 </button>
               </div>
@@ -467,12 +499,14 @@ export default function MenuPlanning() {
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
                       calendarView === "Month" ? "bg-radish-900 text-white" : ""
                     }`}
+                    type="button"
                     onClick={() => setCalendarView("Month")}
                   >
                     Month
                   </button>
 
                   <button
+                    type="button"
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold ${
                       calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"
                     }`}
@@ -482,6 +516,7 @@ export default function MenuPlanning() {
                   </button>
 
                   <button
+                    type="button"
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
                       calendarView === "Day" ? "bg-radish-900 text-white" : ""
                     }`}
@@ -505,7 +540,13 @@ export default function MenuPlanning() {
 
             {calendarView === "Month" && (
               <>
-                <MonthView monthDates={viewDates} dateToday={today} refetchTrigger={recipeDropTrigger} />
+                <MonthView
+                  monthDates={viewDates}
+                  dateToday={dateToday}
+                  refetchTrigger={recipeDropTrigger}
+                  selectedDate={pickedDateFromMonth}
+                  onDaySelect={setPickedDateFromMonth}
+                />
 
                 <div className="mt-2">
                   <WarningQuotaMonthly />
@@ -519,7 +560,12 @@ export default function MenuPlanning() {
 
             {calendarView === "Week" && (
               <>
-                <WeekView dateToday={today} weekDates={viewDates} refetchTrigger={recipeDropTrigger} />
+                <WeekView
+                  dateToday={dateToday}
+                  weekDates={viewDates}
+                  refetchTrigger={recipeDropTrigger}
+                  selectedDate={pickedDateFromMonth}
+                />
 
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
