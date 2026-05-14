@@ -1,14 +1,24 @@
-import { Nutrition, RecipeNutritionOnly } from "@/lib/types";
+import { Nutrition } from "@/lib/types";
 
 export type MenuExportFormat = "Display" | "Nutritional";
 
+type ExportRecipe = {
+  _id?: string;
+  name: string;
+  category?: string;
+  serving?: number;
+  nutritional_info?: Partial<Nutrition>;
+};
+
+type CalendarDayExportItem = ExportRecipe | string | null;
+
 export type CalendarDayExport = {
   _id: string;
-  entrees?: RecipeNutritionOnly[];
-  vegetables?: RecipeNutritionOnly[];
-  fruits?: RecipeNutritionOnly[];
-  grains?: RecipeNutritionOnly[];
-  sides?: RecipeNutritionOnly[];
+  entrees?: CalendarDayExportItem[];
+  vegetables?: CalendarDayExportItem[];
+  fruits?: CalendarDayExportItem[];
+  grains?: CalendarDayExportItem[];
+  sides?: CalendarDayExportItem[];
 };
 
 type ExcelValue = string | number | null | undefined;
@@ -603,6 +613,10 @@ function getCalendarDay(dayMap: Map<string, CalendarDayExport>, date: Date) {
   return dayMap.get(id) ?? emptyCalendarDay(id);
 }
 
+function isExportRecipe(item: CalendarDayExportItem): item is ExportRecipe {
+  return typeof item === "object" && item !== null && typeof item.name === "string";
+}
+
 function getDayItems(day: CalendarDayExport | undefined) {
   return [
     ...(day?.entrees ?? []),
@@ -610,10 +624,10 @@ function getDayItems(day: CalendarDayExport | undefined) {
     ...(day?.fruits ?? []),
     ...(day?.grains ?? []),
     ...(day?.sides ?? []),
-  ];
+  ].filter(isExportRecipe);
 }
 
-function numberOrZero(value: number | undefined) {
+function numberOrZero(value: number | null | undefined) {
   return Number.isFinite(value) ? Number(value) : 0;
 }
 
@@ -621,7 +635,7 @@ function round(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function sumNutrition(items: RecipeNutritionOnly[]): Nutrition {
+function sumNutrition(items: ExportRecipe[]): Nutrition {
   return items.reduce(
     (total, item) => ({
       calories: total.calories + numberOrZero(item.nutritional_info?.calories),
@@ -635,22 +649,22 @@ function sumNutrition(items: RecipeNutritionOnly[]): Nutrition {
   );
 }
 
-function nutritionValues(nutrition: Nutrition) {
-  const fat = numberOrZero(nutrition.fat);
+function nutritionValues(nutrition: Partial<Nutrition> | undefined) {
+  const fat = numberOrZero(nutrition?.fat);
 
   return [
-    round(numberOrZero(nutrition.calories)),
-    round(numberOrZero(nutrition.sodium)),
-    round(numberOrZero(nutrition.protein)),
+    round(numberOrZero(nutrition?.calories)),
+    round(numberOrZero(nutrition?.sodium)),
+    round(numberOrZero(nutrition?.protein)),
     "--",
     "--",
-    round(numberOrZero(nutrition.carbs)),
+    round(numberOrZero(nutrition?.carbs)),
     round(fat),
     round(fat * 9),
     "--",
     "--",
     "--",
-    round(numberOrZero(nutrition.fiber)),
+    round(numberOrZero(nutrition?.fiber)),
     "--",
     "--",
   ];
@@ -855,7 +869,7 @@ export async function downloadMenuPlanningExportForView({
   const exportMonths = getCalendarExportMonths(year, monthIndex, format);
   const responses = await Promise.all(
     exportMonths.map((exportMonth) =>
-      fetch(`/api/calendar?year=${exportMonth.year}&month=${exportMonth.monthIndex + 1}`, {
+      fetch(`/api/calendar?year=${exportMonth.year}&month=${exportMonth.monthIndex + 1}&populate=nutrition`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       }),

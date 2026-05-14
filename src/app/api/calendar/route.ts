@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/database/db";
+import "@/database/RecipeSchema";
 import Calendar from "@/database/CalendarSchema";
 import { RECIPE_BUCKETS } from "@/lib/types";
 
