@@ -213,88 +213,70 @@ export default function MenuPlanning() {
   const weekDayAnchor =
     (calendarView === "Week" || calendarView === "Day") && pickedDateFromMonth ? pickedDateFromMonth : offsetAnchor;
 
-const viewDates =
-  calendarView === "Month"
-    ? getCurrentViewDates(monthAnchor, "Month")
-    : getCurrentViewDates(weekDayAnchor, calendarView);
+  const viewDates =
+    calendarView === "Month"
+      ? getCurrentViewDates(monthAnchor, "Month")
+      : getCurrentViewDates(weekDayAnchor, calendarView);
 
-const viewDateIds = viewDates.map(formatCalendarDayId);
+  const viewDateIds = viewDates.map(formatCalendarDayId);
 
-const viewDateKey = viewDateIds.join(",");
+  const viewDateKey = viewDateIds.join(",");
 
-const weeklyNutritionTotals: Nutrition[] = viewDateIds.map(
-  (dateId) =>
-    nutritionByDate[dateId]?.nutritional_info ??
-    emptyNutrition(),
-);
+  const weeklyNutritionTotals: Nutrition[] = viewDateIds.map(
+    (dateId) => nutritionByDate[dateId]?.nutritional_info ?? emptyNutrition(),
+  );
 
-const bumpDatesOffset = (delta: number) => {
-  setPickedDateFromMonth(null);
-  setDatesOffset((d) => d + delta);
-};
+  const bumpDatesOffset = (delta: number) => {
+    setPickedDateFromMonth(null);
+    setDatesOffset((d) => d + delta);
+  };
 
-const resetToPlanningToday = () => {
-  setPickedDateFromMonth(null);
-  setDatesOffset(0);
-};
+  const resetToPlanningToday = () => {
+    setPickedDateFromMonth(null);
+    setDatesOffset(0);
+  };
 
-useEffect(() => {
-  if (!viewDateKey) {
-    setNutritionByDate({});
-    return;
-  }
-
-  const controller = new AbortController();
-
-  async function fetchNutrition() {
-    try {
-      const res = await fetch(
-        `/api/calendar/nutrition?ids=${encodeURIComponent(
-          viewDateKey,
-        )}`,
-        {
-          signal: controller.signal,
-        },
-      );
-
-      if (!res.ok) {
-        throw new Error(
-          `Failed to fetch nutrition totals (${res.status})`,
-        );
-      }
-
-      const body: { data?: NutritionSummary[] } =
-        await res.json();
-
-      const summaries = body.data ?? [];
-
-      if (!controller.signal.aborted) {
-        setNutritionByDate(
-          summaries.reduce<
-            Record<string, NutritionSummary>
-          >((acc, summary) => {
-            acc[summary._id] = summary;
-            return acc;
-          }, {}),
-        );
-      }
-    } catch (error) {
-      if (
-        error instanceof Error &&
-        error.name === "AbortError"
-      ) {
-        return;
-      }
-
-      console.error(
-        "Error fetching nutrition totals:",
-        error,
-      );
+  useEffect(() => {
+    if (!viewDateKey) {
+      setNutritionByDate({});
+      return;
     }
-  }
-  fetchNutrition();
-  return () => controller.abort();
-}, [viewDateKey, recipeDropTrigger]);
+
+    const controller = new AbortController();
+
+    async function fetchNutrition() {
+      try {
+        const res = await fetch(`/api/calendar/nutrition?ids=${encodeURIComponent(viewDateKey)}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch nutrition totals (${res.status})`);
+        }
+
+        const body: { data?: NutritionSummary[] } = await res.json();
+
+        const summaries = body.data ?? [];
+
+        if (!controller.signal.aborted) {
+          setNutritionByDate(
+            summaries.reduce<Record<string, NutritionSummary>>((acc, summary) => {
+              acc[summary._id] = summary;
+              return acc;
+            }, {}),
+          );
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
+        console.error("Error fetching nutrition totals:", error);
+      }
+    }
+    fetchNutrition();
+    return () => controller.abort();
+  }, [viewDateKey, recipeDropTrigger]);
 
   const downloadMonthlyMenu = async () => {
     const baseDate = viewDates[0] ?? planningRoot;
@@ -530,7 +512,7 @@ useEffect(() => {
                   monthDates={viewDates}
                   dateToday={today}
                   nutritionByDate={nutritionByDate}
-                  refetchTrigger={recipeDropTrigger}        
+                  refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   onDaySelect={setPickedDateFromMonth}
                 />
