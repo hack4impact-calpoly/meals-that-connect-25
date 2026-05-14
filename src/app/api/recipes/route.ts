@@ -29,13 +29,15 @@ export async function GET(req: NextRequest) {
     const isSubrecipeParam = searchParams.get("isSubrecipe");
     const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
-    // Values that are not recognized will be thrown away.
+    const tagParams = searchParams
+      .getAll("filters")
+      .concat(searchParams.getAll("tags"))
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean);
+
     const categoryParams = getNormalizedParams(searchParams, "categories", RECIPE_CATEGORIES);
-
     const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
-
     const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
-
     const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
 
     const servingParams = searchParams
@@ -51,18 +53,20 @@ export async function GET(req: NextRequest) {
 
     const andClauses: any[] = [];
 
+    if (tagParams.length > 0) {
+      const tagRegexes = tagParams.map((tag) => new RegExp(`^${tag}$`, "i"));
+
+      andClauses.push({
+        $or: [{ filters: { $all: tagRegexes } }, { tags: { $all: tagRegexes } }, { allergens: { $all: tagRegexes } }],
+      });
+    }
+
     if (proteinSourceParams.length > 0) {
-      // "$in" means something like: proteinSources=Chicken&proteinSources=Tofu
-      // will match recipes with chicken OR tofu OR both.
       andClauses.push({
         proteinSources: { $in: proteinSourceParams },
       });
-      // If we ever want "chicken AND tofu, should use "$all" instead"
     }
 
-    // The rest are ANDs. Meaning:
-    // dietary=halal&exclusions=glutenFree
-    // requires halal AND glutenFree
     for (const dietaryKey of dietaryParams) {
       andClauses.push({
         [`dietary.${dietaryKey}`]: true,
@@ -109,7 +113,7 @@ export async function GET(req: NextRequest) {
       filter.isSubrecipe = true;
     } else if (isSubrecipeParam === "false") {
       filter.isSubrecipe = false;
-    } // Undefined means query for a mix
+    }
 
     let sort: Record<string, 1 | -1> = { createdAt: -1 };
 
@@ -129,8 +133,6 @@ export async function GET(req: NextRequest) {
     }
 
     const totalCount = await Recipe.countDocuments(filter);
-    console.log(`Filter: ${JSON.stringify(filter)}, Total Count: ${totalCount}`);
-
     let query = Recipe.find(filter)
       .sort(sort)
       .skip((page - 1) * limit)

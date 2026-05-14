@@ -6,15 +6,19 @@ import type { RecipeCategory } from "@/lib/types";
 import { refreshCombosContainingRecipe, updateAffectsComboData } from "@/lib/server/comboHelpers";
 
 type Params = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ id: string }> | { id: string };
 };
+
+async function getRouteParams(params: Params["params"]) {
+  return await params;
+}
 
 function isRecipeCategory(value: unknown): value is RecipeCategory {
   return typeof value === "string" && RECIPE_CATEGORIES.includes(value as RecipeCategory);
 }
 
 export async function GET(_req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
@@ -35,7 +39,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Recipe ID is required" }, { status: 400 });
@@ -71,8 +75,6 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (updateAffectsComboData(updates)) {
-      // Refresh combos only if this change would actually affect them.
-      // For example, a nutrition change or a filter change.
       await refreshCombosContainingRecipe(id);
     }
 
@@ -88,7 +90,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
-  const { id } = await params;
+  const { id } = await getRouteParams(params);
 
   if (!id) {
     return NextResponse.json({ error: "Missing Recipe ID" }, { status: 400 });

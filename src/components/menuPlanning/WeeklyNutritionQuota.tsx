@@ -1,28 +1,16 @@
 "use client";
 
-import { NUTRIENT_LABELS, Nutrition, WEEKLY_NUTRITION_QUOTA, ZERO_NUTRITION } from "@/lib/types";
+import { NUTRIENT_LABELS, WEEKLY_NUTRITION_QUOTA } from "@/lib/types";
+import type { Nutrition } from "@/lib/types";
+import { isNutritionQuotaMet, sumNutrition } from "@/lib/nutrition";
 
 interface WeeklyNutritionQuotaProps {
   dailyTotals: Nutrition[];
 }
 
-function sumNutritionTotals(dailyTotals: Nutrition[]): Nutrition {
-  return dailyTotals.reduce<Nutrition>(
-    (total, day) => {
-      for (const { key } of NUTRIENT_LABELS) {
-        total[key] += day[key];
-      }
-
-      return total;
-    },
-    { ...ZERO_NUTRITION },
-  );
-}
-
 export default function WeeklyNutritionQuota({ dailyTotals }: WeeklyNutritionQuotaProps) {
-  const weeklyTotals = sumNutritionTotals(dailyTotals);
-
-  const allMet = NUTRIENT_LABELS.every(({ key }) => weeklyTotals[key] >= WEEKLY_NUTRITION_QUOTA[key]);
+  const weeklyTotals = sumNutrition(dailyTotals);
+  const allMet = isNutritionQuotaMet(weeklyTotals, WEEKLY_NUTRITION_QUOTA);
 
   return (
     <div className="mt-4 rounded-xl border border-pepper/20 bg-white p-4">

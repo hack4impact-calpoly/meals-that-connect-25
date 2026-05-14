@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import MonthMealCard from "./MonthMealCard";
+import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import { RECIPE_BUCKETS } from "@/lib/types";
-import type { CalendarDay, NutrientDisplay, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
+import type { CalendarDay, RecipeNutritionOnly } from "@/lib/types";
+import type { NutritionSummary } from "@/lib/nutrition";
 
 const WEEKDAY_LABELS = ["SUN", "MON", "TUE", "WED", "THUR", "FRI", "SAT"] as const;
 
@@ -12,6 +14,7 @@ type Props = {
   /** In-month dates only (1..last day). */
   monthDates: Date[];
   dateToday: Date;
+  nutritionByDate?: Record<string, NutritionSummary>;
   refetchTrigger?: number;
 };
 
@@ -50,7 +53,7 @@ function getVisibleMonthMeals(meals: RecipeNutritionOnly[]) {
   };
 }
 
-export default function MonthView({ monthDates, dateToday, refetchTrigger }: Props) {
+export default function MonthView({ monthDates, dateToday, nutritionByDate = {}, refetchTrigger }: Props) {
   const [mealsByDayId, setMealsByDayId] = useState<Record<string, RecipeNutritionOnly[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -58,7 +61,7 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger }: Pro
   const year = focusDate.getFullYear();
   const month = String(focusDate.getMonth() + 1).padStart(2, "0");
 
-  const leadingBlanks = focusDate.getDay(); // Sunday-first
+  const leadingBlanks = focusDate.getDay();
 
   const cells: Array<Date | null> = useMemo(
     () => [...Array.from({ length: leadingBlanks }, () => null), ...monthDates],
@@ -142,6 +145,8 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger }: Pro
               const inMonth = isSameMonth(date, focusDate);
               const meals = mealsByDayId[dayId] ?? [];
               const { visibleMeals, hiddenCount } = getVisibleMonthMeals(meals);
+              const nutritionSummary = nutritionByDate[dayId];
+              const showWarning = !weekend && Boolean(nutritionSummary) && !nutritionSummary?.quotaMet;
 
               const cellContent = (
                 <div className="flex min-h-22.5 flex-col items-start gap-1 p-2 pt-5">
@@ -171,8 +176,14 @@ export default function MonthView({ monthDates, dateToday, refetchTrigger }: Pro
                   } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"}`}
                   data-drop-disabled={weekend ? "true" : undefined}
                   aria-disabled={weekend}
-                  title={weekend ? "Weekends — meals cannot be placed here" : undefined}
+                  title={weekend ? "Weekends - meals cannot be placed here" : undefined}
                 >
+                  {showWarning ? (
+                    <div className="absolute top-2 left-2 z-10">
+                      <WarningQuotaMonthly />
+                    </div>
+                  ) : null}
+
                   <span className="absolute top-2 right-2 z-10 font-montserrat text-sm font-normal text-dark-gray">
                     {String(date.getDate()).padStart(2, "0")}
                   </span>

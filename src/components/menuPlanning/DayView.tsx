@@ -4,9 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
+import DailyNutritionSummary from "./DailyNutritionSummary";
 import { CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
-import type { Recipe, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
+import type { Nutrition, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
+import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutrition";
 
 interface DayViewProps {
   date: Date;
@@ -15,13 +17,12 @@ interface DayViewProps {
 
 type CalendarDayResponse = {
   _id: string;
-} & RecipeBuckets<Recipe>;
+  nutritional_info?: Nutrition;
+} & RecipeBuckets<RecipeNutritionOnly>;
 
 type DayMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
-  deletingId: string | null;
-  onDelete: (meal: RecipeNutritionOnly) => void;
 };
 
 const formatDayId = (date: Date) => {
@@ -65,11 +66,10 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
   );
 }
 
-function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
+function DayMealCard({ item, dayId }: DayMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
-  const isDeleting = deletingId === item._id;
 
   const dragData: CalendarDragData = {
     source: "calendar",
@@ -80,7 +80,6 @@ function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
   const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({
     id: dndId,
     data: dragData,
-    disabled: isDeleting,
   });
 
   const calories = item.nutritional_info.calories;
@@ -110,8 +109,6 @@ function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
       </span>
 
       <button
-        // Only the vertical grip starts a drag, since otherwise the trashcan button would also drag
-        // Makes it easier to implement linking to the recipe on click later as well.
         ref={setActivatorNodeRef}
         type="button"
         className="shrink-0 cursor-move rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100"
@@ -126,9 +123,9 @@ function DayMealCard({ item, dayId, deletingId, onDelete }: DayMealCardProps) {
 }
 
 export default function DayView({ date, refetchTrigger }: DayViewProps) {
-  const [meals, setMeals] = useState<Recipe[]>([]);
+  const [meals, setMeals] = useState<RecipeNutritionOnly[]>([]);
+  const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const dayId = formatDayId(date);
 
@@ -140,6 +137,7 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
 
       if (response.status === 404) {
         setMeals([]);
+        setNutritionTotal(emptyNutrition());
         return;
       }
 
@@ -151,9 +149,15 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
       const nextMeals = RECIPE_BUCKETS.flatMap((bucket) => calendarDay[bucket] ?? []);
 
       setMeals(nextMeals);
+      setNutritionTotal(
+        calendarDay.nutritional_info
+          ? normalizeNutrition(calendarDay.nutritional_info)
+          : sumNutrition(nextMeals.map((meal) => meal.nutritional_info)),
+      );
     } catch (error) {
       console.error("Error fetching day meals:", error);
       setMeals([]);
+      setNutritionTotal(emptyNutrition());
     } finally {
       setIsLoading(false);
     }
@@ -163,49 +167,16 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
     fetchDayMeals();
   }, [fetchDayMeals, refetchTrigger]);
 
-  const handleDelete = async (meal: RecipeNutritionOnly) => {
-    setDeletingId(meal._id);
-
-    try {
-      const response = await fetch(`/api/calendar/${dayId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          recipeId: meal._id,
-          category: CATEGORY_TO_BUCKET[meal.category],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete recipe from calendar");
-      }
-
-      setMeals((prev) => prev.filter((m) => !(m._id === meal._id && m.category === meal.category)));
-    } catch (error) {
-      console.error("Error deleting recipe from calendar:", error);
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
   return (
     <div className="flex flex-col gap-3 pt-4">
-      <div className="rounded-[14px] p-3 bg-white border border-medium-gray/35">
+      <div className="rounded-[14px] border border-medium-gray/35 bg-white p-3">
         <DroppableCalendarArea dayId={dayId}>
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 py-8 text-center font-montserrat text-xs font-medium text-pepper/55">
               Loading meals...
             </div>
           ) : meals.length > 0 ? (
-            meals.map((meal) => (
-              <DayMealCard
-                key={`${dayId}-${meal._id}`}
-                item={meal}
-                dayId={dayId}
-                deletingId={deletingId}
-                onDelete={handleDelete}
-              />
-            ))
+            meals.map((meal) => <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
               Drop a recipe here to add it to today&apos;s menu
@@ -213,6 +184,8 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
           )}
         </DroppableCalendarArea>
       </div>
+
+      <DailyNutritionSummary total={nutritionTotal} />
     </div>
   );
 }

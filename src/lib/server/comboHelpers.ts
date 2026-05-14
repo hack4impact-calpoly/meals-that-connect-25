@@ -3,12 +3,14 @@ import "server-only";
 import Recipe from "@/database/RecipeSchema";
 import Combo from "@/database/ComboSchema";
 import { DIETARY_KEYS, EMPTY_DIETARY_FLAGS, EMPTY_EXCLUSION_FLAGS, EXCLUSION_KEYS, RECIPE_BUCKETS } from "@/lib/types";
+import { emptyNutrition, sumNutrition } from "@/lib/nutrition";
 import type {
   DietaryFlags,
   DietaryKey,
   ExclusionFlags,
   ExclusionKey,
   MealFilterFields,
+  Nutrition,
   ProteinSource,
   RecipeBucket,
   RecipeBuckets,
@@ -19,16 +21,20 @@ type RecipeFilterFields = {
   proteinSources?: ProteinSource[];
   dietary?: Partial<Record<DietaryKey, boolean>>;
   exclusions?: Partial<Record<ExclusionKey, boolean>>;
+  nutritional_info?: Partial<Nutrition>;
+};
+
+type ComboDerivedData = MealFilterFields & {
+  nutritional_info: Nutrition;
 };
 
 function unique<T>(values: T[]): T[] {
   return Array.from(new Set(values));
 }
 
-export async function deriveComboDataFromRecipeIds(recipeBuckets: RecipeBuckets): Promise<MealFilterFields> {
+export async function deriveComboDataFromRecipeIds(recipeBuckets: RecipeBuckets): Promise<ComboDerivedData> {
   // Used to aggregate the filters from all recipes in a combo
   // into one single filters object for the combo itself.
-  // TODO: Nutritional information could be updated here as well.
   const recipeIds = unique(RECIPE_BUCKETS.flatMap((bucket) => recipeBuckets[bucket] ?? []));
 
   if (recipeIds.length === 0) {
@@ -36,11 +42,12 @@ export async function deriveComboDataFromRecipeIds(recipeBuckets: RecipeBuckets)
       proteinSources: [],
       dietary: { ...EMPTY_DIETARY_FLAGS },
       exclusions: { ...EMPTY_EXCLUSION_FLAGS },
+      nutritional_info: emptyNutrition(),
     };
   }
 
   const recipes = await Recipe.find({ _id: { $in: recipeIds } })
-    .select("_id proteinSources dietary exclusions")
+    .select("_id proteinSources dietary exclusions nutritional_info")
     .lean<RecipeFilterFields[]>();
 
   if (recipes.length !== recipeIds.length) {
@@ -74,6 +81,7 @@ export async function deriveComboDataFromRecipeIds(recipeBuckets: RecipeBuckets)
     proteinSources,
     dietary,
     exclusions,
+    nutritional_info: sumNutrition(recipes.map((recipe) => recipe.nutritional_info)),
   };
 }
 
@@ -145,7 +153,6 @@ function getRecipeBucketsFromCombo(combo: ComboRecipeBuckets): RecipeBuckets {
 export async function refreshCombosContainingRecipe(recipeId: string) {
   // Query for every combo containing this recipe in any bucket (entrees, Vegetables, etc)
   // Then, update the derived data for the combo.
-  // TODO: Nutrition data can be updated here as well.
   const combos = await Combo.find({
     $or: RECIPE_BUCKETS.map((bucket) => ({
       [bucket]: recipeId,
@@ -190,7 +197,9 @@ export function updateAffectsComboData(updates: Record<string, unknown>) {
       key === "proteinSources" ||
       key === "dietary" ||
       key === "exclusions" ||
+      key === "nutritional_info" ||
       key.startsWith("dietary.") ||
-      key.startsWith("exclusions."),
+      key.startsWith("exclusions.") ||
+      key.startsWith("nutritional_info."),
   );
 }
