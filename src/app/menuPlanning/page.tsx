@@ -194,6 +194,26 @@ export default function MenuPlanning() {
 
   const previousCalendarView = useRef(calendarView);
 
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+    console.log("User role set to:", userRole);
+  }, []);
+
   useEffect(() => {
     const prev = previousCalendarView.current;
     previousCalendarView.current = calendarView;
@@ -514,13 +534,16 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   onDaySelect={setPickedDateFromMonth}
+                  userRole={userRole}
                 />
 
                 <div className="mt-2">
                   <WarningQuotaMonthly />
                 </div>
 
-                <div className="mt-auto flex justify-end pb-4">
+                <div
+                  className={`mt-auto flex justify-end pb-4 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+                >
                   <TrashDropZone />
                 </div>
               </>
@@ -534,9 +557,12 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   nutritionByDate={nutritionByDate}
+                  userRole={userRole}
                 />
 
-                <div className="mt-auto flex justify-end pb-4">
+                <div
+                  className={`mt-auto flex justify-end pb-4 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+                >
                   <TrashDropZone />
                 </div>
                 <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
@@ -545,8 +571,10 @@ export default function MenuPlanning() {
 
             {calendarView === "Day" && (
               <>
-                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
-                <div className="mt-2 flex justify-end">
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} userRole={userRole} />
+                <div
+                  className={`mt-2 flex justify-end ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+                >
                   <TrashDropZone />
                 </div>
               </>
@@ -554,21 +582,23 @@ export default function MenuPlanning() {
           </div>
         </div>
 
-        <SidebarDropZone>
-          <RecipeDatabase
-            items={items}
-            loading={loading}
-            error={error}
-            onSearch={setSearch}
-            selectedCategories={selectedCategories}
-            onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </SidebarDropZone>
+        {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+          <SidebarDropZone>
+            <RecipeDatabase
+              items={items}
+              loading={loading}
+              error={error}
+              onSearch={setSearch}
+              selectedCategories={selectedCategories}
+              onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </SidebarDropZone>
+        )}
       </main>
 
       <DragOverlay>

@@ -10,6 +10,7 @@ import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 type MonthMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
+  userRole: string | null;
 };
 
 type MonthMealCardPreviewProps = {
@@ -32,7 +33,7 @@ export function MonthMealCardPreview({ item }: MonthMealCardPreviewProps) {
   );
 }
 
-export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
+export default function MonthMealCard({ item, dayId, userRole }: MonthMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
@@ -62,7 +63,9 @@ export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
           {item.name}
         </p>
 
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true" />
+        <GripVertical
+          className={`h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        />
       </div>
 
       <RecipeSeeMorePopover recipeId={item._id} variant="compact" />

@@ -13,6 +13,7 @@ interface WeekViewProps {
   refetchTrigger?: number;
   nutritionByDate?: Record<string, NutritionSummary>;
   selectedDate: Date | null;
+  userRole: string | null;
 }
 
 function isSameCalendarDay(a: Date, b: Date): boolean {
@@ -73,6 +74,7 @@ export default function WeekView({
   refetchTrigger,
   nutritionByDate = {},
   selectedDate,
+  userRole,
 }: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +150,9 @@ export default function WeekView({
                     Loading meals...
                   </div>
                 ) : dayData.meals.length > 0 ? (
-                  dayData.meals.map((meal) => <WeekMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
+                  dayData.meals.map((meal) => (
+                    <WeekMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} userRole={userRole} />
+                  ))
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
                     Drop recipe here

@@ -14,6 +14,7 @@ import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutritio
 interface DayViewProps {
   date: Date;
   refetchTrigger?: number;
+  userRole: string | null;
 }
 
 type CalendarDayResponse = {
@@ -24,6 +25,7 @@ type CalendarDayResponse = {
 type DayMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
+  userRole: string | null;
 };
 
 const formatDayId = (date: Date) => {
@@ -67,7 +69,7 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
   );
 }
 
-function DayMealCard({ item, dayId }: DayMealCardProps) {
+function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
@@ -114,7 +116,7 @@ function DayMealCard({ item, dayId }: DayMealCardProps) {
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className="shrink-0 cursor-move rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100"
+        className={`shrink-0 cursor-move rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
         aria-label={`Drag ${item.name}`}
         {...attributes}
         {...listeners}
@@ -125,7 +127,7 @@ function DayMealCard({ item, dayId }: DayMealCardProps) {
   );
 }
 
-export default function DayView({ date, refetchTrigger }: DayViewProps) {
+export default function DayView({ date, refetchTrigger, userRole }: DayViewProps) {
   const [meals, setMeals] = useState<RecipeNutritionOnly[]>([]);
   const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
@@ -179,7 +181,9 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
               Loading meals...
             </div>
           ) : meals.length > 0 ? (
-            meals.map((meal) => <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
+            meals.map((meal) => (
+              <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} userRole={userRole} />
+            ))
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
               Drop a recipe here to add it to today&apos;s menu
