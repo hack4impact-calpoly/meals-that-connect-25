@@ -5,8 +5,8 @@ import DroppableCalendarArea from "./DroppableCalendarArea";
 import MonthMealCard from "./MonthMealCard";
 import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
 import { RECIPE_BUCKETS } from "@/lib/types";
-import type { CalendarDay, RecipeNutritionOnly } from "@/lib/types";
 import type { NutritionSummary } from "@/lib/nutrition";
+import type { CalendarDay, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 
 const WEEKDAY_LABELS = ["SUN", "MON", "TUE", "WED", "THUR", "FRI", "SAT"] as const;
 
@@ -16,6 +16,9 @@ type Props = {
   dateToday: Date;
   nutritionByDate?: Record<string, NutritionSummary>;
   refetchTrigger?: number;
+  /** Calendar day picked in month view; used when switching to week/day on the parent. */
+  selectedDate: Date | null;
+  onDaySelect: (date: Date) => void;
 };
 
 function isWeekend(d: Date): boolean {
@@ -25,6 +28,10 @@ function isWeekend(d: Date): boolean {
 
 function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 function formatCalendarDayId(date: Date) {
@@ -40,7 +47,7 @@ function mapCalendarDayToMeals(calendarDay: CalendarDay<RecipeNutritionOnly>): R
 }
 
 function getVisibleMonthMeals(meals: RecipeNutritionOnly[]) {
-  if (meals.length <= 2) {
+  if (meals.length <= 1) {
     return {
       visibleMeals: meals,
       hiddenCount: 0,
@@ -53,7 +60,14 @@ function getVisibleMonthMeals(meals: RecipeNutritionOnly[]) {
   };
 }
 
-export default function MonthView({ monthDates, dateToday, nutritionByDate = {}, refetchTrigger }: Props) {
+export default function MonthView({
+  monthDates,
+  dateToday,
+  nutritionByDate = {},
+  refetchTrigger,
+  selectedDate,
+  onDaySelect,
+}: Props) {
   const [mealsByDayId, setMealsByDayId] = useState<Record<string, RecipeNutritionOnly[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
@@ -143,6 +157,7 @@ export default function MonthView({ monthDates, dateToday, nutritionByDate = {},
               const weekend = isWeekend(date);
               const isToday = date.toDateString() === dateToday.toDateString();
               const inMonth = isSameMonth(date, focusDate);
+              const isDaySelected = selectedDate ? isSameCalendarDay(date, selectedDate) : false;
               const meals = mealsByDayId[dayId] ?? [];
               const { visibleMeals, hiddenCount } = getVisibleMonthMeals(meals);
               const nutritionSummary = nutritionByDate[dayId];
@@ -168,15 +183,37 @@ export default function MonthView({ monthDates, dateToday, nutritionByDate = {},
                 </div>
               );
 
+              const selectDay = () => {
+                if (weekend) return;
+                onDaySelect(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
+              };
+
               return (
                 <div
                   key={dayId}
-                  className={`relative min-h-22.5 overflow-hidden rounded-xl border border-medium-gray ${
+                  role={weekend ? undefined : "button"}
+                  tabIndex={weekend ? undefined : 0}
+                  onClick={weekend ? undefined : selectDay}
+                  onKeyDown={
+                    weekend
+                      ? undefined
+                      : (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            selectDay();
+                          }
+                        }
+                  }
+                  className={`relative min-h-22.5 overflow-visible rounded-xl border border-medium-gray ${
                     weekend ? "bg-medium-gray/35" : "bg-white"
-                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${inMonth ? "" : "opacity-60"}`}
+                  } ${isToday ? "ring-2 ring-radish-900" : ""} ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80" : ""} ${
+                    isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
+                  } ${inMonth ? "" : "opacity-60"} ${
+                    weekend ? "pointer-events-none cursor-default select-none" : "cursor-pointer"
+                  }`}
                   data-drop-disabled={weekend ? "true" : undefined}
-                  aria-disabled={weekend}
-                  title={weekend ? "Weekends - meals cannot be placed here" : undefined}
+                  aria-pressed={weekend ? undefined : isDaySelected}
+                  title={weekend ? "Weekends — not available for planning or selection." : "Click to select this day"}
                 >
                   {showWarning ? (
                     <div className="absolute top-2 left-2 z-10">

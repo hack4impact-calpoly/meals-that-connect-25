@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import WeekMealCard from "./WeekMealCard";
 import NutritionInfoNotMetCard from "./NutritionInfoNotMetCard";
 import DroppableCalendarArea from "./DroppableCalendarArea";
-import { RECIPE_BUCKETS } from "@/lib/types";
-import type { Recipe, RecipeBuckets } from "@/lib/types";
 import type { NutritionSummary } from "@/lib/nutrition";
+import { RECIPE_BUCKETS, Recipe, RecipeBuckets } from "@/lib/types";
 
 interface WeekViewProps {
   dateToday: Date;
   weekDates: Date[];
   refetchTrigger?: number;
   nutritionByDate?: Record<string, NutritionSummary>;
+  selectedDate: Date | null;
+}
+
+function isSameCalendarDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
 type WeekViewDayData = {
@@ -63,7 +67,13 @@ async function fetchCalendarDayMeals(dayId: string, signal: AbortSignal): Promis
   };
 }
 
-export default function WeekView({ dateToday, weekDates, refetchTrigger, nutritionByDate = {} }: WeekViewProps) {
+export default function WeekView({
+  dateToday,
+  weekDates,
+  refetchTrigger,
+  nutritionByDate = {},
+  selectedDate,
+}: WeekViewProps) {
   const [weekViewMeals, setWeekViewMeals] = useState<WeekViewDayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -113,6 +123,7 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger, nutriti
         const isToday = date.toDateString() === dateToday.toDateString();
         const nutritionSummary = nutritionByDate[dayId];
         const showNutritionWarning = nutritionSummary ? !nutritionSummary.quotaMet : dayData.showNutritionInfoNotMet;
+        const isDaySelected = selectedDate ? isSameCalendarDay(date, selectedDate) : false;
 
         return (
           <div key={dayId} className="flex min-w-0 flex-col items-center">
@@ -127,7 +138,9 @@ export default function WeekView({ dateToday, weekDates, refetchTrigger, nutriti
             <div
               className={`flex min-h-105 w-full flex-1 flex-col gap-3 rounded-[14px] p-3 ${
                 isToday ? "border-2 border-radish-900" : "border border-medium-gray/35"
-              } bg-white`}
+              } bg-white ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80 ring-offset-2 ring-offset-gray-100" : ""} ${
+                isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
+              }`}
             >
               <DroppableCalendarArea dayId={dayId}>
                 {isLoading ? (

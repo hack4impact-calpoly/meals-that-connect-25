@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ReactNode } from "react";
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, useDroppable } from "@dnd-kit/core";
 import WeekView from "@/components/menuPlanning/WeekView";
@@ -32,6 +32,14 @@ import { toggleCategory } from "@/lib/helpers";
 import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 
 const today = new Date();
+// Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
+const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
+  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
+  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
+  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
+  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
+  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
+];
 
 export type SidebarDragData =
   | {
@@ -168,10 +176,13 @@ const formatCalendarDayId = (date: Date) => {
 };
 
 export default function MenuPlanning() {
+  const [planningRoot] = useState(() => new Date());
+  const dateToday = new Date();
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
+  const [pickedDateFromMonth, setPickedDateFromMonth] = useState<Date | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<Set<CategoryValue>>(new Set<CategoryValue>(["Combo"]));
   const [filters] = useState(() => createEmptyFilterSelections());
   const [exportFormat, setExportFormat] = useState<"Display" | "Nutritional">("Nutritional");
@@ -181,16 +192,48 @@ export default function MenuPlanning() {
   const [activeDragData, setActiveDragData] = useState<ActiveDragData | null>(null);
   const [nutritionByDate, setNutritionByDate] = useState<Record<string, NutritionSummary>>({});
 
-  useEffect(() => {
-    setDatesOffset(0);
-  }, [calendarView]);
+  const previousCalendarView = useRef(calendarView);
 
-  const viewDates = getCurrentViewDates(getOffsetDate(today, datesOffset, calendarView), calendarView);
+  useEffect(() => {
+    const prev = previousCalendarView.current;
+    previousCalendarView.current = calendarView;
+    if (calendarView === "Month" && prev !== "Month" && pickedDateFromMonth) {
+      const p = pickedDateFromMonth;
+      const monthDiff = (p.getFullYear() - planningRoot.getFullYear()) * 12 + (p.getMonth() - planningRoot.getMonth());
+      setDatesOffset(monthDiff);
+      return;
+    }
+    if (prev !== calendarView) {
+      setDatesOffset(0);
+    }
+  }, [calendarView, pickedDateFromMonth, planningRoot]);
+  const offsetAnchor = getOffsetDate(planningRoot, datesOffset, calendarView);
+  const monthAnchor = getOffsetDate(planningRoot, datesOffset, "Month");
+  const weekDayAnchor =
+    (calendarView === "Week" || calendarView === "Day") && pickedDateFromMonth ? pickedDateFromMonth : offsetAnchor;
+
+  const viewDates =
+    calendarView === "Month"
+      ? getCurrentViewDates(monthAnchor, "Month")
+      : getCurrentViewDates(weekDayAnchor, calendarView);
+
   const viewDateIds = viewDates.map(formatCalendarDayId);
+
   const viewDateKey = viewDateIds.join(",");
+
   const weeklyNutritionTotals: Nutrition[] = viewDateIds.map(
     (dateId) => nutritionByDate[dateId]?.nutritional_info ?? emptyNutrition(),
   );
+
+  const bumpDatesOffset = (delta: number) => {
+    setPickedDateFromMonth(null);
+    setDatesOffset((d) => d + delta);
+  };
+
+  const resetToPlanningToday = () => {
+    setPickedDateFromMonth(null);
+    setDatesOffset(0);
+  };
 
   useEffect(() => {
     if (!viewDateKey) {
@@ -211,6 +254,7 @@ export default function MenuPlanning() {
         }
 
         const body: { data?: NutritionSummary[] } = await res.json();
+
         const summaries = body.data ?? [];
 
         if (!controller.signal.aborted) {
@@ -222,17 +266,22 @@ export default function MenuPlanning() {
           );
         }
       } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return;
+        if (error instanceof Error && error.name === "AbortError") {
+          return;
+        }
+
         console.error("Error fetching nutrition totals:", error);
       }
     }
-
     fetchNutrition();
-
     return () => controller.abort();
   }, [viewDateKey, recipeDropTrigger]);
 
   const downloadMonthlyMenu = async () => {
+    const baseDate = viewDates[0] ?? planningRoot;
+    const currentMonth = baseDate.getMonth();
+    const currentYear = baseDate.getFullYear();
+
     try {
       await downloadMenuPlanningExportForView({ calendarView, viewDates, format: exportFormat });
     } catch (error) {
@@ -371,9 +420,9 @@ export default function MenuPlanning() {
           <div className="flex w-260 flex-col">
             <div className="flex items-center justify-between">
               <div className="flex items-center justify-center gap-2">
-                <CurrentDateButton onClick={() => setDatesOffset(0)} />
+                <CurrentDateButton onClick={resetToPlanningToday} />
 
-                <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset - 1)}>
+                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(-1)}>
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
 
@@ -396,7 +445,7 @@ export default function MenuPlanning() {
                     })}
                 </span>
 
-                <button className="cursor-pointer" onClick={() => setDatesOffset(datesOffset + 1)}>
+                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(1)}>
                   <ChevronRight size={20} strokeWidth={2.5} />
                 </button>
               </div>
@@ -407,12 +456,14 @@ export default function MenuPlanning() {
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
                       calendarView === "Month" ? "bg-radish-900 text-white" : ""
                     }`}
+                    type="button"
                     onClick={() => setCalendarView("Month")}
                   >
                     Month
                   </button>
 
                   <button
+                    type="button"
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold ${
                       calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"
                     }`}
@@ -422,6 +473,7 @@ export default function MenuPlanning() {
                   </button>
 
                   <button
+                    type="button"
                     className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
                       calendarView === "Day" ? "bg-radish-900 text-white" : ""
                     }`}
@@ -460,7 +512,14 @@ export default function MenuPlanning() {
                   dateToday={today}
                   nutritionByDate={nutritionByDate}
                   refetchTrigger={recipeDropTrigger}
+                  selectedDate={pickedDateFromMonth}
+                  onDaySelect={setPickedDateFromMonth}
                 />
+
+                <div className="mt-2">
+                  <WarningQuotaMonthly />
+                </div>
+
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
@@ -470,11 +529,13 @@ export default function MenuPlanning() {
             {calendarView === "Week" && (
               <>
                 <WeekView
-                  dateToday={today}
+                  dateToday={dateToday}
                   weekDates={viewDates}
                   refetchTrigger={recipeDropTrigger}
+                  selectedDate={pickedDateFromMonth}
                   nutritionByDate={nutritionByDate}
                 />
+
                 <div className="mt-auto flex justify-end pb-4">
                   <TrashDropZone />
                 </div>
