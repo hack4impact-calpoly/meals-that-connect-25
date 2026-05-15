@@ -19,7 +19,7 @@ export default function SearchBarClient({ placeholder = "Search a recipe", onSea
   return (
     <div
       className="
-        w-full h-11 rounded-md border border-medium-gray bg-white
+        min-w-0 w-full h-11 rounded-md border border-medium-gray bg-white
         flex items-center gap-2 px-3
         focus-within:border-radish-900
       "

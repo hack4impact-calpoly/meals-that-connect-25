@@ -22,7 +22,7 @@ export default function DroppableCalendarArea({ dayId, children }: DroppableCale
   return (
     <div
       ref={setNodeRef}
-      className={`flex h-full w-full flex-1 flex-col gap-2 rounded-[10px] p-4 transition-colors ${
+      className={`flex h-full w-full flex-1 flex-row flex-wrap content-start gap-2 rounded-[10px] p-2 transition-colors md:flex-col md:flex-nowrap md:p-4 ${
         isOver ? "bg-radish-100 border-2 border-radish-900" : "border border-medium-gray/20 bg-white/30"
       }`}
     >

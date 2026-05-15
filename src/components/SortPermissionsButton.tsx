@@ -51,7 +51,7 @@ export default function SortPermissionsButton({
   const isRight = align === "right";
   return (
     <>
-      <Menu as="div" className="relative">
+      <Menu as="div" className="relative shrink-0">
         <MenuButton className="w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
           <ListFilter className="text-pepper" />
         </MenuButton>

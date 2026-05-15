@@ -44,13 +44,13 @@ export default function RecipeDatabase({
   onPageChange,
 }: RecipeDatabaseProps) {
   return (
-    <div className="flex flex-col p-6 overflow-auto">
-      <div className="mb-6 text-xl font-semibold">Recipe Database</div>
+    <div className="flex min-h-0 flex-col overflow-auto p-4 sm:p-6">
+      <div className="mb-4 text-xl font-semibold sm:mb-6">Recipe Database</div>
 
-      <div className="flex flex-row items-center gap-4">
+      <div className="flex min-w-0 flex-row items-center gap-2 sm:gap-4">
         <SearchBarClient placeholder="Search a recipe" onSearch={onSearch} />
 
-        <Menu as="div" className="relative">
+        <Menu as="div" className="relative shrink-0">
           <MenuButton className="rounded-lg bg-radish-900 p-2">
             <SlidersHorizontal className="cursor-pointer" color="white" size={24} strokeWidth={1.7} />
           </MenuButton>
@@ -83,7 +83,7 @@ export default function RecipeDatabase({
         </Menu>
       </div>
 
-      <div className="my-4">
+      <div className="my-4 overflow-x-auto pb-1">
         <CategoryToggle
           options={CATEGORY_DISPLAY}
           selectedCategories={selectedCategories}
@@ -94,7 +94,7 @@ export default function RecipeDatabase({
       {loading && <div>Loading...</div>}
       {error && <div>{error}</div>}
 
-      <div className="flex flex-col min-h-0 gap-4 overflow-auto">
+      <div className="flex min-h-0 flex-col gap-3 overflow-auto sm:gap-4">
         {items.map((item) => (
           <DraggableRecipeCard key={item._id} item={item} />
         ))}
