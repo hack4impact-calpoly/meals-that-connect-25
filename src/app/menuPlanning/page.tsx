@@ -31,7 +31,6 @@ import xlsx, { IContent, IJsonSheet } from "json-as-xlsx";
 import { toggleCategory } from "@/lib/helpers";
 import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 
-
 const today = new Date();
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
