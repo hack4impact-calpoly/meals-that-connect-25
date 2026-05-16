@@ -115,70 +115,74 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
               </div>
             </div>
 
-            {(userRole === "Admin" || userRole === "Kitchen Staff") && (
-              <div className="max-h-80 overflow-y-auto p-3">
-                {isLoading ? <p className="text-sm font-medium text-pepper/60">Loading recipe...</p> : null}
+            <div className="max-h-80 overflow-y-auto p-3">
+              {isLoading ? <p className="text-sm font-medium text-pepper/60">Loading recipe...</p> : null}
 
-                {error ? <p className="text-sm font-medium text-radish-900">{error}</p> : null}
+              {error ? <p className="text-sm font-medium text-radish-900">{error}</p> : null}
 
-                {recipe ? (
-                  <div className="space-y-3 text-sm">
-                    {recipe.notes ? (
-                      <section className="space-y-1.5">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Notes</h4>
-                        <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.notes}</p>
-                      </section>
-                    ) : null}
-
-                    {recipe.ingredients?.length ? (
-                      <section className="space-y-1.5">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Ingredients</h4>
-                        <ul className="space-y-1">
-                          {recipe.ingredients.map((ingredient, index) => (
-                            <li
-                              key={`${ingredient.name}-${index}`}
-                              className="flex justify-between gap-3 rounded-md bg-light-gray/60 px-2 py-1 text-xs"
-                            >
-                              <span className="font-semibold text-pepper">{ingredient.name}</span>
-                              <span className="shrink-0 text-pepper/70">
-                                {ingredient.quantity} {ingredient.units}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </section>
-                    ) : null}
-
-                    {recipe.instructions ? (
-                      <section className="space-y-1.5">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Instructions</h4>
-                        <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.instructions}</p>
-                      </section>
-                    ) : null}
-
+              {recipe ? (
+                <div className="space-y-3 text-sm">
+                  {recipe.exclusions ? (
                     <section className="space-y-1.5">
-                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Nutrition</h4>
-
-                      <div className="grid grid-cols-2 gap-1.5 text-xs">
-                        {[
-                          ["Calories", `${formatNutritionValue(recipe.nutritional_info?.calories)} kcal`],
-                          ["Protein", `${formatNutritionValue(recipe.nutritional_info?.protein)} g`],
-                          ["Fat", `${formatNutritionValue(recipe.nutritional_info?.fat)} g`],
-                          ["Carbs", `${formatNutritionValue(recipe.nutritional_info?.carbs)} g`],
-                          ["Fiber", `${formatNutritionValue(recipe.nutritional_info?.fiber)} g`],
-                          ["Sodium", `${formatNutritionValue(recipe.nutritional_info?.sodium)} mg`],
-                        ].map(([label, value]) => (
-                          <div key={label} className="rounded-md bg-light-gray/60 px-2 py-1">
-                            <p className="font-semibold leading-tight text-pepper">{label}</p>
-                            <p className="leading-tight text-pepper/70">{value}</p>
-                          </div>
-                        ))}
-                      </div>
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Exclusions</h4>
                     </section>
-                  </div>
-                ) : null}
-              </div>
-            )}
+                  ) : null}
+
+                  {(userRole === "Admin" || userRole === "Kitchen Staff") && recipe.notes ? (
+                    <section className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Notes</h4>
+                      <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.notes}</p>
+                    </section>
+                  ) : null}
+
+                  {(userRole === "Admin" || userRole === "Kitchen Staff") && recipe.ingredients?.length ? (
+                    <section className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Ingredients</h4>
+                      <ul className="space-y-1">
+                        {recipe.ingredients.map((ingredient, index) => (
+                          <li
+                            key={`${ingredient.name}-${index}`}
+                            className="flex justify-between gap-3 rounded-md bg-light-gray/60 px-2 py-1 text-xs"
+                          >
+                            <span className="font-semibold text-pepper">{ingredient.name}</span>
+                            <span className="shrink-0 text-pepper/70">
+                              {ingredient.quantity} {ingredient.units}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+
+                  {(userRole === "Admin" || userRole === "Kitchen Staff") && recipe.instructions ? (
+                    <section className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Instructions</h4>
+                      <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.instructions}</p>
+                    </section>
+                  ) : null}
+
+                  <section className="space-y-1.5">
+                    <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Nutrition</h4>
+
+                    <div className="grid grid-cols-2 gap-1.5 text-xs">
+                      {[
+                        ["Calories", `${formatNutritionValue(recipe.nutritional_info?.calories)} kcal`],
+                        ["Protein", `${formatNutritionValue(recipe.nutritional_info?.protein)} g`],
+                        ["Fat", `${formatNutritionValue(recipe.nutritional_info?.fat)} g`],
+                        ["Carbs", `${formatNutritionValue(recipe.nutritional_info?.carbs)} g`],
+                        ["Fiber", `${formatNutritionValue(recipe.nutritional_info?.fiber)} g`],
+                        ["Sodium", `${formatNutritionValue(recipe.nutritional_info?.sodium)} mg`],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-md bg-light-gray/60 px-2 py-1">
+                          <p className="font-semibold leading-tight text-pepper">{label}</p>
+                          <p className="leading-tight text-pepper/70">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                </div>
+              ) : null}
+            </div>
 
             <div className="border-t border-medium-gray/60 p-3">
               <a
