@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import { CategoryValue, createEmptyFilterSelections, FilterSelections, RecipePreview } from "@/lib/types";
@@ -31,6 +31,29 @@ export default function DraftsPage() {
       draftMode: true,
       comboPopulate: "preview",
     });
+
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+
+    if (userRole !== "Admin" && userRole !== "Kitchen Staff") {
+      redirect("/");
+    }
+  }, []);
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -124,6 +147,7 @@ export default function DraftsPage() {
               <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
             </button>
           }
+          userRole={userRole}
         />
 
         <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
