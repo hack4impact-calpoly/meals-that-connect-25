@@ -40,6 +40,11 @@ export default function DraftsPage() {
         const response = await fetch("/api/users/me");
         if (response.ok) {
           const data = await response.json();
+
+          if (data.role !== "Admin" && data.role !== "Kitchen Staff") {
+            redirect("/recipe");
+          }
+
           setUserRole(data.role);
         } else {
           console.error("Failed to fetch user role");
@@ -49,10 +54,6 @@ export default function DraftsPage() {
       }
     }
     getUserRole();
-
-    if (userRole !== "Admin" && userRole !== "Kitchen Staff") {
-      redirect("/");
-    }
   }, []);
 
   useEffect(() => {
