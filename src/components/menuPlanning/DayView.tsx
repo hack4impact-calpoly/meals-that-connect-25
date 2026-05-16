@@ -106,7 +106,7 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
 
         {metaText ? <p className="font-montserrat text-base font-medium text-pepper/70">{metaText}</p> : null}
 
-        <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+        <RecipeSeeMorePopover recipeId={item._id} variant="default" userRole={userRole} />
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
@@ -116,10 +116,10 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className={`shrink-0 cursor-move rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        className={`shrink-0 rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
         aria-label={`Drag ${item.name}`}
         {...attributes}
-        {...listeners}
+        {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
       >
         <GripVertical size={20} strokeWidth={1.7} />
       </button>

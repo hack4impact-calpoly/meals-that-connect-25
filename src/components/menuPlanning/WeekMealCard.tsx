@@ -37,13 +37,13 @@ export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProp
   return (
     <div
       ref={setNodeRef}
-      className={`group flex cursor-move items-stretch gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] 
+      className={`group flex items-stretch gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] 
         ${tagClassName} 
         ${isDragging ? "opacity-40" : ""} 
-        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"}
+        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "cursor-move" : ""}
       `}
       {...attributes}
-      {...listeners}
+      {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-[16px] leading-tight font-bold" title={item.name}>
@@ -52,7 +52,7 @@ export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProp
 
         {metaText ? <p className="truncate text-[15px] leading-tight font-medium">{metaText}</p> : null}
 
-        <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+        <RecipeSeeMorePopover recipeId={item._id} variant="default" userRole={userRole} />
       </div>
 
       <GripVertical

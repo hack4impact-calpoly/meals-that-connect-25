@@ -212,7 +212,7 @@ export default function MonthView({
                     isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
                   } ${inMonth ? "" : "opacity-60"} ${
                     weekend ? "pointer-events-none cursor-default select-none" : "cursor-pointer"
-                  } ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "pointer-events-none"}`}
+                  }`}
                   data-drop-disabled={weekend ? "true" : undefined}
                   aria-pressed={weekend ? undefined : isDaySelected}
                   title={weekend ? "Weekends — not available for planning or selection." : "Click to select this day"}

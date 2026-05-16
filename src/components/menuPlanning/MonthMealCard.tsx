@@ -52,11 +52,12 @@ export default function MonthMealCard({ item, dayId, userRole }: MonthMealCardPr
   return (
     <div
       ref={setNodeRef}
-      className={`group flex max-w-full cursor-move flex-col gap-0.5 rounded-md px-2 py-1.5 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
-        isDragging ? "opacity-40" : ""
-      }`}
+      className={`group flex max-w-full flex-col gap-0.5 rounded-md px-2 py-1.5 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] 
+        ${tagClassName} 
+        ${isDragging ? "opacity-40" : ""}
+         ${userRole === "Admin" || userRole === "Kitchen Staff" ? "cursor-move" : "cursor-default"}`}
       {...attributes}
-      {...listeners}
+      {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
     >
       <div className="flex min-w-0 items-center gap-1">
         <p className="min-w-0 flex-1 truncate leading-tight" title={item.name}>
@@ -68,7 +69,7 @@ export default function MonthMealCard({ item, dayId, userRole }: MonthMealCardPr
         />
       </div>
 
-      <RecipeSeeMorePopover recipeId={item._id} variant="compact" />
+      <RecipeSeeMorePopover recipeId={item._id} variant="compact" userRole={userRole} />
     </div>
   );
 }
