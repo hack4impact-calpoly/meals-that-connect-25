@@ -60,6 +60,16 @@ const RecipeSchema = new Schema(
       required: true,
     },
 
+    subrecipes: {
+      type: [
+        {
+          recipeId: { type: String, ref: "Recipe", required: true },
+          quantity: { type: Number, required: true, min: 1 },
+        },
+      ],
+      default: [],
+    },
+
     instructions: { type: String, required: false },
     comments: { type: String, required: false },
     notes: { type: String, required: false },

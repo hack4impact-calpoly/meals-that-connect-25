@@ -8,6 +8,7 @@ import {
   FILTER_SECTIONS,
   FRUIT_ICON,
   GRAIN_ICON,
+  NUTRIENT_LABELS,
   RECIPE_BUCKETS,
   TAG_STYLES,
   VEGETABLE_ICON,
@@ -38,10 +39,17 @@ function emptyNutrition(): Nutrition {
   return {
     calories: 0,
     protein: 0,
-    fat: 0,
-    carbs: 0,
+    fatPercentage: 0,
+    saturatedFatPercentage: 0,
     fiber: 0,
+    calcium: 0,
+    magnesium: 0,
+    potassium: 0,
     sodium: 0,
+    vitaminA: 0,
+    vitaminD: 0,
+    vitaminC: 0,
+    vitaminB12: 0,
   };
 }
 
@@ -49,10 +57,17 @@ function scaleNutrition(nutrition: Nutrition, multiplier: number): Nutrition {
   return {
     calories: (nutrition.calories || 0) * multiplier,
     protein: (nutrition.protein || 0) * multiplier,
-    fat: (nutrition.fat || 0) * multiplier,
-    carbs: (nutrition.carbs || 0) * multiplier,
+    fatPercentage: (nutrition.fatPercentage || 0) * multiplier,
+    saturatedFatPercentage: (nutrition.saturatedFatPercentage || 0) * multiplier,
     fiber: (nutrition.fiber || 0) * multiplier,
+    calcium: (nutrition.calcium || 0) * multiplier,
+    magnesium: (nutrition.magnesium || 0) * multiplier,
+    potassium: (nutrition.potassium || 0) * multiplier,
     sodium: (nutrition.sodium || 0) * multiplier,
+    vitaminA: (nutrition.vitaminA || 0) * multiplier,
+    vitaminD: (nutrition.vitaminD || 0) * multiplier,
+    vitaminC: (nutrition.vitaminC || 0) * multiplier,
+    vitaminB12: (nutrition.vitaminB12 || 0) * multiplier,
   };
 }
 
@@ -60,10 +75,17 @@ function addNutrition(a: Nutrition, b: Nutrition): Nutrition {
   return {
     calories: a.calories + b.calories,
     protein: a.protein + b.protein,
-    fat: a.fat + b.fat,
-    carbs: a.carbs + b.carbs,
+    fatPercentage: a.fatPercentage + b.fatPercentage,
+    saturatedFatPercentage: a.saturatedFatPercentage + b.saturatedFatPercentage,
     fiber: a.fiber + b.fiber,
+    calcium: a.calcium + b.calcium,
+    magnesium: a.magnesium + b.magnesium,
+    potassium: a.potassium + b.potassium,
     sodium: a.sodium + b.sodium,
+    vitaminA: a.vitaminA + b.vitaminA,
+    vitaminD: a.vitaminD + b.vitaminD,
+    vitaminC: a.vitaminC + b.vitaminC,
+    vitaminB12: a.vitaminB12 + b.vitaminB12,
   };
 }
 
@@ -422,48 +444,16 @@ function NutritionSection({
       <h3 className="mb-4 text-xl font-semibold">Nutritional Information</h3>
 
       <div className="mt-3 flex flex-wrap gap-3">
-        <NutritionalInfo
-          label="Calories"
-          unit="kcal"
-          value={formatNutritionValue(nutrition.calories, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Protein"
-          unit="g"
-          value={formatNutritionValue(nutrition.protein, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Fat"
-          unit="g"
-          value={formatNutritionValue(nutrition.fat, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Carbs"
-          unit="g"
-          value={formatNutritionValue(nutrition.carbs, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Fiber"
-          unit="g"
-          value={formatNutritionValue(nutrition.fiber, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Sodium"
-          unit="mg"
-          value={formatNutritionValue(nutrition.sodium, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
+        {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+          <NutritionalInfo
+            key={key}
+            label={label}
+            unit={unit}
+            value={formatNutritionValue(nutrition[key] ?? 0, originalServings, servings)}
+            onChange={() => {}}
+            readOnly={true}
+          />
+        ))}
       </div>
     </>
   );
