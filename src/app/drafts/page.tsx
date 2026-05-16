@@ -1,6 +1,6 @@
 "use client";
 
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
 import { CategoryValue, createEmptyFilterSelections, FilterSelections, RecipePreview } from "@/lib/types";
@@ -42,7 +42,8 @@ export default function DraftsPage() {
           const data = await response.json();
 
           if (data.role !== "Admin" && data.role !== "Kitchen Staff") {
-            redirect("/recipe");
+            console.log("Redirecting user due to insufficient permissions");
+            router.push("/");
           }
 
           setUserRole(data.role);
