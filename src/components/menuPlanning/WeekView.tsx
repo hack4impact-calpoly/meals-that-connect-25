@@ -118,7 +118,7 @@ export default function WeekView({
   }, [weekKey, refetchTrigger]);
 
   return (
-    <div className="relative my-4 grid flex-1 grid-cols-5 gap-3">
+    <div className="relative my-4 flex flex-1 flex-col gap-3 md:grid md:grid-cols-5">
       {weekDates.map((date, index) => {
         const dayId = weekDayIds[index] ?? formatCalendarDayId(date);
         const dayData = weekViewMeals[index] ?? EMPTY_DAY;
@@ -128,17 +128,24 @@ export default function WeekView({
         const isDaySelected = selectedDate ? isSameCalendarDay(date, selectedDate) : false;
 
         return (
-          <div key={dayId} className="flex min-w-0 flex-col items-center">
-            <span className="font-montserrat text-xs font-medium tracking-[0.12em] text-pepper">
-              {date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
-            </span>
+          <div
+            key={dayId}
+            className="grid min-w-0 grid-cols-[3.25rem_minmax(0,1fr)] gap-3 md:flex md:flex-col md:items-center"
+          >
+            <div className="flex flex-col items-center pt-2 md:pt-0">
+              <span className="font-montserrat text-xs font-medium tracking-[0.12em] text-pepper">
+                {date.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase()}
+              </span>
 
-            <span className={`mb-2 font-montserrat text-2xl font-bold ${isToday ? "text-radish-900" : "text-pepper"}`}>
-              {String(date.getDate()).padStart(2, "0")}
-            </span>
+              <span
+                className={`font-montserrat text-2xl font-bold md:mb-2 ${isToday ? "text-radish-900" : "text-pepper"}`}
+              >
+                {String(date.getDate()).padStart(2, "0")}
+              </span>
+            </div>
 
             <div
-              className={`flex min-h-105 w-full flex-1 flex-col gap-3 rounded-[14px] p-3 ${
+              className={`flex min-h-28 w-full min-w-0 flex-1 flex-col gap-3 rounded-[14px] p-2 sm:min-h-32 md:min-h-105 md:p-3 ${
                 isToday ? "border-2 border-radish-900" : "border border-medium-gray/35"
               } bg-white ${isDaySelected && !isToday ? "ring-2 ring-radish-600/80 ring-offset-2 ring-offset-gray-100" : ""} ${
                 isDaySelected && isToday ? "ring-2 ring-radish-900 ring-offset-2 ring-offset-gray-100" : ""
