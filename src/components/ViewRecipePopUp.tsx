@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import {
+  BUCKET_TO_CATEGORY,
+  CATEGORY_DISPLAY_MAP,
   DIETARY_KEYS,
   ENTREE_ICON,
   EXCLUSION_KEYS,
@@ -9,6 +11,7 @@ import {
   FRUIT_ICON,
   GRAIN_ICON,
   RECIPE_BUCKETS,
+  RECIPE_CATEGORIES,
   TAG_STYLES,
   VEGETABLE_ICON,
 } from "@/lib/types";
@@ -22,7 +25,18 @@ import type {
   RecipeBuckets,
   RecipeCategory,
 } from "@/lib/types";
-import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Maximize2,
+  Pencil,
+  Tag,
+  CircleAlert,
+  SquarePen,
+  Minus,
+  Plus,
+  ArrowUpRight,
+  Key,
+} from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
 
@@ -245,10 +259,11 @@ function ComboDetails({
 
   return (
     <>
-      <RecipeGroup label="Entrees" icon={<ENTREE_ICON />} items={combo.entrees} styleKey="Entree" />
-      <RecipeGroup label="Vegetables" icon={<VEGETABLE_ICON />} items={combo.vegetables} styleKey="Vegetable" />
-      <RecipeGroup label="Fruits" icon={<FRUIT_ICON />} items={combo.fruits} styleKey="Fruit" />
-      <RecipeGroup label="Grains" icon={<GRAIN_ICON />} items={combo.grains} styleKey="Grain" />
+      {RECIPE_BUCKETS.map((bucket) => {
+        const category = BUCKET_TO_CATEGORY[bucket];
+        const { plural, icon: Icon } = CATEGORY_DISPLAY_MAP[category];
+        return <RecipeGroup key={category} label={plural} icon={<Icon />} items={combo[bucket]} styleKey={category} />;
+      })}
 
       <MealFiltersSection item={combo} />
 
