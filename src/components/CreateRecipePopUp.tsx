@@ -59,6 +59,7 @@ type InputPair = {
 type SubrecipeRow = {
   category: RecipeCategory | "";
   recipeId: string;
+  recipeName: string;
   quantity: number | "";
 };
 
@@ -180,7 +181,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [fruitOptions, setFruitOptions] = useState<RecipeWithNutrition[]>([]);
   const [grainOptions, setGrainOptions] = useState<RecipeWithNutrition[]>([]);
   const [subrecipeInputs, setSubrecipeInputs] = useState<SubrecipeRow[]>([
-    { category: "", recipeId: "", quantity: "" },
+    { category: "", recipeId: "", recipeName: "", quantity: "" },
   ]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
@@ -243,7 +244,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   // subrecipe handlers
   const addSubrecipeRow = () => {
-    setSubrecipeInputs([...subrecipeInputs, { category: "", recipeId: "", quantity: "" }]);
+    setSubrecipeInputs([...subrecipeInputs, { category: "", recipeId: "", recipeName: "", quantity: "" }]);
   };
 
   const removeSubrecipeRow = (index: number) => {
@@ -254,12 +255,15 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     const updated = [...subrecipeInputs];
     updated[index].category = value;
     updated[index].recipeId = "";
+    updated[index].recipeName = "";
     setSubrecipeInputs(updated);
   };
 
   const handleSubrecipeRecipeChange = (index: number, value: string) => {
     const updated = [...subrecipeInputs];
     updated[index].recipeId = value;
+    const options = getOptionsForCategory(updated[index].category);
+    updated[index].recipeName = options.find((r) => r._id === value)?.name ?? "";
     setSubrecipeInputs(updated);
   };
 
@@ -283,7 +287,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     if (item == null) {
       setName("");
       setIngredientInputs([{ name: "", quantity: "", units: "", notes: "" }]);
-      setSubrecipeInputs([{ category: "", recipeId: "", quantity: "" }]);
+      setSubrecipeInputs([{ category: "", recipeId: "", recipeName: "", quantity: "" }]);
       setSelectedEntree([]);
       setSelectedVegetables([]);
       setSelectedFruit([]);
@@ -332,11 +336,12 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
         setSubrecipeInputs(
           item.subrecipes && item.subrecipes.length > 0
             ? item.subrecipes.map((sr: SubrecipeIngredient) => ({
-                category: "",
+                category: sr.category ?? ("" as RecipeCategory | ""),
                 recipeId: sr.recipeId,
+                recipeName: sr.recipeName ?? "",
                 quantity: sr.quantity,
               }))
-            : [{ category: "", recipeId: "", quantity: "" }],
+            : [{ category: "", recipeId: "", recipeName: "", quantity: "" }],
         );
 
         const ni = item.nutritional_info;
@@ -542,6 +547,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             .filter((sr) => sr.recipeId !== "" && sr.quantity !== "")
             .map((sr) => ({
               recipeId: sr.recipeId,
+              recipeName: sr.recipeName,
+              category: sr.category || undefined,
               quantity: Number(sr.quantity),
             })),
           instructions: instructionsText,
@@ -1027,7 +1034,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                             onChange={(e) =>
                               handleSubrecipeCategoryChange(index, e.target.value as RecipeCategory | "")
                             }
-                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                            className="flex-1 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
                           >
                             <option value="">Select Category</option>
                             {RECIPE_CATEGORIES.map((cat) => (
@@ -1040,7 +1047,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                           <select
                             value={sr.recipeId}
                             onChange={(e) => handleSubrecipeRecipeChange(index, e.target.value)}
-                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                            className="flex-1 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
                             disabled={!sr.category}
                           >
                             <option value="">{sr.category ? "Select Recipe" : "Select category first"}</option>
@@ -1057,7 +1064,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                             min={1}
                             value={sr.quantity}
                             onChange={(e) => handleSubrecipeQuantityChange(index, e.target.value)}
-                            className="w-24 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-24 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
 
                           <button

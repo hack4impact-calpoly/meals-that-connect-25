@@ -13,6 +13,8 @@ export type Ingredient = {
 
 export type SubrecipeIngredient = {
   recipeId: string;
+  recipeName?: string;
+  category?: RecipeCategory;
   quantity: number;
 };
 

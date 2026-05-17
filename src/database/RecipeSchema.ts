@@ -64,6 +64,8 @@ const RecipeSchema = new Schema(
       type: [
         {
           recipeId: { type: String, ref: "Recipe", required: true },
+          recipeName: { type: String, required: false },
+          category: { type: String, required: false },
           quantity: { type: Number, required: true, min: 1 },
         },
       ],

@@ -22,6 +22,7 @@ import type {
   Recipe,
   RecipeBuckets,
   RecipeCategory,
+  SubrecipeIngredient,
 } from "@/lib/types";
 import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
@@ -227,21 +228,28 @@ function RecipeDetails({
 
       <ServingsControl servings={servings} setServings={setServings} />
 
-      {recipe.ingredients?.length ? (
+      {recipe.ingredients?.length || recipe.subrecipes?.length ? (
         <>
           <Divider />
 
-          <div className="mb-4">
-            <h3 className="mb-4 text-xl font-semibold">Ingredients</h3>
+          {recipe.ingredients?.length ? (
+            <div className="mb-4">
+              <h3 className="mb-4 text-xl font-semibold">Ingredients</h3>
 
-            <ul className="list-disc pl-5">
-              {recipe.ingredients.map((ingredient, i) => (
-                <li key={i}>
-                  {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
-                </li>
-              ))}
-            </ul>
-          </div>
+              <ul className="list-disc pl-5">
+                {recipe.ingredients.map((ingredient, i) => (
+                  <li key={i}>
+                    {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
+                    {ingredient.notes ? (
+                      <span className="ml-2 text-pepper/60 text-sm">— {ingredient.notes}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {recipe.subrecipes?.length ? <SubrecipeSection subrecipes={recipe.subrecipes} /> : null}
         </>
       ) : null}
 
@@ -287,6 +295,69 @@ function ComboDetails({
       {combo.instructions ? <InstructionsSection instructions={combo.instructions} /> : null}
 
       <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
+    </>
+  );
+}
+
+function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] }) {
+  const CATEGORY_CONFIG: { key: RecipeCategory; label: string; icon: ReactNode }[] = [
+    { key: "Entree", label: "Entrees", icon: <ENTREE_ICON /> },
+    { key: "Vegetable", label: "Vegetables", icon: <VEGETABLE_ICON /> },
+    { key: "Fruit", label: "Fruits", icon: <FRUIT_ICON /> },
+    { key: "Grain", label: "Grains", icon: <GRAIN_ICON /> },
+  ];
+
+  const uncategorized = subrecipes.filter((sr) => !sr.category);
+  const hasAnyCategory = subrecipes.some((sr) => sr.category);
+
+  return (
+    <>
+      {hasAnyCategory &&
+        CATEGORY_CONFIG.map(({ key, label, icon }) => {
+          const items = subrecipes.filter((sr) => sr.category === key);
+          if (!items.length) return null;
+          return (
+            <LabeledSection key={key} label={label} icon={icon}>
+              <div className="flex flex-wrap gap-2">
+                {items.map((sr, i) => (
+                  <div key={i} className={`flex items-center gap-1 rounded-md px-2 py-1 ${TAG_STYLES[key]}`}>
+                    {sr.recipeName || sr.recipeId}
+                    <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}
+                      className="cursor-pointer rounded p-1 hover:opacity-80"
+                      aria-label={`Open ${sr.recipeName}`}
+                    >
+                      <ArrowUpRight size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </LabeledSection>
+          );
+        })}
+
+      {uncategorized.length > 0 && (
+        <LabeledSection label="Sub-recipes" icon={<Tag />}>
+          <div className="flex flex-wrap gap-2">
+            {uncategorized.map((sr, i) => (
+              <div key={i} className="flex items-center gap-1 rounded-md px-2 py-1 bg-pepper text-white">
+                {sr.recipeName || sr.recipeId}
+                <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}
+                  className="cursor-pointer rounded p-1 hover:opacity-80"
+                  aria-label={`Open ${sr.recipeName}`}
+                >
+                  <ArrowUpRight size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </LabeledSection>
+      )}
     </>
   );
 }
