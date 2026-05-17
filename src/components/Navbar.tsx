@@ -81,7 +81,7 @@ export default function Navbar() {
     { href: "/", label: "Dashboard", authOnly: true },
     { href: "/menuPlanning", label: "Menu Planning" },
     { href: "/recipe", label: "Recipes" },
-    { href: "/permissions", label: "Permissions", adminOnly: true },
+    { href: "/permissions", label: "Permissions", authOnly: true, adminOnly: true },
   ];
 
   const navLinks = allNavLinks
