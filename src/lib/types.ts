@@ -372,6 +372,14 @@ export const CATEGORY_DISPLAY = [
   GRAIN_CATEGORY_DISPLAY,
 ] satisfies CategoryDisplayType[];
 
+export const CATEGORY_DISPLAY_MAP = {
+  Combo: COMBO_CATEGORY_DISPLAY,
+  Entree: ENTREE_CATEGORY_DISPLAY,
+  Vegetable: VEGETABLE_CATEGORY_DISPLAY,
+  Fruit: FRUIT_CATEGORY_DISPLAY,
+  Grain: GRAIN_CATEGORY_DISPLAY,
+} satisfies Record<CategoryValue, CategoryDisplayType>;
+
 /* -------------------------------------------------------------------------- */
 /* Users                                                                      */
 /* -------------------------------------------------------------------------- */

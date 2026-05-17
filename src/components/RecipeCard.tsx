@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
-import { Recipe, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
@@ -41,7 +41,7 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
       <span
         className={`w-16 shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:w-20 md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
       >
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       {item.isDraft && (
