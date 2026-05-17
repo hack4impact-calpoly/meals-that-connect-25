@@ -7,6 +7,8 @@ import SortPermissionsButton from "@/components/SortPermissionsButton";
 import EditPermissionsButton from "@/components/EditPermissionsButton";
 import PermissionsPopUp from "@/components/PermissionsPopUp";
 import SearchBarClient from "@/components/SearchbarClient";
+import { SortOption, USER_ROLES, UserRole } from "@/lib/types";
+import RoleToggle from "./RoleToggle";
 
 export default function PermissionsClient() {
   const [usersList, setUsersList] = useState<UserPerms[]>([]);
@@ -15,22 +17,55 @@ export default function PermissionsClient() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [search, setSearch] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Set<UserRole>>(new Set<UserRole>());
+  const [sortOption, setSortOption] = useState<SortOption>("createdDate");
 
   // get all existing users
-  async function getUsers(): Promise<UserPerms[]> {
-    const res = await fetch(`/api/users`);
-    if (!res.ok) throw new Error(`Failed to get users`);
-    return res.json();
-  }
+  // async function getUsers(): Promise<UserPerms[]> {
+  //   const res = await fetch(`/api/users`);
+  //   if (!res.ok) throw new Error(`Failed to get users`);
+  //   return res.json();
+  // }
+
+  // useEffect(() => {
+  //   const loadAll = async () => {
+  //     const users = await getUsers();
+  //     setUsersList(users);
+  //   };
+
+  //   loadAll();
+  // }, []);
 
   useEffect(() => {
-    const loadAll = async () => {
-      const users = await getUsers();
-      setUsersList(users);
-    };
+    const controller = new AbortController();
 
-    loadAll();
-  }, []);
+    async function loadUsers() {
+      try {
+        const parsed = search.trim().toLowerCase();
+
+        const params = new URLSearchParams();
+        params.append("name", parsed);
+        params.append("role", Array.from(selectedRole).join(","));
+        params.append("sortBy", sortOption);
+
+        const res = await fetch(`/api/users?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          throw new Error(`Request failed: ${res.status}`);
+        }
+
+        const users = await res.json();
+        setUsersList(users);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    }
+
+    loadUsers();
+    // console.log("fetching users:", usersList);
+  }, [search, selectedRole, sortOption]);
 
   /* TODO: Delete this local filtering/pagination once permissions are fetched from the API.
    * Eventually the API should receive: search, selectedRoles, currentPage, PAGE_SIZE.
@@ -44,6 +79,20 @@ export default function PermissionsClient() {
       return parts.some((part) => part.includes(query)) || user.name.toLowerCase().includes(query);
     });
   }, [search, usersList]);
+
+  const toggleRole = (category: UserRole) => {
+    setSelectedRole((prev) => {
+      const next = new Set<UserRole>(prev);
+
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+
+      return next;
+    });
+  };
 
   const toggleUserSelection = (user: UserPerms) => {
     setSelectedUsers((prev) => {
@@ -117,8 +166,13 @@ export default function PermissionsClient() {
           />
         </div>
 
-        <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-5 sm:gap-3">
-          <SearchBarClient placeholder="Search a user" onSearch={setSearch} /> <SortPermissionsButton align="right" />
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <SearchBarClient placeholder="Search a user" onSearch={setSearch} />{" "}
+          <SortPermissionsButton align="right" activeType={sortOption} onSortChange={setSortOption} />
+        </div>
+
+        <div>
+          <RoleToggle options={[...USER_ROLES]} selectedRoles={selectedRole} onToggle={toggleRole} />
         </div>
 
         <div>
