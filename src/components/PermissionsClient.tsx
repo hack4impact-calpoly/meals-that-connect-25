@@ -102,9 +102,9 @@ export default function PermissionsClient() {
 
   return (
     <main>
-      <div className="flex flex-col py-5 gap-4 px-10">
-        <div className="flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Manage Permissions</h1>
+      <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 lg:px-10">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-lg font-semibold sm:text-xl">Manage Permissions</h1>
           <EditPermissionsButton
             isEditing={isEditing}
             onClick={() => {
@@ -117,7 +117,7 @@ export default function PermissionsClient() {
           />
         </div>
 
-        <div className="flex items-center gap-3 mb-5">
+        <div className="mb-3 flex min-w-0 items-center gap-2 sm:mb-5 sm:gap-3">
           <SearchBarClient placeholder="Search a user" onSearch={setSearch} /> <SortPermissionsButton align="right" />
         </div>
 
@@ -131,7 +131,7 @@ export default function PermissionsClient() {
           />
         </div>
 
-        {isEditing && selectedUsers.length > 0 && <div className="h-20"></div>}
+        {isEditing && selectedUsers.length > 0 && <div className="h-36 sm:h-24"></div>}
       </div>
       {isEditing && selectedUsers.length > 0 && (
         <PermissionsPopUp

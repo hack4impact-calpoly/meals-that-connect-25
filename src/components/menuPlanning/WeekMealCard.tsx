@@ -36,23 +36,25 @@ export default function WeekMealCard({ item, dayId }: WeekMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`group flex cursor-move items-stretch gap-3 rounded-md px-4 py-3 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
+      className={`group flex min-w-[8rem] flex-1 cursor-move items-stretch gap-2 rounded-md px-3 py-2 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] sm:px-4 sm:py-3 md:min-w-0 md:flex-none md:gap-3 ${tagClassName} ${
         isDragging ? "opacity-40" : ""
       }`}
       {...attributes}
       {...listeners}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="truncate text-[16px] leading-tight font-bold" title={item.name}>
+        <p className="truncate text-sm leading-tight font-bold sm:text-[16px]" title={item.name}>
           {item.name}
         </p>
 
-        {metaText ? <p className="truncate text-[15px] leading-tight font-medium">{metaText}</p> : null}
+        {metaText ? <p className="truncate text-xs leading-tight font-medium sm:text-[15px]">{metaText}</p> : null}
 
-        <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+        <div className="hidden sm:block">
+          <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+        </div>
       </div>
 
-      <GripVertical className="h-5 w-5 shrink-0 self-center text-current opacity-90" aria-hidden="true" />
+      <GripVertical className="h-4 w-4 shrink-0 self-center text-current opacity-90 sm:h-5 sm:w-5" aria-hidden="true" />
     </div>
   );
 }
