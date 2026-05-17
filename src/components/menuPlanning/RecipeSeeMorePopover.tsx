@@ -2,7 +2,7 @@
 
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TAG_STYLES, type Recipe } from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
@@ -18,10 +18,13 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const textSize = variant === "compact" ? "text-[11px]" : "text-xs";
   const iconSize = variant === "compact" ? "h-3 w-3" : "h-3.5 w-3.5";
   const rowMin = variant === "compact" ? "min-h-[1.125rem]" : "min-h-[1.375rem]";
+  const panelPosition = "top-full mt-1";
 
   const fetchRecipe = async () => {
     if (recipe || isLoading) return;
@@ -46,24 +49,52 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
   };
   const [isOpen, setIsOpen] = useState(false);
 
+  const cancelClose = () => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const openPopover = () => {
+    cancelClose();
+    setIsOpen(true);
+    fetchRecipe();
+  };
+
+  const scheduleClose = () => {
+    cancelClose();
+    closeTimerRef.current = setTimeout(() => {
+      setIsOpen(false);
+      closeTimerRef.current = null;
+    }, 250);
+  };
+
+  useEffect(() => {
+    return () => cancelClose();
+  }, []);
+
   return (
     <Popover
+      ref={popoverRef}
       className={`relative shrink-0 ${rowMin}`}
-      onMouseEnter={() => {
-        setIsOpen(true);
-        fetchRecipe();
+      onMouseEnter={openPopover}
+      onMouseLeave={scheduleClose}
+      onFocus={openPopover}
+      onBlur={(event) => {
+        const nextFocusedElement = event.relatedTarget;
+
+        if (nextFocusedElement instanceof Node && popoverRef.current?.contains(nextFocusedElement)) {
+          return;
+        }
+
+        scheduleClose();
       }}
-      onMouseLeave={() => setIsOpen(false)}
     >
       <>
         <PopoverButton
           type="button"
           className={`inline-flex items-center gap-1 whitespace-nowrap font-montserrat font-semibold underline underline-offset-2 ${textSize}`}
-          onFocus={() => {
-            setIsOpen(true);
-            fetchRecipe();
-          }}
-          onBlur={() => setIsOpen(false)}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
           aria-label="See more recipe details"
@@ -75,7 +106,9 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
         {isOpen ? (
           <PopoverPanel
             static
-            className="absolute left-0 top-full z-50 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-medium-gray bg-white font-montserrat text-pepper shadow-xl"
+            className={`absolute left-0 z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-medium-gray bg-white font-montserrat text-pepper shadow-xl ${panelPosition}`}
+            onMouseEnter={cancelClose}
+            onMouseLeave={scheduleClose}
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
