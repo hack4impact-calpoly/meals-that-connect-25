@@ -186,13 +186,15 @@ export default function DayView({ date, refetchTrigger, userRole }: DayViewProps
             ))
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
-              Drop a recipe here to add it to today&apos;s menu
+              {userRole === "Admin" || userRole === "Kitchen Staff"
+                ? "Drop a recipe here to add it to today's menu"
+                : "Meal Not Planned for the day"}
             </div>
           )}
         </DroppableCalendarArea>
       </div>
 
-      <DailyNutritionSummary total={nutritionTotal} />
+      {userRole && <DailyNutritionSummary total={nutritionTotal} />}
     </div>
   );
 }

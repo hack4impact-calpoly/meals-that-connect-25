@@ -549,16 +549,17 @@ export default function MenuPlanning() {
                   userRole={userRole}
                 />
 
-                <div className="mt-2">
-                  <WarningQuotaMonthly />
-                </div>
+                {userRole && (
+                  <div className="mt-2">
+                    <WarningQuotaMonthly />
+                  </div>
+                )}
 
-                <div
-                  className={`mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4
-                  ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
-                >
-                  <TrashDropZone />
-                </div>
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
 
@@ -573,24 +574,24 @@ export default function MenuPlanning() {
                   userRole={userRole}
                 />
 
-                <div
-                  className={`mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4
-                  ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
-                >
-                  <TrashDropZone />
-                </div>
-                <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
+
+                {userRole && <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />}
               </>
             )}
 
             {calendarView === "Day" && (
               <>
                 <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} userRole={userRole} />
-                <div
-                  className={`mt-2 flex justify-end ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
-                >
-                  <TrashDropZone />
-                </div>
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -217,7 +217,7 @@ export default function MonthView({
                   aria-pressed={weekend ? undefined : isDaySelected}
                   title={weekend ? "Weekends — not available for planning or selection." : "Click to select this day"}
                 >
-                  {showWarning ? (
+                  {userRole && showWarning ? (
                     <div className="absolute top-2 left-2 z-10">
                       <WarningQuotaMonthly />
                     </div>

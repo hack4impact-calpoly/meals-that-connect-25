@@ -162,12 +162,14 @@ export default function WeekView({
                   ))
                 ) : (
                   <div className="flex flex-1 items-center justify-center text-center font-montserrat text-xs font-medium text-pepper/55">
-                    Drop recipe here
+                    {userRole === "Admin" || userRole === "Kitchen Staff"
+                      ? "Drop recipe here"
+                      : "Meal Not Planned for the day"}
                   </div>
                 )}
               </DroppableCalendarArea>
 
-              {!isLoading && showNutritionWarning ? <NutritionInfoNotMetCard /> : null}
+              {!isLoading && userRole && showNutritionWarning ? <NutritionInfoNotMetCard /> : null}
             </div>
           </div>
         );
