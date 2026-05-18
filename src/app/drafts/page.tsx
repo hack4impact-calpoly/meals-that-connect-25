@@ -232,6 +232,7 @@ export default function DraftsPage() {
           item={selectedItem}
           isComboMode={selectedItemIsCombo}
           changeMode={(nextMode) => setMode(nextMode)}
+          userRole={userRole}
         />
       ) : (
         <CreateRecipePopUp
