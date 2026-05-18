@@ -47,13 +47,13 @@ export default function DraggableRecipeCard({ item, disabled = false }: Draggabl
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-w-0 items-center gap-3 rounded-xl border-2 border-gray-300 bg-white p-3 transition sm:p-4 ${
+      className={`flex min-w-0 items-center gap-3 rounded-md border border-medium-gray/70 bg-white p-2 transition sm:p-3 ${
         isDragging ? "opacity-50 bg-gray-50" : "hover:shadow-md"
       }`}
       {...attributes}
       {...listeners}
     >
-      <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-gray-100 sm:h-12 sm:w-12">
+      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-md bg-gray-100 sm:h-12 sm:w-12">
         {item.imageUrl ? (
           <Image src={item.imageUrl} alt={item.name} fill sizes="80px" className="object-cover" />
         ) : null}

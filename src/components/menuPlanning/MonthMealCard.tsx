@@ -10,11 +10,19 @@ import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 type MonthMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
+  variant?: "card" | "bar";
 };
 
 type MonthMealCardPreviewProps = {
   item: RecipeNutritionOnly;
 };
+
+const MONTH_BAR_STYLES = {
+  Entree: "bg-entree-bg",
+  Vegetable: "bg-vegetable-bg",
+  Fruit: "bg-fruit-bg",
+  Grain: "bg-grain-bg",
+} as const;
 
 export function MonthMealCardPreview({ item }: MonthMealCardPreviewProps) {
   const tagClassName = TAG_STYLES[item.category];
@@ -32,9 +40,10 @@ export function MonthMealCardPreview({ item }: MonthMealCardPreviewProps) {
   );
 }
 
-export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
+export default function MonthMealCard({ item, dayId, variant = "card" }: MonthMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
-  const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
+  const dndId = `calendar-${variant}-${dayId}-${bucket}-${item._id}`;
+  const barClassName = MONTH_BAR_STYLES[item.category];
   const tagClassName = TAG_STYLES[item.category];
 
   const dragData: CalendarDragData = {
@@ -47,6 +56,21 @@ export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
     id: dndId,
     data: dragData,
   });
+
+  if (variant === "bar") {
+    return (
+      <div
+        ref={setNodeRef}
+        className={`h-2 w-full cursor-move rounded-full shadow-[0_1px_2px_rgba(72,73,75,0.12)] ${barClassName} ${
+          isDragging ? "opacity-40" : ""
+        }`}
+        title={`${item.name} (${item.category})`}
+        aria-label={`${item.name} (${item.category})`}
+        {...attributes}
+        {...listeners}
+      />
+    );
+  }
 
   return (
     <div
