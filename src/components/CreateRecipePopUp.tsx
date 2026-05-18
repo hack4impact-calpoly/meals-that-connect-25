@@ -12,6 +12,7 @@ import {
   ALLERGEN_ICON,
   DIETARY_KEYS,
   EXCLUSION_KEYS,
+  ENTREE_CATEGORY_DISPLAY,
 } from "@/lib/types";
 import type {
   Recipe,
@@ -716,7 +717,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <>
                   <DropdownField
                     icon={ENTREE_ICON}
-                    label="Entree"
+                    label={ENTREE_CATEGORY_DISPLAY.label}
                     options={entreeOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                     selectedValues={selectedEntrees.map((recipe) => recipe.name)}
                     onSelect={(value) => {

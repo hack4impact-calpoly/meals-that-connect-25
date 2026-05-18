@@ -216,7 +216,7 @@ function RecipeDetails({
   return (
     <>
       <LabeledSection label="Category" icon={<Tag />}>
-        <Chip label={recipe.category} styleKey={recipe.category} />
+        <Chip label={CATEGORY_DISPLAY_MAP[recipe.category].label} styleKey={recipe.category} />
         {recipe.isSubrecipe ? <Chip label="Subrecipe" /> : null}
       </LabeledSection>
 

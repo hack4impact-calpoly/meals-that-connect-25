@@ -6,7 +6,7 @@ import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
 import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
-import { CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
 import type { Nutrition, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
 import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutrition";
@@ -61,7 +61,7 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <GripVertical className="h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
@@ -110,7 +110,7 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <button

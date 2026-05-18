@@ -55,7 +55,7 @@ export default function MealBrowser({
   userRole,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-3 md:gap-4 overflow-hidden">
+    <div className="flex flex-1 flex-col h-full gap-3 md:gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
 
