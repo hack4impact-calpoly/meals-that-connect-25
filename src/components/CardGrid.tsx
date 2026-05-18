@@ -14,6 +14,7 @@ type Props = {
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
   onOpenItem?: (item: Recipe | Combo<RecipePreview>) => void;
+  userRole: string | null;
 };
 
 // FIXME: layouts are currently sortof broken (max 2 cols for some reason). Figure out why
@@ -27,6 +28,7 @@ export default function CardGrid({
   selectedIds,
   onToggleSelect,
   onOpenItem,
+  userRole,
 }: Props) {
   if (loading) return <div className="text-sm text-black/60">Loading…</div>;
   if (error) return <div className="text-sm text-red-600">{error}</div>;
@@ -37,7 +39,9 @@ export default function CardGrid({
   if (isComboMode) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 w-full">
-        {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
+        {!draftMode && (userRole === "Admin" || userRole === "Kitchen Staff") && (
+          <DraftEntryCard variant="Combo" numDrafts={draftCount} />
+        )}
 
         {(items as Combo<RecipePreview>[]).map((combo) => (
           <ComboCard
@@ -56,7 +60,9 @@ export default function CardGrid({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full">
-      {!draftMode && <DraftEntryCard variant="recipe" numDrafts={draftCount} />}
+      {!draftMode && (userRole === "Admin" || userRole === "Kitchen Staff") && (
+        <DraftEntryCard variant="recipe" numDrafts={draftCount} />
+      )}
 
       {(items as Recipe[]).map((recipe) => (
         <RecipeCard
