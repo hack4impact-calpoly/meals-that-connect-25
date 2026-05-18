@@ -43,10 +43,11 @@ const getWeekDates = (today: Date) => {
 const formatWeekRange = (weekDates: Date[]) => {
   const first = weekDates[0];
   const last = weekDates[4];
-  const month = first.toLocaleDateString("en-US", { month: "short" });
+  const startMonth = first.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = last.toLocaleDateString("en-US", { month: "short" });
   const startDay = String(first.getDate());
   const endDay = String(last.getDate());
-  return `${month} ${startDay} – ${month} ${endDay}`;
+  return `${startMonth} ${startDay} – ${endMonth} ${endDay}`;
 };
 
 const fetchCalendarById = async (id: string) => {
