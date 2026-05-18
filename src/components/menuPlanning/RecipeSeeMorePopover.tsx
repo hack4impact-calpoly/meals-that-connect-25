@@ -3,18 +3,19 @@
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { useState } from "react";
-import { TAG_STYLES, type Recipe } from "@/lib/types";
+import { EXCLUSION_KEYS, FILTER_SECTIONS, TAG_STYLES, type Recipe } from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
   recipeId: string;
   variant?: "compact" | "default";
+  userRole: string | null;
 };
 
 function formatNutritionValue(value?: number) {
   return value == null ? "0" : value.toString();
 }
 
-export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: RecipeSeeMorePopoverProps) {
+export default function RecipeSeeMorePopover({ recipeId, variant = "default", userRole }: RecipeSeeMorePopoverProps) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,9 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
                       >
                         {recipe.category}
                       </span>
-                      <span className="text-[11px] font-medium leading-none text-pepper/60">
+                      <span
+                        className={`text-[11px] font-medium leading-none text-pepper/60 ${userRole ? "" : "hidden"}`}
+                      >
                         {recipe.serving} servings
                       </span>
                     </div>
@@ -118,14 +121,27 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
 
               {recipe ? (
                 <div className="space-y-3 text-sm">
-                  {recipe.notes ? (
+                  {recipe.exclusions ? (
+                    <section className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Allergens</h4>
+                      {EXCLUSION_KEYS.map((key) =>
+                        recipe.exclusions?.[key] ? (
+                          <p key={key} className="whitespace-pre-wrap leading-snug text-pepper/80">
+                            {FILTER_SECTIONS[0].options.find((option) => option.id === key)?.label || key}
+                          </p>
+                        ) : null,
+                      )}
+                    </section>
+                  ) : null}
+
+                  {userRole && recipe.notes ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Notes</h4>
                       <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.notes}</p>
                     </section>
                   ) : null}
 
-                  {recipe.ingredients?.length ? (
+                  {userRole && recipe.ingredients?.length ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Ingredients</h4>
                       <ul className="space-y-1">
@@ -144,7 +160,7 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
                     </section>
                   ) : null}
 
-                  {recipe.instructions ? (
+                  {userRole && recipe.instructions ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Instructions</h4>
                       <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.instructions}</p>

@@ -32,6 +32,31 @@ export default function DraftsPage() {
       comboPopulate: "preview",
     });
 
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.role !== "Admin" && data.role !== "Kitchen Staff") {
+            console.log("Redirecting user due to insufficient permissions");
+            router.push("/");
+          }
+
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
+
   useEffect(() => {
     setSelectedIds(new Set());
     setSelectedNames({});
@@ -124,6 +149,7 @@ export default function DraftsPage() {
               <Menu className="h-6 w-6" strokeWidth={2} aria-hidden />
             </button>
           }
+          userRole={userRole}
         />
 
         <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />

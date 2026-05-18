@@ -10,6 +10,7 @@ import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 type MonthMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
+  userRole: string | null;
 };
 
 type MonthMealCardPreviewProps = {
@@ -32,7 +33,7 @@ export function MonthMealCardPreview({ item }: MonthMealCardPreviewProps) {
   );
 }
 
-export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
+export default function MonthMealCard({ item, dayId, userRole }: MonthMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
@@ -51,21 +52,24 @@ export default function MonthMealCard({ item, dayId }: MonthMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`group flex max-w-full cursor-move flex-col gap-0.5 rounded-md px-2 py-1.5 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] ${tagClassName} ${
-        isDragging ? "opacity-40" : ""
-      }`}
+      className={`group flex max-w-full flex-col gap-0.5 rounded-md px-2 py-1.5 font-montserrat text-sm shadow-[0_2px_6px_rgba(72,73,75,0.08)] 
+        ${tagClassName} 
+        ${isDragging ? "opacity-40" : ""}
+         ${userRole === "Admin" || userRole === "Kitchen Staff" ? "cursor-move" : "cursor-default"}`}
       {...attributes}
-      {...listeners}
+      {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
     >
       <div className="flex min-w-0 items-center gap-1">
         <p className="min-w-0 flex-1 truncate leading-tight" title={item.name}>
           {item.name}
         </p>
 
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true" />
+        <GripVertical
+          className={`h-3.5 w-3.5 shrink-0 text-current opacity-90" aria-hidden="true ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        />
       </div>
 
-      <RecipeSeeMorePopover recipeId={item._id} variant="compact" />
+      <RecipeSeeMorePopover recipeId={item._id} variant="compact" userRole={userRole} />
     </div>
   );
 }
