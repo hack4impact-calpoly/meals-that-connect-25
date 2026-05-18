@@ -20,6 +20,7 @@ type Props = {
   /** Calendar day picked in month view; used when switching to week/day on the parent. */
   selectedDate: Date | null;
   onDaySelect: (date: Date) => void;
+  userRole: string | null;
 };
 
 function isWeekend(d: Date): boolean {
@@ -82,6 +83,7 @@ export default function MonthView({
   refetchTrigger,
   selectedDate,
   onDaySelect,
+  userRole,
 }: Props) {
   const [mealsByDayId, setMealsByDayId] = useState<Record<string, RecipeNutritionOnly[]>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -201,7 +203,13 @@ export default function MonthView({
                     ) : visibleMeals.length > 0 ? (
                       <>
                         {visibleMeals.map((meal) => (
-                          <MonthMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} variant="bar" />
+                          <MonthMealCard
+                            key={`${dayId}-${meal._id}`}
+                            item={meal}
+                            dayId={dayId}
+                            variant="bar"
+                            userRole={userRole}
+                          />
                         ))}
 
                         {hiddenCount > 0 ? (
@@ -238,7 +246,7 @@ export default function MonthView({
                     aria-pressed={isDaySelected}
                     title="Click to select this day"
                   >
-                    {showWarning ? (
+                    {userRole && showWarning ? (
                       <div className="absolute top-0.5 left-0.5 z-10 origin-top-left scale-75">
                         <WarningQuotaMonthly />
                       </div>
@@ -297,7 +305,7 @@ export default function MonthView({
                     ) : visibleMeals.length > 0 ? (
                       <>
                         {visibleMeals.map((meal) => (
-                          <MonthMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />
+                          <MonthMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} userRole={userRole} />
                         ))}
 
                         {hiddenCount > 0 ? (
@@ -344,7 +352,7 @@ export default function MonthView({
                     aria-pressed={weekend ? undefined : isDaySelected}
                     title={weekend ? "Weekends — not available for planning or selection." : "Click to select this day"}
                   >
-                    {showWarning ? (
+                    {userRole && showWarning ? (
                       <div className="absolute top-2 left-2 z-10">
                         <WarningQuotaMonthly />
                       </div>

@@ -32,6 +32,7 @@ type Props = {
   item: Recipe | Combo<Recipe> | null;
   isComboMode: boolean;
   changeMode: (mode: "view" | "edit") => void;
+  userRole: string | null;
 };
 
 function emptyNutrition(): Nutrition {
@@ -97,7 +98,7 @@ function selectedFlagLabels<TId extends FilterOptionId>(flags: Record<TId, boole
   return keys.filter((key) => flags[key]).map(getFilterLabel);
 }
 
-export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
+export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode, userRole }: Props) {
   const [maximized, setMaximized] = useState(false);
   const [servings, setServings] = useState(item?.serving || 1);
 
@@ -137,7 +138,9 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
               </div>
 
               <div className="flex flex-row gap-4">
-                <Pencil className="cursor-pointer" onClick={() => changeMode("edit")} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <Pencil className="cursor-pointer" onClick={() => changeMode("edit")} />
+                )}
               </div>
             </div>
 
@@ -157,6 +160,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 servings={servings}
                 setServings={setServings}
                 originalServings={originalServings}
+                userRole={userRole}
               />
             ) : (
               <RecipeDetails
@@ -164,6 +168,7 @@ export default function ViewRecipePopUp({ open, onClose, item, isComboMode, chan
                 servings={servings}
                 setServings={setServings}
                 originalServings={originalServings}
+                userRole={userRole}
               />
             )}
           </DialogPanel>
@@ -178,11 +183,13 @@ function RecipeDetails({
   servings,
   setServings,
   originalServings,
+  userRole,
 }: {
   recipe: Recipe;
   servings: number;
   setServings: React.Dispatch<React.SetStateAction<number>>;
   originalServings: number;
+  userRole: string | null;
 }) {
   const nutrition = recipe.nutritional_info ?? emptyNutrition();
 
@@ -201,11 +208,15 @@ function RecipeDetails({
         </LabeledSection>
       ) : null}
 
-      <Divider />
+      {userRole && (
+        <>
+          <Divider />
 
-      <ServingsControl servings={servings} setServings={setServings} />
+          <ServingsControl servings={servings} setServings={setServings} />
+        </>
+      )}
 
-      {recipe.ingredients?.length ? (
+      {userRole && recipe.ingredients?.length ? (
         <>
           <Divider />
 
@@ -223,7 +234,7 @@ function RecipeDetails({
         </>
       ) : null}
 
-      {recipe.instructions ? <InstructionsSection instructions={recipe.instructions} /> : null}
+      {userRole && recipe.instructions ? <InstructionsSection instructions={recipe.instructions} /> : null}
 
       <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
     </>
@@ -235,11 +246,13 @@ function ComboDetails({
   servings,
   setServings,
   originalServings,
+  userRole,
 }: {
   combo: Combo<Recipe>;
   servings: number;
   setServings: React.Dispatch<React.SetStateAction<number>>;
   originalServings: number;
+  userRole: string | null;
 }) {
   const nutrition = useMemo(() => getComboNutrition(combo, combo.serving), [combo]);
 
@@ -258,11 +271,15 @@ function ComboDetails({
         </LabeledSection>
       ) : null}
 
-      <Divider />
+      {userRole && (
+        <>
+          <Divider />
 
-      <ServingsControl servings={servings} setServings={setServings} />
+          <ServingsControl servings={servings} setServings={setServings} />
+        </>
+      )}
 
-      {combo.instructions ? <InstructionsSection instructions={combo.instructions} /> : null}
+      {userRole && combo.instructions ? <InstructionsSection instructions={combo.instructions} /> : null}
 
       <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
     </>

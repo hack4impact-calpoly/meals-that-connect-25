@@ -18,6 +18,7 @@ import {
   Recipe,
   RecipeBucket,
   RECIPE_BUCKETS,
+  SortOption,
   createEmptyFilterSelections,
   CATEGORY_TO_BUCKET,
   RecipeNutritionOnly,
@@ -185,6 +186,7 @@ export default function MenuPlanning() {
   const [planningRoot] = useState(() => new Date());
   const dateToday = new Date();
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("createdDate");
   const [calendarView, setCalendarView] = useState<"Month" | "Week" | "Day">("Week");
   const [datesOffset, setDatesOffset] = useState(0);
   const [pickedDateFromMonth, setPickedDateFromMonth] = useState<Date | null>(null);
@@ -198,6 +200,25 @@ export default function MenuPlanning() {
   const [nutritionByDate, setNutritionByDate] = useState<Record<string, NutritionSummary>>({});
 
   const previousCalendarView = useRef(calendarView);
+
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
 
   useEffect(() => {
     const prev = previousCalendarView.current;
@@ -299,6 +320,7 @@ export default function MenuPlanning() {
     filters, // TODO: can add filtering support to recipeDatabase
     selectedCategories,
     draftMode: false,
+    sortBy,
   });
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
@@ -512,15 +534,20 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   onDaySelect={setPickedDateFromMonth}
+                  userRole={userRole}
                 />
 
-                <div className="mt-2 hidden sm:block">
-                  <WarningQuotaMonthly />
-                </div>
+                {userRole && (
+                  <div className="mt-2">
+                    <WarningQuotaMonthly />
+                  </div>
+                )}
 
-                <div className="mt-2 hidden justify-end pb-2 sm:mt-auto sm:flex sm:pb-4">
-                  <TrashDropZone />
-                </div>
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
 
@@ -532,39 +559,49 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   nutritionByDate={nutritionByDate}
+                  userRole={userRole}
                 />
 
-                <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
-                  <TrashDropZone />
-                </div>
-                <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
+
+                {userRole && <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />}
               </>
             )}
 
             {calendarView === "Day" && (
               <>
-                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
-                <div className="mt-2 hidden justify-end sm:flex">
-                  <TrashDropZone />
-                </div>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} userRole={userRole} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
 
-        <SidebarDropZone>
-          <RecipeDatabase
-            items={items}
-            loading={loading}
-            error={error}
-            onSearch={setSearch}
-            selectedCategories={selectedCategories}
-            onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </SidebarDropZone>
+        {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+          <SidebarDropZone>
+            <RecipeDatabase
+              items={items}
+              loading={loading}
+              error={error}
+              onSearch={setSearch}
+              selectedCategories={selectedCategories}
+              onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </SidebarDropZone>
+        )}
       </main>
 
       <DragOverlay>
