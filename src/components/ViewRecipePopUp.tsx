@@ -59,6 +59,12 @@ function emptyNutrition(): Nutrition {
   };
 }
 
+type ServingsValue = number | "";
+
+function toPositiveServings(servings: ServingsValue) {
+  return typeof servings === "number" && servings > 0 ? servings : 1;
+}
+
 function scaleNutrition(nutrition: Nutrition, multiplier: number): Nutrition {
   return {
     calories: (nutrition.calories || 0) * multiplier,
@@ -81,8 +87,8 @@ function addNutrition(a: Nutrition, b: Nutrition): Nutrition {
   };
 }
 
-function formatNutritionValue(value: number, originalServings: number, servings: number) {
-  const scaled = (value / Math.max(1, originalServings)) * servings;
+function formatNutritionValue(value: number, originalServings: number, servings: ServingsValue) {
+  const scaled = (value / Math.max(1, originalServings)) * toPositiveServings(servings);
   return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
 }
 
@@ -113,7 +119,7 @@ function selectedFlagLabels<TId extends FilterOptionId>(flags: Record<TId, boole
 
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode }: Props) {
   const [maximized, setMaximized] = useState(false);
-  const [servings, setServings] = useState(item?.serving || 1);
+  const [servings, setServings] = useState<ServingsValue>(item?.serving || 1);
 
   useEffect(() => {
     if (open && item?.serving) {
@@ -194,8 +200,8 @@ function RecipeDetails({
   originalServings,
 }: {
   recipe: Recipe;
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
   originalServings: number;
 }) {
   const nutrition = recipe.nutritional_info ?? emptyNutrition();
@@ -229,7 +235,8 @@ function RecipeDetails({
             <ul className="list-disc pl-5">
               {recipe.ingredients.map((ingredient, i) => (
                 <li key={i}>
-                  {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
+                  {ingredient.name}: {(ingredient.quantity / originalServings) * toPositiveServings(servings)}{" "}
+                  {ingredient.units}
                 </li>
               ))}
             </ul>
@@ -251,8 +258,8 @@ function ComboDetails({
   originalServings,
 }: {
   combo: Combo<Recipe>;
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
   originalServings: number;
 }) {
   const nutrition = useMemo(() => getComboNutrition(combo, combo.serving), [combo]);
@@ -378,8 +385,8 @@ function ServingsControl({
   servings,
   setServings,
 }: {
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
 }) {
   return (
     <>
@@ -389,17 +396,41 @@ function ServingsControl({
         <button
           type="button"
           className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
-          onClick={() => setServings((s) => Math.max(1, s - 1))}
+          onClick={() => setServings((s) => Math.max(1, toPositiveServings(s) - 1))}
         >
           <Minus />
         </button>
 
-        <span className="w-15 text-center font-mono">{servings}</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={servings}
+          onChange={(e) => {
+            const value = e.target.value;
+
+            if (value === "") {
+              setServings("");
+              return;
+            }
+
+            const nextServings = Number(value);
+
+            if (nextServings > 0) {
+              setServings(nextServings);
+            }
+          }}
+          onBlur={() => {
+            if (servings === "") {
+              setServings(1);
+            }
+          }}
+          className="w-15 text-center font-mono outline-none"
+        />
 
         <button
           type="button"
           className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
-          onClick={() => setServings((s) => s + 1)}
+          onClick={() => setServings((s) => toPositiveServings(s) + 1)}
         >
           <Plus />
         </button>
@@ -427,7 +458,7 @@ function NutritionSection({
   originalServings,
 }: {
   nutrition: Nutrition;
-  servings: number;
+  servings: ServingsValue;
   originalServings: number;
 }) {
   return (

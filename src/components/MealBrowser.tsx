@@ -52,7 +52,7 @@ export default function MealBrowser({
   onOpenItem,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-3 md:gap-4">
+    <div className="flex flex-1 flex-col gap-3 md:gap-4 overflow-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
 
@@ -99,7 +99,7 @@ export default function MealBrowser({
         </div>
       </div>
 
-      <div className="w-full overflow-auto pb-5">
+      <div className="w-full min-h-0 overflow-auto pb-5">
         <CardGrid
           loading={loading}
           error={error}

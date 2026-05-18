@@ -1,5 +1,6 @@
 import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
+import { getCleanName, isDuplicateNameError, nameFieldError } from "@/lib/server/comboHelpers";
 import { getNormalizedParams } from "@/lib/server/searchParams";
 import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
@@ -161,12 +162,42 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  try {
-    const recipeData = await req.json();
-    const response = await postRecipe(recipeData);
+  let recipeData: Record<string, unknown>;
 
-    return NextResponse.json(response, { status: 201 });
+  try {
+    recipeData = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+
+    const name = getCleanName(recipeData);
+
+    if (!name) {
+      return nameFieldError("Name cannot be empty.");
+    }
+
+    const existingRecipe = await Recipe.exists({ name });
+
+    if (existingRecipe) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
+    const recipe = new Recipe({
+      ...recipeData,
+      name,
+    });
+
+    await recipe.save();
+
+    return NextResponse.json(recipe, { status: 201 });
   } catch (err: any) {
+    if (isDuplicateNameError(err)) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
