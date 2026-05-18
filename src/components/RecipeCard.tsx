@@ -15,7 +15,7 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
   const [editMode, setEditMode] = useState(false);
 
   const tagStyle = TAG_STYLES[item.category];
-  const metaText = `${item.nutritional_info.calories} cal / ${item.serving}`;
+  const metaText = `${item.nutritional_info.calories} cal / ${item.serving} ${item.serving > 1 ? "servings" : "serving"}`;
 
   return (
     <div

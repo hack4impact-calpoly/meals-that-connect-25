@@ -11,6 +11,8 @@ import {
   FilterSelections,
 } from "@/lib/types";
 
+const ITEMS_PER_PAGE = 4;
+
 type FilterMenuProps = {
   onFilterChange?: (selections: FilterSelections) => void;
   /** Seed overlay draft from parent-applied filters when opening the sheet. */
