@@ -166,8 +166,13 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const handleQuantityChange = (index: number, value: string) => {
     const updated = [...ingredientInputs];
 
-    // convert to number
-    updated[index].quantity = value === "" ? "" : Number(value);
+    if (value === "") {
+      updated[index].quantity = "";
+    } else {
+      const numValue = Number(value);
+      // convert to number
+      updated[index].quantity = Math.max(0, numValue);
+    }
 
     setIngredientInputs(updated);
   };
@@ -854,6 +859,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
                           <input
                             type="number"
+                            min="0"
                             placeholder="Enter Number"
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(index, e.target.value)}
