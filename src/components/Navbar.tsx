@@ -3,10 +3,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, redirect } from "next/navigation";
 import { useClerk, useUser } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 import { UserRole } from "@/lib/types";
+import { auth } from "@clerk/nextjs/server";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,6 +21,24 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
   const mobileDropdownRef = useRef<HTMLDivElement>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+  }, []);
 
   // cync user to DB on sign-in and fetch their role
   useEffect(() => {
@@ -59,13 +78,15 @@ export default function Navbar() {
   }, [drawerOpen]);
 
   const allNavLinks = [
-    { href: "/", label: "Dashboard" },
+    { href: "/", label: "Dashboard", authOnly: true },
     { href: "/menuPlanning", label: "Menu Planning" },
     { href: "/recipe", label: "Recipes" },
-    { href: "/permissions", label: "Permissions", adminOnly: true },
+    { href: "/permissions", label: "Permissions", authOnly: true, adminOnly: true },
   ];
 
-  const navLinks = allNavLinks.filter((link) => !link.adminOnly || role === "Admin");
+  const navLinks = allNavLinks
+    .filter((link) => !link.authOnly || isSignedIn)
+    .filter((link) => !link.adminOnly || role === "Admin");
 
   const displayName = user?.firstName
     ? `${user.firstName}${user.lastName ? " " + user.lastName : ""}`
@@ -93,7 +114,7 @@ export default function Navbar() {
         ))}
       </div>
 
-      {isSignedIn && (
+      {isSignedIn ? (
         <div className="relative hidden md:block" ref={dropdownRef}>
           <button
             onClick={() => setDropdownOpen((prev) => !prev)}
@@ -113,13 +134,25 @@ export default function Navbar() {
           {dropdownOpen && (
             <div className="absolute right-0 mt-2 w-40 rounded-lg border border-medium-gray bg-white shadow-md z-50">
               <button
-                onClick={() => signOut({ redirectUrl: "/sign-in" })}
+                onClick={() => {
+                  setUserRole(null);
+                  signOut({ redirectUrl: "/sign-in" });
+                }}
                 className="w-full rounded-lg px-4 py-3 text-left text-sm font-medium text-pepper hover:bg-light-gray transition-colors"
               >
                 Log out
               </button>
             </div>
           )}
+        </div>
+      ) : (
+        <div className="relative hidden md:block" ref={dropdownRef}>
+          <button
+            onClick={() => redirect("/sign-in")}
+            className="flex items-center gap-3 rounded-lg border border-medium-gray px-4 py-2 hover:bg-light-gray transition-colors cursor-pointer"
+          >
+            Sign In
+          </button>
         </div>
       )}
 
@@ -159,7 +192,7 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {isSignedIn && (
+          {isSignedIn ? (
             <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
               <button
                 onClick={() => setMobileDropdownOpen((prev) => !prev)}
@@ -185,6 +218,7 @@ export default function Navbar() {
                 <div className="absolute bottom-20 mt-2 w-20 rounded-lg border border-medium-gray bg-white shadow-md z-50">
                   <button
                     onClick={() => {
+                      setUserRole(null);
                       signOut({ redirectUrl: "/sign-in" });
                       setDrawerOpen(false);
                       setMobileDropdownOpen(false);
@@ -195,6 +229,15 @@ export default function Navbar() {
                   </button>
                 </div>
               )}
+            </div>
+          ) : (
+            <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
+              <button
+                onClick={() => redirect("/sign-in")}
+                className="w-full rounded-lg px-3 py-2 text-xs font-medium text-pepper border border-medium-gray hover:bg-light-gray transition-colors"
+              >
+                Sign In
+              </button>
             </div>
           )}
         </div>

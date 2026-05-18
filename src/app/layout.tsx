@@ -17,11 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ClerkProvider>
       <html lang="en" className="h-full">
         <body className="flex flex-col h-full bg-light-gray">
-          <Show when="signed-in">
-            <header>
-              <Navbar />
-            </header>
-          </Show>
+          <header>
+            <Navbar />
+          </header>
           {children}
         </body>
       </html>
