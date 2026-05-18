@@ -7,7 +7,7 @@ import {
   type Recipe,
   type RecipeMinimal,
 } from "@/lib/types";
-import { EditableItem } from "../CreateRecipePopUp";
+import type { EditableItem } from "../CreateRecipePopUp";
 
 export function isRecipeItem(item: EditableItem): item is Recipe {
   return "category" in item;

@@ -34,8 +34,8 @@ import { DropdownField } from "./createMeal/DropdownField";
 
 // TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
-type EditableCombo = Combo<Recipe>;
-type EditableItem = Recipe | EditableCombo;
+export type EditableCombo = Combo<Recipe>;
+export type EditableItem = Recipe | EditableCombo;
 
 type Props = {
   item: EditableItem | null;
