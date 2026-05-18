@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
   }
 
   const dbUsers = await query;
-  console.log("dbUsers:", dbUsers);
 
   const users = clerkUsers.map((clerkUser) => {
     // find every user to get their information we need
