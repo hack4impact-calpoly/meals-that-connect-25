@@ -151,9 +151,13 @@ function TrashDropZone() {
 
   return (
     // some padding around the button to make the droppable area larger
-    <div ref={setNodeRef} className="flex h-24 w-24 items-center justify-center" aria-label="Trash drop zone">
+    <div
+      ref={setNodeRef}
+      className="flex h-16 w-16 items-center justify-center sm:h-24 sm:w-24"
+      aria-label="Trash drop zone"
+    >
       <div
-        className={`flex h-14 w-14 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition ${
+        className={`flex h-12 w-12 items-center justify-center rounded-full bg-radish-900 text-white shadow-lg transition sm:h-14 sm:w-14 ${
           isOver ? "scale-105 ring-4 ring-radish-900/20" : ""
         }`}
         aria-label="Trash"
@@ -171,7 +175,7 @@ function SidebarDropZone({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div ref={setNodeRef} className="flex flex-col w-90">
+    <div ref={setNodeRef} className="flex w-full min-w-0 flex-col bg-white lg:w-90 lg:shrink-0">
       {children}
     </div>
   );
@@ -485,18 +489,22 @@ export default function MenuPlanning() {
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
-      <main className="flex flex-1 overflow-hidden">
-        <div className="flex flex-1 justify-center pt-4 bg-gray-100 overflow-auto">
-          <div className="flex w-260 flex-col">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center justify-center gap-2">
+      <main className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">
+        <div className="flex w-full min-w-0 justify-center bg-gray-100 px-4 py-4 sm:px-6 lg:flex-1 lg:overflow-auto lg:px-4">
+          <div className="flex w-full max-w-[1040px] flex-col">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex min-w-0 items-center gap-1 sm:gap-2">
                 <CurrentDateButton onClick={resetToPlanningToday} />
 
-                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(-1)}>
+                <button
+                  type="button"
+                  className="shrink-0 cursor-pointer rounded-md p-1 hover:bg-white"
+                  onClick={() => bumpDatesOffset(-1)}
+                >
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
 
-                <span className="text-xl font-bold">
+                <span className="min-w-0 truncate text-base font-bold sm:text-xl">
                   {calendarView === "Day" &&
                     `${viewDates[0].toLocaleDateString(undefined, {
                       weekday: "long",
@@ -515,15 +523,19 @@ export default function MenuPlanning() {
                     })}
                 </span>
 
-                <button type="button" className="cursor-pointer" onClick={() => bumpDatesOffset(1)}>
+                <button
+                  type="button"
+                  className="shrink-0 cursor-pointer rounded-md p-1 hover:bg-white"
+                  onClick={() => bumpDatesOffset(1)}
+                >
                   <ChevronRight size={20} strokeWidth={2.5} />
                 </button>
               </div>
 
-              <div className="flex flex-row">
-                <div className="flex w-fit rounded-md bg-white">
+              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                <div className="flex w-full rounded-md bg-white p-1 sm:w-fit sm:p-0">
                   <button
-                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
+                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold text-black sm:flex-none sm:px-4 sm:text-base ${
                       calendarView === "Month" ? "bg-radish-900 text-white" : ""
                     }`}
                     type="button"
@@ -534,7 +546,7 @@ export default function MenuPlanning() {
 
                   <button
                     type="button"
-                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold ${
+                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold sm:flex-none sm:px-4 sm:text-base ${
                       calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"
                     }`}
                     onClick={() => setCalendarView("Week")}
@@ -544,7 +556,7 @@ export default function MenuPlanning() {
 
                   <button
                     type="button"
-                    className={`cursor-pointer rounded-md px-4 py-1 font-semibold text-black ${
+                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold text-black sm:flex-none sm:px-4 sm:text-base ${
                       calendarView === "Day" ? "bg-radish-900 text-white" : ""
                     }`}
                     onClick={() => setCalendarView("Day")}
@@ -553,16 +565,16 @@ export default function MenuPlanning() {
                   </button>
                 </div>
 
-                <div className="flex gap-2 ml-2 items-center">
+                <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:ml-2 sm:flex-none">
                   <select
                     value={exportFormat}
                     onChange={(e) => setExportFormat(e.target.value as "Display" | "Nutritional")}
-                    className="bg-white rounded-md px-3 py-2 font-semibold text-black border border-gray-300 cursor-pointer"
+                    className="min-w-0 flex-1 cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-black sm:flex-none sm:text-base"
                   >
                     <option value="Nutritional">Nutritional</option>
                     <option value="Display">Display</option>
                   </select>
-                  <span className="bg-radish-900 rounded-md p-2">
+                  <span className="shrink-0 rounded-md bg-radish-900 p-2">
                     <ArrowDownToLine
                       className="cursor-pointer"
                       color="white"
@@ -590,7 +602,7 @@ export default function MenuPlanning() {
                   <WarningQuotaMonthly />
                 </div>
 
-                <div className="mt-auto flex justify-end pb-4">
+                <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
                   <TrashDropZone />
                 </div>
               </>
@@ -606,7 +618,7 @@ export default function MenuPlanning() {
                   nutritionByDate={nutritionByDate}
                 />
 
-                <div className="mt-auto flex justify-end pb-4">
+                <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
                   <TrashDropZone />
                 </div>
                 <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
