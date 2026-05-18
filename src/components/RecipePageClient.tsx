@@ -38,6 +38,21 @@ export default function RecipePageClient() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
+  const [pageSize, setPageSize] = useState(4);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        setPageSize(11);
+      } else {
+        setPageSize(4);
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   async function getRecipe(id: string): Promise<Recipe> {
     const res = await fetch(`/api/recipes/${id}`);
@@ -66,6 +81,7 @@ export default function RecipePageClient() {
       selectedCategories,
       draftMode: false,
       comboPopulate: "preview",
+      pageSize: pageSize,
     });
 
   const handleOpenItem = async (item: BrowserItem) => {
@@ -107,7 +123,7 @@ export default function RecipePageClient() {
   const selectedItemIsCombo = selectedItem ? !isRecipe(selectedItem) : isComboMode;
 
   return (
-    <main className="relative flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-5 md:flex-row">
+    <main className="relative flex min-h-0 flex-1 flex-col gap-6 overflow-auto md:overflow-hidden px-5 pt-5 md:flex-row">
       <MealBrowser
         setSearch={setSearch}
         items={items}

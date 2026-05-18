@@ -37,7 +37,7 @@ export function useMealData<TComboRecipe = string>({
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
-  pageSize = 11,
+  pageSize = 4,
   comboPopulate,
 }: Params): Return<TComboRecipe> {
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -80,7 +80,9 @@ export function useMealData<TComboRecipe = string>({
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
         params.append("page", String(currentPage));
-        params.append("limit", String(draftMode ? pageSize - 1 : pageSize));
+
+        const limit = !draftMode ? pageSize - 1 : pageSize;
+        params.append("limit", String(limit));
 
         if (trimmed) {
           params.append("name", trimmed);

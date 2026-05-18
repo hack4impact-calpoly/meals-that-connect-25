@@ -99,7 +99,7 @@ export default function MealBrowser({
         </div>
       </div>
 
-      <div className="w-full overflow-auto pb-5">
+      <div className="w-full h-full overflow-visible md:overflow-hidden pb-5">
         <CardGrid
           loading={loading}
           error={error}
