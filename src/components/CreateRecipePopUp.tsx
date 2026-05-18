@@ -538,18 +538,18 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                   )
                   .map((ingredient) => ({
                     name: ingredient.name,
-                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : undefined,
+                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : 1,
                     units: ingredient.units,
                     notes: ingredient.notes,
                   }))
               : undefined,
           subrecipes: subrecipeInputs
-            .filter((sr) => sr.recipeId !== "" && sr.quantity !== "")
+            .filter((sr) => sr.recipeId !== "")
             .map((sr) => ({
               recipeId: sr.recipeId,
               recipeName: sr.recipeName,
               category: sr.category || undefined,
-              quantity: Number(sr.quantity),
+              quantity: sr.quantity !== "" ? Number(sr.quantity) : 1,
             })),
           instructions: instructionsText,
           notes: notes,

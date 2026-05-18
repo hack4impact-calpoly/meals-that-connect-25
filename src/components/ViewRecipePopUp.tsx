@@ -299,7 +299,22 @@ function ComboDetails({
   );
 }
 
+function mergeSubrecipes(subrecipes: SubrecipeIngredient[]): SubrecipeIngredient[] {
+  const merged = new Map<string, SubrecipeIngredient>();
+  for (const sr of subrecipes) {
+    const existing = merged.get(sr.recipeId);
+    if (existing) {
+      existing.quantity += sr.quantity;
+    } else {
+      merged.set(sr.recipeId, { ...sr });
+    }
+  }
+  return Array.from(merged.values());
+}
+
 function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] }) {
+  const merged = mergeSubrecipes(subrecipes);
+
   const CATEGORY_CONFIG: { key: RecipeCategory; label: string; icon: ReactNode }[] = [
     { key: "Entree", label: "Entrees", icon: <ENTREE_ICON /> },
     { key: "Vegetable", label: "Vegetables", icon: <VEGETABLE_ICON /> },
@@ -307,14 +322,14 @@ function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] })
     { key: "Grain", label: "Grains", icon: <GRAIN_ICON /> },
   ];
 
-  const uncategorized = subrecipes.filter((sr) => !sr.category);
-  const hasAnyCategory = subrecipes.some((sr) => sr.category);
+  const uncategorized = merged.filter((sr) => !sr.category);
+  const hasAnyCategory = merged.some((sr) => sr.category);
 
   return (
     <>
       {hasAnyCategory &&
         CATEGORY_CONFIG.map(({ key, label, icon }) => {
-          const items = subrecipes.filter((sr) => sr.category === key);
+          const items = merged.filter((sr) => sr.category === key);
           if (!items.length) return null;
           return (
             <LabeledSection key={key} label={label} icon={icon}>
