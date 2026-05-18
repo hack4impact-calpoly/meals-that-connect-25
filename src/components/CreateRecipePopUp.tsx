@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { AlignLeft, ChefHat, Minus, Plus, X } from "lucide-react";
+import { AlignLeft, ChefHat, ChevronDown, Minus, Plus, Save, Trash2, X, type LucideIcon } from "lucide-react";
+import ImageUploader from "@/components/ImageUploader";
 import {
+  FILTER_SECTIONS,
   ENTREE_ICON,
   VEGETABLE_ICON,
   FRUIT_ICON,
@@ -22,28 +24,18 @@ import type {
   ExclusionKey,
   FilterOption,
   ProteinSource,
+  FilterOptionId,
+  FilterSectionId,
 } from "@/lib/types";
+import Image from "next/image";
 import { NutritionalInfo } from "./createMeal/NutritionalInfo";
 import { FieldRow } from "./createMeal/FieldRow";
 import { DropdownField } from "./createMeal/DropdownField";
-import {
-  comboHasRecipe,
-  flagsToSelectedOptions,
-  isRecipeItem,
-  optionsToBooleanFlags,
-  toggleFilterOption,
-  toRecipeMinimal,
-  getFilterSectionOptions,
-} from "./createMeal/helpers";
-import { ConfirmActionDialog } from "./createMeal/shared/DiscardChangesDialog";
-import { ImageUploadSection } from "./createMeal/shared/ImageUploadSection";
-import { PopupHeader } from "./createMeal/shared/PopupHeader";
-import { InstructionsField } from "./createMeal/shared/InstructionsField";
-import { TitleField } from "./createMeal/shared/TitleField";
-import { ServingsField } from "./createMeal/recipe/ServingsField";
+
+// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
 type EditableCombo = Combo<Recipe>;
-export type EditableItem = Recipe | EditableCombo;
+type EditableItem = Recipe | EditableCombo;
 
 type Props = {
   item: EditableItem | null;
@@ -58,6 +50,61 @@ type InputPair = {
   quantity: number | "";
   units: string;
 };
+
+function isRecipeItem(item: EditableItem): item is Recipe {
+  return "category" in item;
+}
+
+function toRecipeMinimal(recipes: Recipe[] = []): RecipeMinimal[] {
+  return recipes.map((recipe) => ({
+    _id: recipe._id,
+    name: recipe.name,
+  }));
+}
+
+function comboHasRecipe(combo: Combo, recipeId: string) {
+  return (
+    combo.entrees?.includes(recipeId) ||
+    combo.vegetables?.includes(recipeId) ||
+    combo.fruits?.includes(recipeId) ||
+    combo.grains?.includes(recipeId)
+  );
+}
+
+function getFilterSectionOptions(sectionId: FilterSectionId): FilterOption[] {
+  const section = FILTER_SECTIONS.find((section) => section.id === sectionId);
+  return section?.options ?? [];
+}
+
+function toggleFilterOption(selectedOptions: FilterOption[], option: FilterOption): FilterOption[] {
+  // check the current toggle status for this option
+  const alreadySelected = selectedOptions.some((selectedOption) => selectedOption.id === option.id);
+
+  if (alreadySelected) {
+    // toggle off
+    return selectedOptions.filter((selectedOption) => selectedOption.id !== option.id);
+  }
+
+  // toggle on
+  return [...selectedOptions, option];
+}
+
+function optionsToBooleanFlags<TFilterKey extends FilterOptionId>(
+  keys: readonly TFilterKey[],
+  selectedOptions: FilterOption[],
+): Record<TFilterKey, boolean> {
+  const selectedIds = new Set(selectedOptions.map((option) => option.id));
+  return Object.fromEntries(keys.map((key) => [key, selectedIds.has(key)])) as Record<TFilterKey, boolean>;
+}
+
+function flagsToSelectedOptions<TFilterKey extends FilterOptionId>(
+  flags: Partial<Record<TFilterKey, boolean>> | undefined,
+  options: FilterOption[],
+): FilterOption[] {
+  if (!flags) return [];
+
+  return options.filter((option) => flags[option.id as TFilterKey]);
+}
 
 const PROTEIN_SOURCE_OPTIONS = getFilterSectionOptions("proteinSources");
 const DIETARY_OPTIONS = getFilterSectionOptions("dietary");
@@ -457,6 +504,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       }
     }
 
+    setShowDeleteModal(true);
     setBusy("delete");
     try {
       let res;
@@ -477,26 +525,33 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   return (
     <>
-      <ConfirmActionDialog
-        open={showCloseConfirm}
-        title={"Discard Changes?"}
-        body={"You have unsaved changes. Are you sure you want to close?"}
-        confirmText={"Discard"}
-        onCancel={() => setShowCloseConfirm(false)}
-        onConfirm={() => {
-          setShowCloseConfirm(false);
-          onClose();
-        }}
-      />
-      <ConfirmActionDialog
-        open={showDeleteModal}
-        title={"Delete item?"}
-        body={"This action cannot be undone."}
-        confirmText={busy === "delete" ? "Deleting..." : "Delete"}
-        confirmDisabled={busy === "delete"}
-        onCancel={() => setShowDeleteModal(false)}
-        onConfirm={trash}
-      />
+      <Dialog open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)} className="relative z-[100]">
+        <DialogBackdrop className="fixed inset-0 bg-black/50" />
+
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+            <h3 className="text-lg font-semibold">Discard changes?</h3>
+
+            <p className="mt-2 text-sm text-gray-600">You have unsaved changes. Are you sure you want to close?</p>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button className="rounded-lg bg-gray-200 px-4 py-2" onClick={() => setShowCloseConfirm(false)}>
+                Cancel
+              </button>
+
+              <button
+                className="rounded-lg bg-radish-900 px-4 py-2 text-white"
+                onClick={() => {
+                  setShowCloseConfirm(false);
+                  onClose();
+                }}
+              >
+                Discard
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
       <Dialog open={open} onClose={() => setShowCloseConfirm(true)} className="relative z-50">
         <DialogBackdrop
           transition
@@ -509,28 +564,118 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 data-closed:scale-95 data-closed:opacity-0 data-enter:duration-200 data-leave:duration-150"
           >
             {/* Header */}
-            <PopupHeader
-              editMode={editMode}
-              publishText={busy === "publish" ? "Saving…" : "Publish"}
-              onDelete={() => setShowDeleteModal(true)}
-              onSaveDraft={() => saveRecipe(true, item ? item._id : "")}
-              onPublish={() => saveRecipe(false, "")}
-              disabled={!!busy || !name.trim}
-            />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                {/* only show trash option if we are editing */}
+                {editMode === true && (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteModal(true)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200 disabled:cursor-not-allowed disabled:opacity-50"
+                    title={id ? "Delete recipe" : "Delete available after publish"}
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
 
-            <ImageUploadSection
-              imageUrl={imageUrl}
-              onUpload={(url) => setImageUrl(url)}
-              onReplace={() => setImageUrl("")}
-            />
+              {showDeleteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
+                  <div className="relative p-4 w-full max-w-md">
+                    <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
+                      {/* Close button */}
+                      <button
+                        type="button"
+                        className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center"
+                        onClick={() => setShowDeleteModal(false)}
+                      >
+                        ✕
+                      </button>
+
+                      {/* Modal content */}
+                      <h3 className="text-lg font-semibold text-heading">Delete item?</h3>
+
+                      <p className="text-sm text-body mt-2">This action cannot be undone.</p>
+
+                      {/* Buttons */}
+                      <div className="flex justify-end gap-2 mt-5">
+                        <button
+                          className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray"
+                          onClick={() => setShowDeleteModal(false)}
+                        >
+                          Cancel
+                        </button>
+
+                        <button
+                          className="px-4 py-2 text-white hover:bg-radish-500 bg-radish-900 rounded-lg"
+                          onClick={trash}
+                          disabled={busy === "delete"}
+                        >
+                          {busy === "delete" ? "Deleting..." : "Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => saveRecipe(true, item ? item._id : "")}
+                  disabled={busy !== null}
+                  className="inline-flex items-center gap-2 rounded-full border border-radish-200 bg-white px-4 py-2 text-sm font-semibold text-radish-900 transition hover:bg-radish-100 disabled:opacity-50"
+                >
+                  <Save className="h-4 w-4" />
+                  Save as Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => saveRecipe(false, "")}
+                  disabled={busy !== null || !name.trim()}
+                  className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
+                >
+                  {busy === "publish" ? "Saving…" : "Publish"}
+                </button>
+              </div>
+            </div>
+
+            {/* Image Upload */}
+            {imageUrl ? (
+              <div className="mt-6 rounded-4xl border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+                <div className="mx-auto max-w-xs text-center">
+                  <Image
+                    src={imageUrl}
+                    alt="Uploaded"
+                    width={200}
+                    height={200}
+                    className="mx-auto mb-4 max-h-48 rounded-xl object-cover"
+                  />
+                  <button onClick={() => setImageUrl("")} className="text-sm text-blue-500">
+                    Replace image
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 rounded-4xl border-2 border-dashed border-pepper/30 bg-pepper/5 px-6 py-10 text-center text-pepper">
+                <div className="mx-auto max-w-xs text-center">
+                  <ImageUploader onUpload={(url) => setImageUrl(url)} />
+                </div>
+              </div>
+            )}
 
             {/* Title */}
-            <TitleField
-              label={`New ${createLabel}`}
-              value={name}
-              onChange={setName}
-              placeholder="e.g. Chicken Alfredo"
-            />
+            <div className="mt-5">
+              <label className="flex flex-col gap-1">
+                <span className="text-sm font-montserrat font-semibold text-pepper">New {createLabel}</span>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Chicken Alfredo"
+                  className="w-full rounded-md border border-pepper/20 px-3 py-2 font-montserrat text-pepper outline-none focus:border-pepper/50"
+                />
+              </label>
+            </div>
 
             <div className="space-y-3 mt-5">
               {isCombo && (
@@ -662,7 +807,35 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             <div className="my-6 h-px bg-pepper/10" />
 
             <div className="space-y-6">
-              {!isCombo && <ServingsField value={servings} onChange={setServings} />}
+              {!isCombo && (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-pepper">Servings</div>
+                  <div className="inline-flex items-center gap-3 rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3">
+                    <button
+                      type="button"
+                      onClick={() => setServings((prev) => String(Math.max(1, Number(prev) - 1) || 1))}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <input
+                      type="number"
+                      value={servings || "1"}
+                      onChange={(e) => setServings(e.target.value)}
+                      className="max-w-13.5 text-center text-xl font-semibold text-pepper"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() => setServings((prev) => String((Number(prev) || 1) + 1))}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-pepper/20 bg-white text-pepper transition hover:bg-pepper/5"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="h-px bg-pepper/10" />
+                </div>
+              )}
 
               {!isCombo && (
                 <div className="space-y-3">
@@ -718,7 +891,16 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 </div>
               )}
 
-              <InstructionsField value={instructionsText} onChange={setInstructionsText} />
+              <div className="space-y-3">
+                <div className="text-sm font-semibold text-pepper">Instructions</div>
+                <textarea
+                  value={instructionsText}
+                  onChange={(e) => setInstructionsText(e.target.value)}
+                  placeholder="List instructions here"
+                  rows={3}
+                  className="min-h-24 w-full rounded-2xl border border-pepper/20 bg-slate-50 px-3 py-3 text-sm font-montserrat text-pepper outline-none focus:border-pepper/50"
+                />
+              </div>
             </div>
 
             {/* Nutritional Info */}
