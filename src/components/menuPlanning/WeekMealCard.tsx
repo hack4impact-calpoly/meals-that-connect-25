@@ -9,9 +9,10 @@ import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
 export type WeekMealCardProps = {
   item: Recipe;
   dayId: string;
+  userRole: string | null;
 };
 
-export default function WeekMealCard({ item, dayId }: WeekMealCardProps) {
+export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
@@ -36,11 +37,12 @@ export default function WeekMealCard({ item, dayId }: WeekMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`group flex min-w-[8rem] flex-1 cursor-move items-stretch gap-2 rounded-md px-3 py-2 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] sm:px-4 sm:py-3 md:min-w-0 md:flex-none md:gap-3 ${tagClassName} ${
-        isDragging ? "opacity-40" : ""
-      }`}
+      className={`group flex min-w-[8rem] flex-1 items-stretch gap-2 rounded-md px-3 py-2 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] sm:px-4 sm:py-3 md:min-w-0 md:flex-none md:gap-3 
+        ${tagClassName} 
+        ${isDragging ? "opacity-40" : ""}
+        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "cursor-move" : ""}`}
       {...attributes}
-      {...listeners}
+      {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm leading-tight font-bold sm:text-[16px]" title={item.name}>
@@ -50,11 +52,14 @@ export default function WeekMealCard({ item, dayId }: WeekMealCardProps) {
         {metaText ? <p className="truncate text-xs leading-tight font-medium sm:text-[15px]">{metaText}</p> : null}
 
         <div className="hidden sm:block">
-          <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+          <RecipeSeeMorePopover recipeId={item._id} variant="default" userRole={userRole} />
         </div>
       </div>
 
-      <GripVertical className="h-4 w-4 shrink-0 self-center text-current opacity-90 sm:h-5 sm:w-5" aria-hidden="true" />
+      <GripVertical
+        className={`h-4 w-4 shrink-0 self-center text-current opacity-90 sm:h-5 sm:w-5" aria-hidden="true 
+        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+      />
     </div>
   );
 }

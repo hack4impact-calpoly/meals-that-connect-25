@@ -38,20 +38,25 @@ export default function RecipePageClient() {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
-  const [pageSize, setPageSize] = useState(4);
+
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setPageSize(11);
-      } else {
-        setPageSize(4);
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
       }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    }
+    getUserRole();
+    console.log("User role set to:", userRole);
   }, []);
 
   async function getRecipe(id: string): Promise<Recipe> {
@@ -149,6 +154,7 @@ export default function RecipePageClient() {
             <span className="font-montserrat text-md font-semibold">Filters</span>
           </button>
         }
+        userRole={userRole}
       />
 
       <div className="hidden w-px shrink-0 bg-dark-gray md:block md:self-stretch" />
@@ -174,6 +180,7 @@ export default function RecipePageClient() {
           item={selectedItem}
           isComboMode={selectedItemIsCombo}
           changeMode={(e) => setMode(e)}
+          userRole={userRole}
         />
       ) : (
         <CreateRecipePopUp
