@@ -81,7 +81,6 @@ export default function RecipePageClient() {
       selectedCategories,
       draftMode: false,
       comboPopulate: "preview",
-      pageSize: pageSize,
     });
 
   const handleOpenItem = async (item: BrowserItem) => {

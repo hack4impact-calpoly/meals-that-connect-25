@@ -36,7 +36,7 @@ export default function CardGrid({
 
   if (isComboMode) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 grid-rows-2 gap-3 md:gap-6 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 w-full overflow-y-auto">
         {!draftMode && <DraftEntryCard variant="Combo" numDrafts={draftCount} />}
 
         {(items as Combo<RecipePreview>[]).map((combo) => (
