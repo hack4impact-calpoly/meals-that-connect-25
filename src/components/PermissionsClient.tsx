@@ -20,22 +20,6 @@ export default function PermissionsClient() {
   const [selectedRole, setSelectedRole] = useState<Set<UserRole>>(new Set<UserRole>());
   const [sortOption, setSortOption] = useState<SortOption>("createdDate");
 
-  // get all existing users
-  // async function getUsers(): Promise<UserPerms[]> {
-  //   const res = await fetch(`/api/users`);
-  //   if (!res.ok) throw new Error(`Failed to get users`);
-  //   return res.json();
-  // }
-
-  // useEffect(() => {
-  //   const loadAll = async () => {
-  //     const users = await getUsers();
-  //     setUsersList(users);
-  //   };
-
-  //   loadAll();
-  // }, []);
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -57,6 +41,7 @@ export default function PermissionsClient() {
         }
 
         const users = await res.json();
+        console.log(users);
         setUsersList(users);
       } catch (err) {
         console.error("Error fetching users:", err);
@@ -64,21 +49,9 @@ export default function PermissionsClient() {
     }
 
     loadUsers();
-    // console.log("fetching users:", usersList);
   }, [search, selectedRole, sortOption]);
 
-  /* TODO: Delete this local filtering/pagination once permissions are fetched from the API.
-   * Eventually the API should receive: search, selectedRoles, currentPage, PAGE_SIZE.
-   */
-  const filteredUsers = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return usersList;
-
-    return usersList.filter((user) => {
-      const parts = user.name.toLowerCase().split(" ");
-      return parts.some((part) => part.includes(query)) || user.name.toLowerCase().includes(query);
-    });
-  }, [search, usersList]);
+  /* TODO: Eventually the API should receive: search, selectedRoles, currentPage, PAGE_SIZE. */
 
   const toggleRole = (category: UserRole) => {
     setSelectedRole((prev) => {
@@ -177,7 +150,7 @@ export default function PermissionsClient() {
 
         <div>
           <PermissionsDisplay
-            users={filteredUsers}
+            users={usersList}
             editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}

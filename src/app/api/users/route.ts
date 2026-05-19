@@ -3,17 +3,12 @@ import User from "@/database/UserSchema";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const client = await clerkClient();
-  const clerkUsers = (await client.users.getUserList()).data;
-
   const searchParams = req.nextUrl.searchParams;
   const name = searchParams.get("name")?.trim().toLowerCase();
   const roleFilter = searchParams.get("role");
   const sortBy = searchParams.get("sortBy") ?? "";
 
-  const filter: any = {
-    clerkId: { $in: clerkUsers.map((user) => user.id) },
-  };
+  const filter: any = {};
 
   if (name) {
     filter.name = { $regex: name, $options: "i" };
@@ -52,16 +47,5 @@ export async function GET(req: NextRequest) {
 
   const dbUsers = await query;
 
-  const users = clerkUsers.map((clerkUser) => {
-    // find every user to get their information we need
-    const dbUser = dbUsers.find((u) => u.clerkId === clerkUser.id);
-
-    return {
-      _id: clerkUser.id,
-      name: `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim(),
-      avatarUrl: clerkUser.imageUrl,
-      role: dbUser?.role,
-    };
-  });
-  return NextResponse.json(users);
+  return NextResponse.json(dbUsers);
 }
