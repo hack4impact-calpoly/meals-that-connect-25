@@ -51,7 +51,7 @@ The **Meals That Connect** team consists of \*\*13 Cal Poly students. Over the c
 - [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
 - [Srinithi Doddapaneni](https://www.linkedin.com/in/srinithi-doddapaneni-5592b0309/) - Software Developer
 - [Xavier Royer] - Software Developer
-- [Taiki Jeffers] - Software Developer
+- [Taiki Jeffers](https://www.linkedin.com/in/taiki-jeffers/) - Software Developer
 - [Derrick Phan] - Software Developer
 
 - [Austin Wright](https://www.linkedin.com/in/austin-wright-613275122/) - Faculty Advisor
