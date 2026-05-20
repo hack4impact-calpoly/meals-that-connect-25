@@ -53,7 +53,7 @@ export function useMealData<TComboRecipe = string>({
   const isComboMode = selectedCategories.has("Combo");
   const isSubrecipeOnly = filters.additional?.has("isSubrecipe") ?? false;
 
-  const pageSize = isComboMode ? 6 : 4;
+  const pageSize = isComboMode ? 6 : 6;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
