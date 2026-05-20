@@ -70,13 +70,15 @@ export default function ComboCard({ item, isSelected, onSelect, onOpen }: ComboC
         ) : null}
 
         {editMode && editItem ? (
-          <CreateRecipePopUp
-            onClose={() => setEditMode(false)}
-            item={editItem}
-            open={true}
-            recipeType={COMBO_CATEGORY_DISPLAY}
-            editMode={true}
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <CreateRecipePopUp
+              onClose={() => setEditMode(false)}
+              item={editItem}
+              open={true}
+              recipeType={COMBO_CATEGORY_DISPLAY}
+              editMode={true}
+            />
+          </div>
         ) : null}
 
         {item.isDraft && (
