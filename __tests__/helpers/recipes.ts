@@ -31,7 +31,7 @@ export function makeRecipe(overrides: any = {}) {
     ingredients: [makeIngredient(), makeIngredient({ name: "Potato", quantity: 3 })],
     instructions: "Chop vegetables and simmer.",
     comments: "Test fixture",
-    nutritional_info: normalizeNutrition({ calories: 200, protein: 8, fat: 4, carbs: 32, fiber: 6, sodium: 480 }),
+    nutritional_info: normalizeNutrition({ calories: 200, protein: 8, fatPercentage: 4, fiber: 6, sodium: 480 }),
     isDraft: false,
     ...overrides,
   };

@@ -3,7 +3,7 @@
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { useState } from "react";
-import { EXCLUSION_KEYS, FILTER_SECTIONS, TAG_STYLES, type Recipe } from "@/lib/types";
+import { EXCLUSION_KEYS, FILTER_SECTIONS, NUTRIENT_LABELS, TAG_STYLES, type Recipe } from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
   recipeId: string;
@@ -171,17 +171,12 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
                     <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Nutrition</h4>
 
                     <div className="grid grid-cols-2 gap-1.5 text-xs">
-                      {[
-                        ["Calories", `${formatNutritionValue(recipe.nutritional_info?.calories)} kcal`],
-                        ["Protein", `${formatNutritionValue(recipe.nutritional_info?.protein)} g`],
-                        ["Fat", `${formatNutritionValue(recipe.nutritional_info?.fat)} g`],
-                        ["Carbs", `${formatNutritionValue(recipe.nutritional_info?.carbs)} g`],
-                        ["Fiber", `${formatNutritionValue(recipe.nutritional_info?.fiber)} g`],
-                        ["Sodium", `${formatNutritionValue(recipe.nutritional_info?.sodium)} mg`],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-md bg-light-gray/60 px-2 py-1">
+                      {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+                        <div key={key} className="rounded-md bg-light-gray/60 px-2 py-1">
                           <p className="font-semibold leading-tight text-pepper">{label}</p>
-                          <p className="leading-tight text-pepper/70">{value}</p>
+                          <p className="leading-tight text-pepper/70">
+                            {formatNutritionValue(recipe.nutritional_info?.[key])} {unit}
+                          </p>
                         </div>
                       ))}
                     </div>
