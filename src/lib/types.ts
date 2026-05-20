@@ -8,15 +8,30 @@ export type Ingredient = {
   name: string;
   quantity: number;
   units: string;
+  notes?: string;
+};
+
+export type SubrecipeIngredient = {
+  recipeId: string;
+  recipeName?: string;
+  category?: RecipeCategory;
+  quantity: number;
 };
 
 export type Nutrition = {
   calories: number;
   protein: number;
-  fat: number;
-  carbs: number;
+  fatPercentage: number;
+  saturatedFatPercentage: number;
   fiber: number;
+  calcium: number;
+  magnesium: number;
+  potassium: number;
   sodium: number;
+  vitaminA: number;
+  vitaminD: number;
+  vitaminC: number;
+  vitaminB12: number;
 };
 
 export type NutrientDisplay = {
@@ -32,28 +47,49 @@ export type NutrientDisplay = {
 export const ZERO_NUTRITION: Nutrition = {
   calories: 0,
   protein: 0,
-  fat: 0,
-  carbs: 0,
+  fatPercentage: 0,
+  saturatedFatPercentage: 0,
   fiber: 0,
+  calcium: 0,
+  magnesium: 0,
+  potassium: 0,
   sodium: 0,
+  vitaminA: 0,
+  vitaminD: 0,
+  vitaminC: 0,
+  vitaminB12: 0,
 };
 
 export const WEEKLY_NUTRITION_QUOTA: Nutrition = {
   calories: 3000,
   protein: 75,
-  fat: 100,
-  carbs: 350,
-  fiber: 40,
-  sodium: 3200,
+  fatPercentage: 137.5,
+  saturatedFatPercentage: 50,
+  fiber: 35,
+  calcium: 2000,
+  magnesium: 525,
+  potassium: 4300,
+  sodium: 3800,
+  vitaminA: 1165,
+  vitaminD: 1000,
+  vitaminC: 125,
+  vitaminB12: 4,
 };
 
 export const NUTRIENT_LABELS = [
   { key: "calories", label: "Calories", unit: "kcal" },
   { key: "protein", label: "Protein", unit: "g" },
-  { key: "fat", label: "Fat", unit: "g" },
-  { key: "carbs", label: "Carbs", unit: "g" },
+  { key: "fatPercentage", label: "Fat %", unit: "%" },
+  { key: "saturatedFatPercentage", label: "Sat. Fat %", unit: "%" },
   { key: "fiber", label: "Fiber", unit: "g" },
+  { key: "calcium", label: "Calcium", unit: "mg" },
+  { key: "magnesium", label: "Magnesium", unit: "mg" },
+  { key: "potassium", label: "Potassium", unit: "mg" },
   { key: "sodium", label: "Sodium", unit: "mg" },
+  { key: "vitaminA", label: "Vitamin A", unit: "mcg" },
+  { key: "vitaminD", label: "Vitamin D", unit: "IU" },
+  { key: "vitaminC", label: "Vitamin C", unit: "mg" },
+  { key: "vitaminB12", label: "Vitamin B12", unit: "μg" },
 ] satisfies NutrientDisplay[];
 
 /* -------------------------------------------------------------------------- */
@@ -104,6 +140,7 @@ export type Recipe = {
   isSubrecipe: boolean;
 
   ingredients: Ingredient[];
+  subrecipes?: SubrecipeIngredient[];
   instructions?: string;
   notes?: string;
   imageUrl?: string;
