@@ -622,12 +622,6 @@ export default function MenuPlanning() {
                   userRole={userRole}
                 />
 
-                {userRole && (
-                  <div className="mt-2">
-                    <WarningQuotaMonthly />
-                  </div>
-                )}
-
                 {(userRole === "Admin" || userRole === "Kitchen Staff") && (
                   <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
                     <TrashDropZone />
