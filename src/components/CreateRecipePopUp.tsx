@@ -13,6 +13,7 @@ import {
   DIETARY_KEYS,
   EXCLUSION_KEYS,
   ENTREE_CATEGORY_DISPLAY,
+  CATEGORY_DISPLAY_MAP,
 } from "@/lib/types";
 import type {
   Recipe,
@@ -864,7 +865,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                           : [...prev, selectedOption],
                       );
                     }}
-                    placeholder={loadingOptions ? "Loading entrees..." : "Select Entree(s)"}
+                    placeholder={loadingOptions ? "Loading entrees..." : `Select ${ENTREE_CATEGORY_DISPLAY.label}(s)`}
                   />
 
                   <DropdownField
@@ -1079,7 +1080,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                             <option value="">Select Category</option>
                             {RECIPE_CATEGORIES.map((cat) => (
                               <option key={cat} value={cat}>
-                                {cat}
+                                {CATEGORY_DISPLAY_MAP[cat].label}
                               </option>
                             ))}
                           </select>
