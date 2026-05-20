@@ -15,7 +15,7 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
   const [editMode, setEditMode] = useState(false);
 
   const tagStyle = TAG_STYLES[item.category];
-  const metaText = `${item.nutritional_info.calories} cal / ${item.serving}`;
+  const metaText = `${item.nutritional_info.calories} cal / ${item.serving} ${item.serving > 1 ? "servings" : "serving"}`;
 
   return (
     <div
@@ -39,7 +39,7 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
       </div>
 
       <span
-        className={`w-16 shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:w-20 md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
+        className={`shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
       >
         {item.category}
       </span>

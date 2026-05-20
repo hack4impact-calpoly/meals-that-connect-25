@@ -124,7 +124,7 @@ export default function FilterMenu({ onFilterChange, initialSelections, mobileOv
       )}
 
       <div className={mobileOverlay ? "flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pb-2 pt-3" : "flex flex-col"}>
-        {FILTER_SECTIONS.map((section) => (
+        {FILTER_SECTIONS.filter((section) => section.id !== "servings").map((section) => (
           <FilterMenuOption
             key={section.id}
             label={section.label}
