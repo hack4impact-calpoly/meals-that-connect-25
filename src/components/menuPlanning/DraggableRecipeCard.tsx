@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
-import { CategoryValue, Combo, Recipe, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, CategoryValue, Combo, Recipe, TAG_STYLES } from "@/lib/types";
 import type { SidebarDragData } from "@/app/menuPlanning/page";
 
 type DraggableRecipeCardProps = {
@@ -69,7 +69,7 @@ export default function DraggableRecipeCard({ item, disabled = false }: Draggabl
       <span
         className={`shrink-0 rounded-md px-2 py-1.5 font-montserrat text-[11px] font-medium sm:text-xs ${tagStyle}`}
       >
-        {category}
+        {CATEGORY_DISPLAY_MAP[category].label}
       </span>
 
       <GripVertical size={20} strokeWidth={1.7} className="shrink-0 cursor-move text-gray-500" />

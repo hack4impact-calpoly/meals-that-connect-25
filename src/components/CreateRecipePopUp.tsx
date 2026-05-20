@@ -12,6 +12,8 @@ import {
   ALLERGEN_ICON,
   DIETARY_KEYS,
   EXCLUSION_KEYS,
+  ENTREE_CATEGORY_DISPLAY,
+  CATEGORY_DISPLAY_MAP,
 } from "@/lib/types";
 import type {
   Recipe,
@@ -32,14 +34,14 @@ import type {
 import { NUTRIENT_LABELS, RECIPE_CATEGORIES } from "@/lib/types";
 import { sumNutrition } from "@/lib/nutrition";
 import Image from "next/image";
-import { NutritionalInfo } from "./createRecipe/NutritionalInfo";
-import { FieldRow } from "./createRecipe/FieldRow";
-import { DropdownField } from "./createRecipe/DropdownField";
+import { NutritionalInfo } from "./createMeal/NutritionalInfo";
+import { FieldRow } from "./createMeal/FieldRow";
+import { DropdownField } from "./createMeal/DropdownField";
 
-// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents and helpers should be moved to helpers.ts
+// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
-type EditableCombo = Combo<Recipe>;
-type EditableItem = Recipe | EditableCombo;
+export type EditableCombo = Combo<Recipe>;
+export type EditableItem = Recipe | EditableCombo;
 
 type Props = {
   item: EditableItem | null;
@@ -188,6 +190,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const [name, setName] = useState("");
+  const [nameError, setNameError] = useState("");
   const [imageUrl, setImageUrl] = useState<string>("");
   const [id, setId] = useState<string | null>(null);
   const [busy, setBusy] = useState<"publish" | "delete" | null>(null);
@@ -288,6 +291,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   useEffect(() => {
     if (!open) return;
+
+    setNameError("");
 
     if (item == null) {
       setName("");
@@ -451,7 +456,12 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   }, [open]);
 
   async function saveRecipe(isDraft: boolean, itemId: String | null) {
-    if (!isDraft && !name.trim()) return;
+    setNameError("");
+
+    if (!isDraft && !name.trim()) {
+      setNameError("Name cannot be empty.");
+      return;
+    }
 
     // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
     if (!isCombo && isDraft && itemId !== "") {
@@ -479,12 +489,12 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     const dietary = optionsToBooleanFlags(DIETARY_KEYS, selectedDietary);
     const exclusions = optionsToBooleanFlags(EXCLUSION_KEYS, selectedExclusions);
 
-    let payload;
+    let payload: Record<string, any>;
 
     setBusy("publish");
 
     try {
-      let res;
+      let res: Response | undefined;
       // check if it's recipe or combo
       if (isCombo) {
         payload = {
@@ -585,9 +595,6 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-
-          if (!res.ok) throw new Error(`Save failed (${res.status})`);
-          await res.json().catch(() => ({}));
         } else if (item && "_id" in item) {
           // change to our id
           payload["_id"] = item._id;
@@ -596,21 +603,29 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-
-          if (!res.ok) throw new Error(`Save failed (${res.status})`);
-          await res.json().catch(() => ({}));
         }
+      }
+      if (!res) return;
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        if (data.errors?.name) {
+          setNameError(data.errors.name);
+          return;
+        }
+
+        throw new Error(data.error ?? `Save failed (${res.status})`);
       }
 
       setId(payload._id);
+      onClose();
+      window.location.reload();
+    } catch (error) {
+      console.error("Failed to save item:", error);
+      alert("Failed to save item. Please try again.");
     } finally {
       setBusy(null);
-
-      // close window
-      onClose();
-
-      // reload window
-      window.location.reload();
     }
   }
 
@@ -767,7 +782,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <button
                   type="button"
                   onClick={() => saveRecipe(false, "")}
-                  disabled={busy !== null || !name.trim()}
+                  disabled={busy !== null}
                   className="inline-flex items-center gap-2 rounded-full bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800 disabled:opacity-50"
                 >
                   {busy === "publish" ? "Saving…" : "Publish"}
@@ -802,13 +817,34 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
             {/* Title */}
             <div className="mt-5">
               <label className="flex flex-col gap-1">
-                <span className="text-sm font-montserrat font-semibold text-pepper">New {createLabel}</span>
+                <span className="text-sm font-montserrat font-semibold text-pepper">
+                  New {createLabel} <span className="text-radish-900">*</span>
+                </span>
+
                 <input
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(e) => {
+                    setName(e.target.value);
+
+                    if (nameError) {
+                      setNameError("");
+                    }
+                  }}
                   placeholder="e.g. Chicken Alfredo"
-                  className="w-full rounded-md border border-pepper/20 px-3 py-2 font-montserrat text-pepper outline-none focus:border-pepper/50"
+                  aria-invalid={nameError ? "true" : "false"}
+                  aria-describedby={nameError ? "name-error" : undefined}
+                  className={`w-full rounded-md border px-3 py-2 font-montserrat text-pepper outline-none ${
+                    nameError
+                      ? "border-radish-900 focus:border-radish-900 focus:ring-2 focus:ring-radish-200"
+                      : "border-pepper/20 focus:border-pepper/50"
+                  }`}
                 />
+
+                {nameError && (
+                  <p id="name-error" className="text-sm font-montserrat text-radish-900">
+                    {nameError}
+                  </p>
+                )}
               </label>
             </div>
 
@@ -817,7 +853,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 <>
                   <DropdownField
                     icon={ENTREE_ICON}
-                    label="Entree"
+                    label={ENTREE_CATEGORY_DISPLAY.label}
                     options={entreeOptions.map((recipe) => ({ id: recipe._id, label: recipe.name }))}
                     selectedValues={selectedEntrees.map((recipe) => recipe.name)}
                     onSelect={(value) => {
@@ -829,7 +865,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                           : [...prev, selectedOption],
                       );
                     }}
-                    placeholder={loadingOptions ? "Loading entrees..." : "Select Entree(s)"}
+                    placeholder={loadingOptions ? "Loading entrees..." : `Select ${ENTREE_CATEGORY_DISPLAY.label}(s)`}
                   />
 
                   <DropdownField
@@ -1044,7 +1080,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                             <option value="">Select Category</option>
                             {RECIPE_CATEGORIES.map((cat) => (
                               <option key={cat} value={cat}>
-                                {cat}
+                                {CATEGORY_DISPLAY_MAP[cat].label}
                               </option>
                             ))}
                           </select>
