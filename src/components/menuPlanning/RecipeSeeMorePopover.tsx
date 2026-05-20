@@ -3,7 +3,14 @@
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { useState } from "react";
-import { EXCLUSION_KEYS, FILTER_SECTIONS, NUTRIENT_LABELS, TAG_STYLES, type Recipe } from "@/lib/types";
+import {
+  CATEGORY_DISPLAY_MAP,
+  EXCLUSION_KEYS,
+  FILTER_SECTIONS,
+  NUTRIENT_LABELS,
+  TAG_STYLES,
+  type Recipe,
+} from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
   recipeId: string;
@@ -92,7 +99,7 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
                       <span
                         className={`rounded-md px-2 py-0.5 text-[11px] font-semibold leading-none ${TAG_STYLES[recipe.category]}`}
                       >
-                        {recipe.category}
+                        {CATEGORY_DISPLAY_MAP[recipe.category].label}
                       </span>
                       <span
                         className={`text-[11px] font-medium leading-none text-pepper/60 ${userRole ? "" : "hidden"}`}

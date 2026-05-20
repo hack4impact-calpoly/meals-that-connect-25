@@ -5,7 +5,7 @@ import Nutrition from "./NutritionSchema";
 const ComboSchema = new Schema(
   {
     _id: { type: String, required: true },
-    name: { type: String, required: true, unique: false },
+    name: { type: String, required: true, unique: true, trim: true },
 
     serving: {
       type: Number,

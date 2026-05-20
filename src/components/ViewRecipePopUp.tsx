@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
 import {
+  BUCKET_TO_CATEGORY,
+  CATEGORY_DISPLAY_MAP,
   DIETARY_KEYS,
+  ENTREE_CATEGORY_DISPLAY,
   ENTREE_ICON,
   EXCLUSION_KEYS,
   FILTER_SECTIONS,
@@ -10,6 +13,7 @@ import {
   GRAIN_ICON,
   NUTRIENT_LABELS,
   RECIPE_BUCKETS,
+  RECIPE_CATEGORIES,
   TAG_STYLES,
   VEGETABLE_ICON,
 } from "@/lib/types";
@@ -24,7 +28,18 @@ import type {
   RecipeCategory,
   SubrecipeIngredient,
 } from "@/lib/types";
-import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
+import {
+  ArrowLeft,
+  Maximize2,
+  Pencil,
+  Tag,
+  CircleAlert,
+  SquarePen,
+  Minus,
+  Plus,
+  ArrowUpRight,
+  Key,
+} from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
 
@@ -53,6 +68,12 @@ function emptyNutrition(): Nutrition {
     vitaminC: 0,
     vitaminB12: 0,
   };
+}
+
+type ServingsValue = number | "";
+
+function toPositiveServings(servings: ServingsValue) {
+  return typeof servings === "number" && servings > 0 ? servings : 1;
 }
 
 function scaleNutrition(nutrition: Nutrition, multiplier: number): Nutrition {
@@ -91,8 +112,8 @@ function addNutrition(a: Nutrition, b: Nutrition): Nutrition {
   };
 }
 
-function formatNutritionValue(value: number, originalServings: number, servings: number) {
-  const scaled = (value / Math.max(1, originalServings)) * servings;
+function formatNutritionValue(value: number, originalServings: number, servings: ServingsValue) {
+  const scaled = (value / Math.max(1, originalServings)) * toPositiveServings(servings);
   return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
 }
 
@@ -123,7 +144,7 @@ function selectedFlagLabels<TId extends FilterOptionId>(flags: Record<TId, boole
 
 export default function ViewRecipePopUp({ open, onClose, item, isComboMode, changeMode, userRole }: Props) {
   const [maximized, setMaximized] = useState(false);
-  const [servings, setServings] = useState(item?.serving || 1);
+  const [servings, setServings] = useState<ServingsValue>(item?.serving || 1);
 
   useEffect(() => {
     if (open && item?.serving) {
@@ -209,8 +230,8 @@ function RecipeDetails({
   userRole,
 }: {
   recipe: Recipe;
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
   originalServings: number;
   userRole: string | null;
 }) {
@@ -219,7 +240,7 @@ function RecipeDetails({
   return (
     <>
       <LabeledSection label="Category" icon={<Tag />}>
-        <Chip label={recipe.category} styleKey={recipe.category} />
+        <Chip label={CATEGORY_DISPLAY_MAP[recipe.category].label} styleKey={recipe.category} />
         {recipe.isSubrecipe ? <Chip label="Subrecipe" /> : null}
       </LabeledSection>
 
@@ -250,7 +271,8 @@ function RecipeDetails({
               <ul className="list-disc pl-5">
                 {recipe.ingredients.map((ingredient, i) => (
                   <li key={i}>
-                    {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
+                    {ingredient.name}: {(ingredient.quantity / originalServings) * toPositiveServings(servings)}{" "}
+                    {ingredient.units}
                     {ingredient.notes ? (
                       <span className="ml-2 text-pepper/60 text-sm">— {ingredient.notes}</span>
                     ) : null}
@@ -279,8 +301,8 @@ function ComboDetails({
   userRole,
 }: {
   combo: Combo<Recipe>;
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
   originalServings: number;
   userRole: string | null;
 }) {
@@ -288,10 +310,11 @@ function ComboDetails({
 
   return (
     <>
-      <RecipeGroup label="Entrees" icon={<ENTREE_ICON />} items={combo.entrees} styleKey="Entree" />
-      <RecipeGroup label="Vegetables" icon={<VEGETABLE_ICON />} items={combo.vegetables} styleKey="Vegetable" />
-      <RecipeGroup label="Fruits" icon={<FRUIT_ICON />} items={combo.fruits} styleKey="Fruit" />
-      <RecipeGroup label="Grains" icon={<GRAIN_ICON />} items={combo.grains} styleKey="Grain" />
+      {RECIPE_BUCKETS.map((bucket) => {
+        const category = BUCKET_TO_CATEGORY[bucket];
+        const { plural, icon: Icon } = CATEGORY_DISPLAY_MAP[category];
+        return <RecipeGroup key={category} label={plural} icon={<Icon />} items={combo[bucket]} styleKey={category} />;
+      })}
 
       <MealFiltersSection item={combo} />
 
@@ -333,7 +356,7 @@ function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] })
   const merged = mergeSubrecipes(subrecipes);
 
   const CATEGORY_CONFIG: { key: RecipeCategory; label: string; icon: ReactNode }[] = [
-    { key: "Entree", label: "Entrees", icon: <ENTREE_ICON /> },
+    { key: "Entree", label: ENTREE_CATEGORY_DISPLAY.label, icon: <ENTREE_ICON /> },
     { key: "Vegetable", label: "Vegetables", icon: <VEGETABLE_ICON /> },
     { key: "Fruit", label: "Fruits", icon: <FRUIT_ICON /> },
     { key: "Grain", label: "Grains", icon: <GRAIN_ICON /> },
@@ -488,8 +511,8 @@ function ServingsControl({
   servings,
   setServings,
 }: {
-  servings: number;
-  setServings: React.Dispatch<React.SetStateAction<number>>;
+  servings: ServingsValue;
+  setServings: React.Dispatch<React.SetStateAction<ServingsValue>>;
 }) {
   return (
     <>
@@ -499,17 +522,41 @@ function ServingsControl({
         <button
           type="button"
           className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
-          onClick={() => setServings((s) => Math.max(1, s - 1))}
+          onClick={() => setServings((s) => Math.max(1, toPositiveServings(s) - 1))}
         >
           <Minus />
         </button>
 
-        <span className="w-15 text-center font-mono">{servings}</span>
+        <input
+          type="text"
+          inputMode="numeric"
+          value={servings}
+          onChange={(e) => {
+            const value = e.target.value;
+
+            if (value === "") {
+              setServings("");
+              return;
+            }
+
+            const nextServings = Number(value);
+
+            if (nextServings > 0) {
+              setServings(nextServings);
+            }
+          }}
+          onBlur={() => {
+            if (servings === "") {
+              setServings(1);
+            }
+          }}
+          className="w-15 text-center font-mono outline-none"
+        />
 
         <button
           type="button"
           className="rounded bg-gray-200 text-gray-600 hover:bg-gray-300"
-          onClick={() => setServings((s) => s + 1)}
+          onClick={() => setServings((s) => toPositiveServings(s) + 1)}
         >
           <Plus />
         </button>
@@ -537,7 +584,7 @@ function NutritionSection({
   originalServings,
 }: {
   nutrition: Nutrition;
-  servings: number;
+  servings: ServingsValue;
   originalServings: number;
 }) {
   return (

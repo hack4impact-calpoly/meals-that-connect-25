@@ -22,6 +22,7 @@ import {
   createEmptyFilterSelections,
   CATEGORY_TO_BUCKET,
   RecipeNutritionOnly,
+  CATEGORY_DISPLAY_MAP,
 } from "@/lib/types";
 import { NutritionSummary, emptyNutrition } from "@/lib/nutrition";
 import { useMealData } from "@/hooks/useMealData";
@@ -189,7 +190,9 @@ function CalendarDragPreview({ item }: CalendarDragData) {
         {item.serving ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{item.serving}</p> : null}
       </div>
 
-      {item.category ? <span className="shrink-0 text-xs font-medium">{item.category}</span> : null}
+      {item.category ? (
+        <span className="shrink-0 text-xs font-medium">{CATEGORY_DISPLAY_MAP[item.category].label}</span>
+      ) : null}
 
       <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
     </div>

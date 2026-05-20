@@ -167,8 +167,6 @@ export type RecipeFiltersOnly = RecipePreview & MealFilterFields;
 
 // Takes the type of the recipe buckets.
 // By default should be string IDs, but can request Recipe or RecipePreviews from the API as well.
-// TODO: add a "populate" parameter to the combo schema that will also preview the recipes
-// This would cut the fetches required for the recipes page by 90%.
 export type Combo<T = string> = {
   _id: string;
   name: string;
@@ -408,6 +406,14 @@ export const CATEGORY_DISPLAY = [
   FRUIT_CATEGORY_DISPLAY,
   GRAIN_CATEGORY_DISPLAY,
 ] satisfies CategoryDisplayType[];
+
+export const CATEGORY_DISPLAY_MAP = {
+  Combo: COMBO_CATEGORY_DISPLAY,
+  Entree: ENTREE_CATEGORY_DISPLAY,
+  Vegetable: VEGETABLE_CATEGORY_DISPLAY,
+  Fruit: FRUIT_CATEGORY_DISPLAY,
+  Grain: GRAIN_CATEGORY_DISPLAY,
+} satisfies Record<CategoryValue, CategoryDisplayType>;
 
 /* -------------------------------------------------------------------------- */
 /* Users                                                                      */
