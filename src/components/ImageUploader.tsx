@@ -90,7 +90,7 @@ export default function ImageUploader({ onUpload }: Props) {
       {/* AFTER UPLOAD (image preview replaces box) */}
       {preview && (
         <div className="relative">
-          <Image src={preview} alt="preview" className="h-40 w-full rounded-lg object-cover" fill={true} />
+          <Image src={preview} alt="preview" width={400} height={160} className="h-40 w-full rounded-lg object-cover" />
 
           {/* Change button */}
           <button
