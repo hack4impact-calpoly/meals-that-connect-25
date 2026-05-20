@@ -18,6 +18,7 @@ import type {
   Recipe,
   Combo,
   Ingredient,
+  Nutrition,
   RecipeMinimal,
   RecipeCategory,
   CategoryDisplayType,
@@ -27,7 +28,10 @@ import type {
   ProteinSource,
   FilterOptionId,
   FilterSectionId,
+  SubrecipeIngredient,
 } from "@/lib/types";
+import { NUTRIENT_LABELS, RECIPE_CATEGORIES } from "@/lib/types";
+import { sumNutrition } from "@/lib/nutrition";
 import Image from "next/image";
 import { NutritionalInfo } from "./createMeal/NutritionalInfo";
 import { FieldRow } from "./createMeal/FieldRow";
@@ -50,16 +54,59 @@ type InputPair = {
   name: string;
   quantity: number | "";
   units: string;
+  notes: string;
+};
+
+type SubrecipeRow = {
+  category: RecipeCategory | "";
+  recipeId: string;
+  recipeName: string;
+  quantity: number | "";
+};
+
+type NutritionFormState = {
+  calories: string;
+  protein: string;
+  fatPercentage: string;
+  saturatedFatPercentage: string;
+  fiber: string;
+  calcium: string;
+  magnesium: string;
+  potassium: string;
+  sodium: string;
+  vitaminA: string;
+  vitaminD: string;
+  vitaminC: string;
+  vitaminB12: string;
+};
+
+type RecipeWithNutrition = RecipeMinimal & { nutritional_info: Nutrition };
+
+const EMPTY_NUTRITION_FORM: NutritionFormState = {
+  calories: "",
+  protein: "",
+  fatPercentage: "",
+  saturatedFatPercentage: "",
+  fiber: "",
+  calcium: "",
+  magnesium: "",
+  potassium: "",
+  sodium: "",
+  vitaminA: "",
+  vitaminD: "",
+  vitaminC: "",
+  vitaminB12: "",
 };
 
 function isRecipeItem(item: EditableItem): item is Recipe {
   return "category" in item;
 }
 
-function toRecipeMinimal(recipes: Recipe[] = []): RecipeMinimal[] {
+function toRecipeWithNutrition(recipes: Recipe[] = []): RecipeWithNutrition[] {
   return recipes.map((recipe) => ({
     _id: recipe._id,
     name: recipe.name,
+    nutritional_info: recipe.nutritional_info,
   }));
 }
 
@@ -120,20 +167,23 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const isCombo = recipeType?.category === "Combo" || (!!item && !isRecipeItem(item));
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
 
-  const [selectedEntrees, setSelectedEntree] = useState<RecipeMinimal[]>([]);
-  const [selectedVegetables, setSelectedVegetables] = useState<RecipeMinimal[]>([]);
-  const [selectedFruits, setSelectedFruit] = useState<RecipeMinimal[]>([]);
-  const [selectedGrains, setSelectedGrains] = useState<RecipeMinimal[]>([]);
+  const [selectedEntrees, setSelectedEntree] = useState<RecipeWithNutrition[]>([]);
+  const [selectedVegetables, setSelectedVegetables] = useState<RecipeWithNutrition[]>([]);
+  const [selectedFruits, setSelectedFruit] = useState<RecipeWithNutrition[]>([]);
+  const [selectedGrains, setSelectedGrains] = useState<RecipeWithNutrition[]>([]);
 
   const [selectedProteinSources, setSelectedProteinSources] = useState<FilterOption[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<FilterOption[]>([]);
   const [selectedExclusions, setSelectedExclusions] = useState<FilterOption[]>([]);
   const [isSubrecipe, setIsSubrecipe] = useState(false);
 
-  const [entreeOptions, setEntreeOptions] = useState<RecipeMinimal[]>([]);
-  const [vegetableOptions, setVegetableOptions] = useState<RecipeMinimal[]>([]);
-  const [fruitOptions, setFruitOptions] = useState<RecipeMinimal[]>([]);
-  const [grainOptions, setGrainOptions] = useState<RecipeMinimal[]>([]);
+  const [entreeOptions, setEntreeOptions] = useState<RecipeWithNutrition[]>([]);
+  const [vegetableOptions, setVegetableOptions] = useState<RecipeWithNutrition[]>([]);
+  const [fruitOptions, setFruitOptions] = useState<RecipeWithNutrition[]>([]);
+  const [grainOptions, setGrainOptions] = useState<RecipeWithNutrition[]>([]);
+  const [subrecipeInputs, setSubrecipeInputs] = useState<SubrecipeRow[]>([
+    { category: "", recipeId: "", recipeName: "", quantity: "" },
+  ]);
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -146,16 +196,11 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [notes, setNotes] = useState("");
   const [servings, setServings] = useState("1");
   const [instructionsText, setInstructionsText] = useState("");
-  const [nutrition, setNutrition] = useState({
-    calories: "",
-    protein: "",
-    fat: "",
-    carbs: "",
-    fiber: "",
-    sodium: "",
-  });
+  const [nutrition, setNutrition] = useState<NutritionFormState>({ ...EMPTY_NUTRITION_FORM });
 
-  const [ingredientInputs, setIngredientInputs] = useState<InputPair[]>([{ name: "", quantity: "", units: "" }]);
+  const [ingredientInputs, setIngredientInputs] = useState<InputPair[]>([
+    { name: "", quantity: "", units: "", notes: "" },
+  ]);
 
   // handle ingredient name change
   const handleIngredientChange = (index: number, value: string) => {
@@ -168,8 +213,13 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const handleQuantityChange = (index: number, value: string) => {
     const updated = [...ingredientInputs];
 
-    // convert to number
-    updated[index].quantity = value === "" ? "" : Number(value);
+    if (value === "") {
+      updated[index].quantity = "";
+    } else {
+      const numValue = Number(value);
+      // convert to number
+      updated[index].quantity = Math.max(0, numValue);
+    }
 
     setIngredientInputs(updated);
   };
@@ -181,15 +231,61 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
     setIngredientInputs(updated);
   };
 
+  // handle notes change
+  const handleNotesChange = (index: number, value: string) => {
+    const updated = [...ingredientInputs];
+    updated[index].notes = value;
+    setIngredientInputs(updated);
+  };
+
   // adding new row
   const addRow = () => {
-    setIngredientInputs([...ingredientInputs, { name: "", quantity: "", units: "" }]);
+    setIngredientInputs([...ingredientInputs, { name: "", quantity: "", units: "", notes: "" }]);
   };
 
   // removing row
   const removeRow = (index: number) => {
     const updated = ingredientInputs.filter((_, i) => i !== index);
     setIngredientInputs(updated);
+  };
+
+  // subrecipe handlers
+  const addSubrecipeRow = () => {
+    setSubrecipeInputs([...subrecipeInputs, { category: "", recipeId: "", recipeName: "", quantity: "" }]);
+  };
+
+  const removeSubrecipeRow = (index: number) => {
+    setSubrecipeInputs(subrecipeInputs.filter((_, i) => i !== index));
+  };
+
+  const handleSubrecipeCategoryChange = (index: number, value: RecipeCategory | "") => {
+    const updated = [...subrecipeInputs];
+    updated[index].category = value;
+    updated[index].recipeId = "";
+    updated[index].recipeName = "";
+    setSubrecipeInputs(updated);
+  };
+
+  const handleSubrecipeRecipeChange = (index: number, value: string) => {
+    const updated = [...subrecipeInputs];
+    updated[index].recipeId = value;
+    const options = getOptionsForCategory(updated[index].category);
+    updated[index].recipeName = options.find((r) => r._id === value)?.name ?? "";
+    setSubrecipeInputs(updated);
+  };
+
+  const handleSubrecipeQuantityChange = (index: number, value: string) => {
+    const updated = [...subrecipeInputs];
+    updated[index].quantity = value === "" ? "" : Math.max(1, Math.floor(Number(value)));
+    setSubrecipeInputs(updated);
+  };
+
+  const getOptionsForCategory = (category: RecipeCategory | ""): RecipeWithNutrition[] => {
+    if (category === "Entree") return entreeOptions;
+    if (category === "Vegetable") return vegetableOptions;
+    if (category === "Fruit") return fruitOptions;
+    if (category === "Grain") return grainOptions;
+    return [];
   };
 
   useEffect(() => {
@@ -199,7 +295,8 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
     if (item == null) {
       setName("");
-      setIngredientInputs([{ name: "", quantity: "", units: "" }]);
+      setIngredientInputs([{ name: "", quantity: "", units: "", notes: "" }]);
+      setSubrecipeInputs([{ category: "", recipeId: "", recipeName: "", quantity: "" }]);
       setSelectedEntree([]);
       setSelectedVegetables([]);
       setSelectedFruit([]);
@@ -212,7 +309,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       setNotes("");
       setServings("1");
       setInstructionsText("");
-      setNutrition({ calories: "", protein: "", fat: "", carbs: "", fiber: "", sodium: "" });
+      setNutrition({ ...EMPTY_NUTRITION_FORM });
       setId(null);
       setBusy(null);
     } else {
@@ -240,23 +337,43 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 name: ingredient.name,
                 quantity: ingredient.quantity,
                 units: ingredient.units,
+                notes: ingredient.notes ?? "",
               }))
             : [],
         );
 
+        setSubrecipeInputs(
+          item.subrecipes && item.subrecipes.length > 0
+            ? item.subrecipes.map((sr: SubrecipeIngredient) => ({
+                category: sr.category ?? ("" as RecipeCategory | ""),
+                recipeId: sr.recipeId,
+                recipeName: sr.recipeName ?? "",
+                quantity: sr.quantity,
+              }))
+            : [{ category: "", recipeId: "", recipeName: "", quantity: "" }],
+        );
+
+        const ni = item.nutritional_info;
         setNutrition({
-          calories: item.nutritional_info.calories.toString(),
-          protein: item.nutritional_info.protein.toString(),
-          fat: item.nutritional_info.fat.toString(),
-          carbs: item.nutritional_info.carbs.toString(),
-          fiber: item.nutritional_info.fiber.toString(),
-          sodium: item.nutritional_info.sodium.toString(),
+          calories: ni.calories?.toString() ?? "",
+          protein: ni.protein?.toString() ?? "",
+          fatPercentage: ni.fatPercentage?.toString() ?? "",
+          saturatedFatPercentage: ni.saturatedFatPercentage?.toString() ?? "",
+          fiber: ni.fiber?.toString() ?? "",
+          calcium: ni.calcium?.toString() ?? "",
+          magnesium: ni.magnesium?.toString() ?? "",
+          potassium: ni.potassium?.toString() ?? "",
+          sodium: ni.sodium?.toString() ?? "",
+          vitaminA: ni.vitaminA?.toString() ?? "",
+          vitaminD: ni.vitaminD?.toString() ?? "",
+          vitaminC: ni.vitaminC?.toString() ?? "",
+          vitaminB12: ni.vitaminB12?.toString() ?? "",
         });
       } else if (isCombo && !isRecipeItem(item)) {
-        setSelectedEntree(toRecipeMinimal(item.entrees));
-        setSelectedVegetables(toRecipeMinimal(item.vegetables));
-        setSelectedFruit(toRecipeMinimal(item.fruits));
-        setSelectedGrains(toRecipeMinimal(item.grains));
+        setSelectedEntree(toRecipeWithNutrition(item.entrees));
+        setSelectedVegetables(toRecipeWithNutrition(item.vegetables));
+        setSelectedFruit(toRecipeWithNutrition(item.fruits));
+        setSelectedGrains(toRecipeWithNutrition(item.grains));
       }
 
       setId(item._id);
@@ -302,7 +419,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           { data?: Recipe[] },
         ] = await Promise.all([entreeRes.json(), vegetableRes.json(), fruitRes.json(), grainRes.json()]);
 
-        const toOptionNames = (recipes: Recipe[] = []) =>
+        const toOptionNames = (recipes: Recipe[] = []): RecipeWithNutrition[] =>
           Array.from(
             new Map(
               recipes.map((recipe) => [
@@ -310,6 +427,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                 {
                   _id: recipe._id,
                   name: recipe.name.trim(),
+                  nutritional_info: recipe.nutritional_info,
                 },
               ]),
             ).values(),
@@ -434,20 +552,37 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                   )
                   .map((ingredient) => ({
                     name: ingredient.name,
-                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : undefined,
+                    quantity: ingredient.quantity !== "" ? Number(ingredient.quantity) : 1,
                     units: ingredient.units,
+                    notes: ingredient.notes,
                   }))
               : undefined,
+          subrecipes: subrecipeInputs
+            .filter((sr) => sr.recipeId !== "")
+            .map((sr) => ({
+              recipeId: sr.recipeId,
+              recipeName: sr.recipeName,
+              category: sr.category || undefined,
+              quantity: sr.quantity !== "" ? Number(sr.quantity) : 1,
+            })),
           instructions: instructionsText,
           notes: notes,
           isDraft,
           nutritional_info: {
             calories: nutrition.calories !== "" ? Number(nutrition.calories) : 0,
             protein: nutrition.protein !== "" ? Number(nutrition.protein) : 0,
-            fat: nutrition.fat !== "" ? Number(nutrition.fat) : 0,
-            carbs: nutrition.carbs !== "" ? Number(nutrition.carbs) : 0,
+            fatPercentage: nutrition.fatPercentage !== "" ? Number(nutrition.fatPercentage) : 0,
+            saturatedFatPercentage:
+              nutrition.saturatedFatPercentage !== "" ? Number(nutrition.saturatedFatPercentage) : 0,
             fiber: nutrition.fiber !== "" ? Number(nutrition.fiber) : 0,
+            calcium: nutrition.calcium !== "" ? Number(nutrition.calcium) : 0,
+            magnesium: nutrition.magnesium !== "" ? Number(nutrition.magnesium) : 0,
+            potassium: nutrition.potassium !== "" ? Number(nutrition.potassium) : 0,
             sodium: nutrition.sodium !== "" ? Number(nutrition.sodium) : 0,
+            vitaminA: nutrition.vitaminA !== "" ? Number(nutrition.vitaminA) : 0,
+            vitaminD: nutrition.vitaminD !== "" ? Number(nutrition.vitaminD) : 0,
+            vitaminC: nutrition.vitaminC !== "" ? Number(nutrition.vitaminC) : 0,
+            vitaminB12: nutrition.vitaminB12 !== "" ? Number(nutrition.vitaminB12) : 0,
           },
           ...(imageUrl ? { imageUrl } : {}),
         };
@@ -539,7 +674,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   return (
     <>
-      <Dialog open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)} className="relative z-[100]">
+      <Dialog open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)} className="relative z-100">
         <DialogBackdrop className="fixed inset-0 bg-black/50" />
 
         <div className="fixed inset-0 flex items-center justify-center p-4">
@@ -723,10 +858,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     onSelect={(value) => {
                       const selectedOption = entreeOptions.find((recipe) => recipe._id === value.id);
                       if (!selectedOption) return;
-
                       setSelectedEntree((prev) =>
-                        prev.some((recipe) => recipe._id === selectedOption._id)
-                          ? prev.filter((recipe) => recipe._id !== selectedOption._id)
+                        prev.some((r) => r._id === selectedOption._id)
+                          ? prev.filter((r) => r._id !== selectedOption._id)
                           : [...prev, selectedOption],
                       );
                     }}
@@ -741,10 +875,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     onSelect={(value) => {
                       const selectedOption = vegetableOptions.find((recipe) => recipe._id === value.id);
                       if (!selectedOption) return;
-
                       setSelectedVegetables((prev) =>
-                        prev.some((recipe) => recipe._id === selectedOption._id)
-                          ? prev.filter((recipe) => recipe._id !== selectedOption._id)
+                        prev.some((r) => r._id === selectedOption._id)
+                          ? prev.filter((r) => r._id !== selectedOption._id)
                           : [...prev, selectedOption],
                       );
                     }}
@@ -759,10 +892,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     onSelect={(value) => {
                       const selectedOption = fruitOptions.find((recipe) => recipe._id === value.id);
                       if (!selectedOption) return;
-
                       setSelectedFruit((prev) =>
-                        prev.some((recipe) => recipe._id === selectedOption._id)
-                          ? prev.filter((recipe) => recipe._id !== selectedOption._id)
+                        prev.some((r) => r._id === selectedOption._id)
+                          ? prev.filter((r) => r._id !== selectedOption._id)
                           : [...prev, selectedOption],
                       );
                     }}
@@ -777,10 +909,9 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     onSelect={(value) => {
                       const selectedOption = grainOptions.find((recipe) => recipe._id === value.id);
                       if (!selectedOption) return;
-
                       setSelectedGrains((prev) =>
-                        prev.some((recipe) => recipe._id === selectedOption._id)
-                          ? prev.filter((recipe) => recipe._id !== selectedOption._id)
+                        prev.some((r) => r._id === selectedOption._id)
+                          ? prev.filter((r) => r._id !== selectedOption._id)
                           : [...prev, selectedOption],
                       );
                     }}
@@ -878,29 +1009,37 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                   <div className="pt-6 pb-6 bg-white rounded-2xl">
                     <div className="flex flex-col gap-2">
                       {ingredientInputs.map((item, index) => (
-                        <div key={index} className="flex gap-3">
+                        <div key={index} className="flex gap-2 items-center">
                           <input
                             type="text"
-                            placeholder="Enter Ingredient Name"
+                            placeholder="Ingredient Name"
                             value={item.name}
                             onChange={(e) => handleIngredientChange(index, e.target.value)}
-                            className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
 
                           <input
                             type="number"
-                            placeholder="Enter Number"
+                            placeholder="Qty"
                             value={item.quantity}
                             onChange={(e) => handleQuantityChange(index, e.target.value)}
-                            className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-24 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
 
                           <input
                             type="text"
-                            placeholder="Enter Units"
+                            placeholder="Units"
                             value={item.units}
                             onChange={(e) => handleUnitsChange(index, e.target.value)}
-                            className="w-1/2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            className="w-28 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+
+                          <input
+                            type="text"
+                            placeholder="Notes"
+                            value={item.notes}
+                            onChange={(e) => handleNotesChange(index, e.target.value)}
+                            className="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                           />
 
                           <button
@@ -923,6 +1062,70 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                     </div>
                   </div>
                   <div className="h-px bg-pepper/10" />
+
+                  {/* Subrecipe Ingredients */}
+                  <div className="text-sm font-semibold text-pepper mt-2">Sub-recipe Ingredients</div>
+                  <div className="pt-4 pb-4 bg-white rounded-2xl">
+                    <div className="flex flex-col gap-2">
+                      {subrecipeInputs.map((sr, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <select
+                            value={sr.category}
+                            onChange={(e) =>
+                              handleSubrecipeCategoryChange(index, e.target.value as RecipeCategory | "")
+                            }
+                            className="flex-1 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                          >
+                            <option value="">Select Category</option>
+                            {RECIPE_CATEGORIES.map((cat) => (
+                              <option key={cat} value={cat}>
+                                {cat}
+                              </option>
+                            ))}
+                          </select>
+
+                          <select
+                            value={sr.recipeId}
+                            onChange={(e) => handleSubrecipeRecipeChange(index, e.target.value)}
+                            className="flex-1 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
+                            disabled={!sr.category}
+                          >
+                            <option value="">{sr.category ? "Select Recipe" : "Select category first"}</option>
+                            {getOptionsForCategory(sr.category).map((recipe) => (
+                              <option key={recipe._id} value={recipe._id}>
+                                {recipe.name}
+                              </option>
+                            ))}
+                          </select>
+
+                          <input
+                            type="number"
+                            placeholder="Qty"
+                            min={1}
+                            value={sr.quantity}
+                            onChange={(e) => handleSubrecipeQuantityChange(index, e.target.value)}
+                            className="w-24 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          />
+
+                          <button
+                            onClick={() => removeSubrecipeRow(index)}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-4xl text-radish-900 transition hover:bg-radish-200"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-3 mt-4">
+                      <button
+                        onClick={addSubrecipeRow}
+                        className="inline-flex h-11 w-11 items-center justify-center rounded-3xl border border-radish-200 bg-radish-100 text-radish-900 transition hover:bg-radish-200"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="h-px bg-pepper/10" />
                 </div>
               )}
 
@@ -938,51 +1141,51 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
               </div>
             </div>
 
-            {/* Nutritional Info */}
+            {/* Nutritional Info — recipe: editable; combo: read-only derived total */}
             {!isCombo && (
               <div className="mt-6">
                 <h3 className="text-base font-montserrat font-semibold text-pepper">Nutritional Information</h3>
 
                 <div className="mt-3 flex flex-wrap gap-3">
-                  <NutritionalInfo
-                    label="Calories"
-                    unit="kcal"
-                    value={nutrition.calories}
-                    onChange={(v) => setNutrition((n) => ({ ...n, calories: v }))}
-                  />
-                  <NutritionalInfo
-                    label="Protein"
-                    unit="g"
-                    value={nutrition.protein}
-                    onChange={(v) => setNutrition((n) => ({ ...n, protein: v }))}
-                  />
-                  <NutritionalInfo
-                    label="Fat"
-                    unit="g"
-                    value={nutrition.fat}
-                    onChange={(v) => setNutrition((n) => ({ ...n, fat: v }))}
-                  />
-                  <NutritionalInfo
-                    label="Carb"
-                    unit="g"
-                    value={nutrition.carbs}
-                    onChange={(v) => setNutrition((n) => ({ ...n, carbs: v }))}
-                  />
-                  <NutritionalInfo
-                    label="Fiber"
-                    unit="g"
-                    value={nutrition.fiber}
-                    onChange={(v) => setNutrition((n) => ({ ...n, fiber: v }))}
-                  />
-                  <NutritionalInfo
-                    label="Sodium"
-                    unit="mg"
-                    value={nutrition.sodium}
-                    onChange={(v) => setNutrition((n) => ({ ...n, sodium: v }))}
-                  />
+                  {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+                    <NutritionalInfo
+                      key={key}
+                      label={label}
+                      unit={unit}
+                      value={nutrition[key as keyof NutritionFormState]}
+                      onChange={(v) => setNutrition((n) => ({ ...n, [key]: v }))}
+                    />
+                  ))}
                 </div>
               </div>
             )}
+
+            {isCombo &&
+              (() => {
+                const allSelected = [...selectedEntrees, ...selectedVegetables, ...selectedFruits, ...selectedGrains];
+                if (allSelected.length === 0) return null;
+                const total = sumNutrition(allSelected.map((r) => r.nutritional_info));
+                return (
+                  <div className="mt-6">
+                    <h3 className="text-base font-montserrat font-semibold text-pepper">
+                      Nutritional Information (Total)
+                    </h3>
+                    <p className="text-xs text-pepper/60 mt-1">Sum of all selected recipes</p>
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+                        <NutritionalInfo
+                          key={key}
+                          label={label}
+                          unit={unit}
+                          value={String(total[key as keyof Nutrition] ?? 0)}
+                          onChange={() => {}}
+                          readOnly
+                        />
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
             {/* Footer */}
             {/*<div className="mt-6 flex justify-end">
