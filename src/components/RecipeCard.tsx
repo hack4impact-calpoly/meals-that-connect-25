@@ -55,13 +55,15 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
       )}
 
       {editMode && (
-        <CreateRecipePopUp
-          onClose={() => setEditMode(false)}
-          item={item}
-          open={true}
-          recipeType={null}
-          editMode={true}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <CreateRecipePopUp
+            onClose={() => setEditMode(false)}
+            item={item}
+            open={true}
+            recipeType={null}
+            editMode={true}
+          />
+        </div>
       )}
 
       {item.isDraft && onSelect && (
