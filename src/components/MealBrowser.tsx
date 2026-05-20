@@ -55,7 +55,7 @@ export default function MealBrowser({
   userRole,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-3 md:gap-4">
+    <div className="flex flex-1 flex-col gap-3 md:gap-4 md:gap-4 h-[calc(100vh-120px)] min-h-0 overflow-hidden">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
 
@@ -102,7 +102,7 @@ export default function MealBrowser({
         </div>
       </div>
 
-      <div className="w-full overflow-auto pb-5">
+      <div className={`w-full flex-1 min-h-0 ${isComboMode ? "overflow-y-auto pb-16" : "overflow-hidden pb-5"}`}>
         <CardGrid
           loading={loading}
           error={error}
