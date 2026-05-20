@@ -8,6 +8,7 @@ import {
   FILTER_SECTIONS,
   FRUIT_ICON,
   GRAIN_ICON,
+  NUTRIENT_LABELS,
   RECIPE_BUCKETS,
   TAG_STYLES,
   VEGETABLE_ICON,
@@ -21,6 +22,7 @@ import type {
   Recipe,
   RecipeBuckets,
   RecipeCategory,
+  SubrecipeIngredient,
 } from "@/lib/types";
 import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
@@ -39,10 +41,17 @@ function emptyNutrition(): Nutrition {
   return {
     calories: 0,
     protein: 0,
-    fat: 0,
-    carbs: 0,
+    fatPercentage: 0,
+    saturatedFatPercentage: 0,
     fiber: 0,
+    calcium: 0,
+    magnesium: 0,
+    potassium: 0,
     sodium: 0,
+    vitaminA: 0,
+    vitaminD: 0,
+    vitaminC: 0,
+    vitaminB12: 0,
   };
 }
 
@@ -50,10 +59,17 @@ function scaleNutrition(nutrition: Nutrition, multiplier: number): Nutrition {
   return {
     calories: (nutrition.calories || 0) * multiplier,
     protein: (nutrition.protein || 0) * multiplier,
-    fat: (nutrition.fat || 0) * multiplier,
-    carbs: (nutrition.carbs || 0) * multiplier,
+    fatPercentage: (nutrition.fatPercentage || 0) * multiplier,
+    saturatedFatPercentage: (nutrition.saturatedFatPercentage || 0) * multiplier,
     fiber: (nutrition.fiber || 0) * multiplier,
+    calcium: (nutrition.calcium || 0) * multiplier,
+    magnesium: (nutrition.magnesium || 0) * multiplier,
+    potassium: (nutrition.potassium || 0) * multiplier,
     sodium: (nutrition.sodium || 0) * multiplier,
+    vitaminA: (nutrition.vitaminA || 0) * multiplier,
+    vitaminD: (nutrition.vitaminD || 0) * multiplier,
+    vitaminC: (nutrition.vitaminC || 0) * multiplier,
+    vitaminB12: (nutrition.vitaminB12 || 0) * multiplier,
   };
 }
 
@@ -61,10 +77,17 @@ function addNutrition(a: Nutrition, b: Nutrition): Nutrition {
   return {
     calories: a.calories + b.calories,
     protein: a.protein + b.protein,
-    fat: a.fat + b.fat,
-    carbs: a.carbs + b.carbs,
+    fatPercentage: a.fatPercentage + b.fatPercentage,
+    saturatedFatPercentage: a.saturatedFatPercentage + b.saturatedFatPercentage,
     fiber: a.fiber + b.fiber,
+    calcium: a.calcium + b.calcium,
+    magnesium: a.magnesium + b.magnesium,
+    potassium: a.potassium + b.potassium,
     sodium: a.sodium + b.sodium,
+    vitaminA: a.vitaminA + b.vitaminA,
+    vitaminD: a.vitaminD + b.vitaminD,
+    vitaminC: a.vitaminC + b.vitaminC,
+    vitaminB12: a.vitaminB12 + b.vitaminB12,
   };
 }
 
@@ -216,21 +239,28 @@ function RecipeDetails({
         </>
       )}
 
-      {userRole && recipe.ingredients?.length ? (
+      {userRole && (recipe.ingredients?.length || recipe.subrecipes?.length) ? (
         <>
           <Divider />
 
-          <div className="mb-4">
-            <h3 className="mb-4 text-xl font-semibold">Ingredients</h3>
+          {recipe.ingredients?.length ? (
+            <div className="mb-4">
+              <h3 className="mb-4 text-xl font-semibold">Ingredients</h3>
 
-            <ul className="list-disc pl-5">
-              {recipe.ingredients.map((ingredient, i) => (
-                <li key={i}>
-                  {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
-                </li>
-              ))}
-            </ul>
-          </div>
+              <ul className="list-disc pl-5">
+                {recipe.ingredients.map((ingredient, i) => (
+                  <li key={i}>
+                    {ingredient.name}: {(ingredient.quantity / originalServings) * servings} {ingredient.units}
+                    {ingredient.notes ? (
+                      <span className="ml-2 text-pepper/60 text-sm">— {ingredient.notes}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {recipe.subrecipes?.length ? <SubrecipeSection subrecipes={recipe.subrecipes} /> : null}
         </>
       ) : null}
 
@@ -282,6 +312,84 @@ function ComboDetails({
       {userRole && combo.instructions ? <InstructionsSection instructions={combo.instructions} /> : null}
 
       <NutritionSection nutrition={nutrition} servings={servings} originalServings={originalServings} />
+    </>
+  );
+}
+
+function mergeSubrecipes(subrecipes: SubrecipeIngredient[]): SubrecipeIngredient[] {
+  const merged = new Map<string, SubrecipeIngredient>();
+  for (const sr of subrecipes) {
+    const existing = merged.get(sr.recipeId);
+    if (existing) {
+      existing.quantity += sr.quantity;
+    } else {
+      merged.set(sr.recipeId, { ...sr });
+    }
+  }
+  return Array.from(merged.values());
+}
+
+function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] }) {
+  const merged = mergeSubrecipes(subrecipes);
+
+  const CATEGORY_CONFIG: { key: RecipeCategory; label: string; icon: ReactNode }[] = [
+    { key: "Entree", label: "Entrees", icon: <ENTREE_ICON /> },
+    { key: "Vegetable", label: "Vegetables", icon: <VEGETABLE_ICON /> },
+    { key: "Fruit", label: "Fruits", icon: <FRUIT_ICON /> },
+    { key: "Grain", label: "Grains", icon: <GRAIN_ICON /> },
+  ];
+
+  const uncategorized = merged.filter((sr) => !sr.category);
+  const hasAnyCategory = merged.some((sr) => sr.category);
+
+  return (
+    <>
+      {hasAnyCategory &&
+        CATEGORY_CONFIG.map(({ key, label, icon }) => {
+          const items = merged.filter((sr) => sr.category === key);
+          if (!items.length) return null;
+          return (
+            <LabeledSection key={key} label={label} icon={icon}>
+              <div className="flex flex-wrap gap-2">
+                {items.map((sr, i) => (
+                  <div key={i} className={`flex items-center gap-1 rounded-md px-2 py-1 ${TAG_STYLES[key]}`}>
+                    {sr.recipeName || sr.recipeId}
+                    <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}
+                      className="cursor-pointer rounded p-1 hover:opacity-80"
+                      aria-label={`Open ${sr.recipeName}`}
+                    >
+                      <ArrowUpRight size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </LabeledSection>
+          );
+        })}
+
+      {uncategorized.length > 0 && (
+        <LabeledSection label="Sub-recipes" icon={<Tag />}>
+          <div className="flex flex-wrap gap-2">
+            {uncategorized.map((sr, i) => (
+              <div key={i} className="flex items-center gap-1 rounded-md px-2 py-1 bg-pepper text-white">
+                {sr.recipeName || sr.recipeId}
+                <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                <button
+                  type="button"
+                  onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}
+                  className="cursor-pointer rounded p-1 hover:opacity-80"
+                  aria-label={`Open ${sr.recipeName}`}
+                >
+                  <ArrowUpRight size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </LabeledSection>
+      )}
     </>
   );
 }
@@ -439,48 +547,16 @@ function NutritionSection({
       <h3 className="mb-4 text-xl font-semibold">Nutritional Information</h3>
 
       <div className="mt-3 flex flex-wrap gap-3">
-        <NutritionalInfo
-          label="Calories"
-          unit="kcal"
-          value={formatNutritionValue(nutrition.calories, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Protein"
-          unit="g"
-          value={formatNutritionValue(nutrition.protein, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Fat"
-          unit="g"
-          value={formatNutritionValue(nutrition.fat, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Carbs"
-          unit="g"
-          value={formatNutritionValue(nutrition.carbs, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Fiber"
-          unit="g"
-          value={formatNutritionValue(nutrition.fiber, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
-        <NutritionalInfo
-          label="Sodium"
-          unit="mg"
-          value={formatNutritionValue(nutrition.sodium, originalServings, servings)}
-          onChange={() => {}}
-          readOnly={true}
-        />
+        {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+          <NutritionalInfo
+            key={key}
+            label={label}
+            unit={unit}
+            value={formatNutritionValue(nutrition[key] ?? 0, originalServings, servings)}
+            onChange={() => {}}
+            readOnly={true}
+          />
+        ))}
       </div>
     </>
   );
