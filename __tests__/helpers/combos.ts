@@ -22,7 +22,7 @@ export function makeCombo(overrides = {}) {
     notes: "Test combo fixture",
     allergens: [],
     instructions: "Serve together.",
-    nutritional_info: normalizeNutrition({ calories: 200, protein: 5, carbs: 30 }),
+    nutritional_info: normalizeNutrition({ calories: 200, protein: 5, fiber: 3 }),
     isDraft: false,
     ...overrides,
   };

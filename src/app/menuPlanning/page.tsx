@@ -34,11 +34,81 @@ import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 const today = new Date();
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
-  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
-  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
-  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
-  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
-  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
+  {
+    calories: 380,
+    protein: 27,
+    fatPercentage: 24,
+    saturatedFatPercentage: 8,
+    fiber: 9,
+    calcium: 350,
+    magnesium: 90,
+    potassium: 750,
+    sodium: 520,
+    vitaminA: 200,
+    vitaminD: 180,
+    vitaminC: 22,
+    vitaminB12: 0.7,
+  }, // Mon
+  {
+    calories: 420,
+    protein: 30,
+    fatPercentage: 26,
+    saturatedFatPercentage: 9,
+    fiber: 8,
+    calcium: 400,
+    magnesium: 100,
+    potassium: 820,
+    sodium: 610,
+    vitaminA: 220,
+    vitaminD: 200,
+    vitaminC: 24,
+    vitaminB12: 0.8,
+  }, // Tue
+  {
+    calories: 350,
+    protein: 24,
+    fatPercentage: 22,
+    saturatedFatPercentage: 7,
+    fiber: 7,
+    calcium: 300,
+    magnesium: 85,
+    potassium: 700,
+    sodium: 490,
+    vitaminA: 180,
+    vitaminD: 160,
+    vitaminC: 20,
+    vitaminB12: 0.6,
+  }, // Wed
+  {
+    calories: 410,
+    protein: 28,
+    fatPercentage: 25,
+    saturatedFatPercentage: 8,
+    fiber: 9,
+    calcium: 380,
+    magnesium: 95,
+    potassium: 800,
+    sodium: 580,
+    vitaminA: 210,
+    vitaminD: 190,
+    vitaminC: 23,
+    vitaminB12: 0.7,
+  }, // Thu
+  {
+    calories: 390,
+    protein: 25,
+    fatPercentage: 23,
+    saturatedFatPercentage: 7,
+    fiber: 8,
+    calcium: 360,
+    magnesium: 88,
+    potassium: 760,
+    sodium: 530,
+    vitaminA: 195,
+    vitaminD: 175,
+    vitaminC: 21,
+    vitaminB12: 0.7,
+  }, // Fri
 ];
 
 export type SidebarDragData =
@@ -197,6 +267,26 @@ export default function MenuPlanning() {
   const [nutritionByDate, setNutritionByDate] = useState<Record<string, NutritionSummary>>({});
 
   const previousCalendarView = useRef(calendarView);
+
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getUserRole() {
+      try {
+        const response = await fetch("/api/users/me");
+        if (response.ok) {
+          const data = await response.json();
+          setUserRole(data.role);
+        } else {
+          console.error("Failed to fetch user role");
+        }
+      } catch (error) {
+        setUserRole(null);
+      }
+    }
+    getUserRole();
+    console.log("User role set to:", userRole);
+  }, []);
 
   useEffect(() => {
     const prev = previousCalendarView.current;
@@ -526,15 +616,20 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   onDaySelect={setPickedDateFromMonth}
+                  userRole={userRole}
                 />
 
-                <div className="mt-2">
-                  <WarningQuotaMonthly />
-                </div>
+                {userRole && (
+                  <div className="mt-2">
+                    <WarningQuotaMonthly />
+                  </div>
+                )}
 
-                <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
-                  <TrashDropZone />
-                </div>
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
 
@@ -546,41 +641,49 @@ export default function MenuPlanning() {
                   refetchTrigger={recipeDropTrigger}
                   selectedDate={pickedDateFromMonth}
                   nutritionByDate={nutritionByDate}
+                  userRole={userRole}
                 />
 
-                <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
-                  <TrashDropZone />
-                </div>
-                <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">
+                    <TrashDropZone />
+                  </div>
+                )}
+
+                {userRole && <WeeklyNutritionQuota dailyTotals={weeklyNutritionTotals} />}
               </>
             )}
 
             {calendarView === "Day" && (
               <>
-                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} />
-                <div className="mt-2 flex justify-end">
-                  <TrashDropZone />
-                </div>
+                <DayView date={viewDates[0]} refetchTrigger={recipeDropTrigger} userRole={userRole} />
+                {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+                  <div className="mt-2 flex justify-end">
+                    <TrashDropZone />
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
 
-        <SidebarDropZone>
-          <RecipeDatabase
-            items={items}
-            loading={loading}
-            error={error}
-            onSearch={setSearch}
-            selectedCategories={selectedCategories}
-            onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
-            sortBy={sortBy}
-            onSortChange={setSortBy}
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-          />
-        </SidebarDropZone>
+        {(userRole === "Admin" || userRole === "Kitchen Staff") && (
+          <SidebarDropZone>
+            <RecipeDatabase
+              items={items}
+              loading={loading}
+              error={error}
+              onSearch={setSearch}
+              selectedCategories={selectedCategories}
+              onToggleCategory={(category: CategoryValue) => toggleCategory(category, setSelectedCategories)}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
+          </SidebarDropZone>
+        )}
       </main>
 
       <DragOverlay>
