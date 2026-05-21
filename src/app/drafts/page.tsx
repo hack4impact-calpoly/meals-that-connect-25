@@ -3,13 +3,31 @@
 import { useRouter } from "next/navigation";
 import MealBrowser from "@/components/MealBrowser";
 import FilterMenu from "@/components/FilterMenu";
-import { CategoryValue, createEmptyFilterSelections, FilterSelections, RecipePreview } from "@/lib/types";
+import ViewRecipePopUp from "@/components/ViewRecipePopUp";
+import CreateRecipePopUp from "@/components/CreateRecipePopUp";
+import {
+  CategoryDisplayType,
+  CategoryValue,
+  COMBO_CATEGORY_DISPLAY,
+  Combo,
+  createEmptyFilterSelections,
+  FilterSelections,
+  Recipe,
+  RecipePreview,
+} from "@/lib/types";
 import { useState, useEffect } from "react";
 import { ArrowLeft, Trash2, CircleX, CircleCheck, Menu } from "lucide-react";
 
 import { publishCombos, deleteCombos, deleteRecipes, publishRecipes } from "@/app/actions/draftActions";
 import { useMealData } from "@/hooks/useMealData";
 import { cloneFilterSelections } from "@/lib/helpers";
+
+type BrowserItem = Recipe | Combo<RecipePreview>;
+type SelectedItem = Recipe | Combo<Recipe>;
+
+function isRecipe(item: BrowserItem | SelectedItem): item is Recipe {
+  return "category" in item;
+}
 
 export default function DraftsPage() {
   const router = useRouter();
@@ -23,6 +41,10 @@ export default function DraftsPage() {
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterSelections>(() => createEmptyFilterSelections()); // Lazy initializer, only used on first render.
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [mode, setMode] = useState<"view" | "edit">("view");
+  const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
   const { items, loading, error, isComboMode, draftCount, currentPage, totalPages, setCurrentPage, refresh } =
     useMealData<RecipePreview>({
       search,
@@ -86,6 +108,37 @@ export default function DraftsPage() {
     });
   };
 
+  async function getCombo(id: string): Promise<Combo<Recipe>> {
+    const res = await fetch(`/api/combos/${id}?populate=all`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to get individual combo (${res.status})`);
+    }
+
+    return res.json();
+  }
+
+  const handleOpenItem = async (item: BrowserItem) => {
+    setMode("view");
+
+    if (isRecipe(item)) {
+      setSelectedItem(item);
+      setActiveType(null);
+      setIsOpen(true);
+      return;
+    }
+
+    try {
+      const combo = await getCombo(item._id);
+
+      setSelectedItem(combo);
+      setActiveType(COMBO_CATEGORY_DISPLAY);
+      setIsOpen(true);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleDelete = async () => {
     setShowDeleteModal(true);
     setBusy("delete");
@@ -112,6 +165,8 @@ export default function DraftsPage() {
     refresh();
   };
 
+  const selectedItemIsCombo = selectedItem ? !isRecipe(selectedItem) : isComboMode;
+
   return (
     <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-5 pt-5 md:flex-row">
@@ -130,6 +185,7 @@ export default function DraftsPage() {
           setSelectedCategories={setSelectedCategories}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
+          onOpenItem={handleOpenItem}
           topLeftChildren={
             <button
               onClick={() => router.push("/recipe")}
@@ -168,6 +224,28 @@ export default function DraftsPage() {
           </div>
         )}
       </div>
+
+      {mode === "view" ? (
+        <ViewRecipePopUp
+          open={isOpen}
+          onClose={setIsOpen}
+          item={selectedItem}
+          isComboMode={selectedItemIsCombo}
+          changeMode={(nextMode) => setMode(nextMode)}
+          userRole={userRole}
+        />
+      ) : (
+        <CreateRecipePopUp
+          item={selectedItem}
+          open={isOpen}
+          onClose={() => {
+            setIsOpen(false);
+            setMode("view");
+          }}
+          recipeType={activeType}
+          editMode={true}
+        />
+      )}
 
       {selectedIds.size > 0 && (
         <div className="flex justify-between bg-white border-t border-gray-300 px-6 py-4 shadow-md">

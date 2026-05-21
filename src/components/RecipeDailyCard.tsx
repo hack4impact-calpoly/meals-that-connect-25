@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { GripVertical } from "lucide-react";
-import { Recipe, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
@@ -43,7 +43,7 @@ export default function RecipeDailyCard({ item, onOpen }: RecipeCardProps) {
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagStyle}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <GripVertical size={20} strokeWidth={1.7} className="cursor-move text-gray-500" />

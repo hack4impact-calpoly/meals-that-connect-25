@@ -15,6 +15,7 @@ import type {
   RecipeBucket,
   RecipeBuckets,
 } from "@/lib/types";
+import { NextResponse } from "next/server";
 
 type RecipeFilterFields = {
   _id: string;
@@ -202,4 +203,27 @@ export function updateAffectsComboData(updates: Record<string, unknown>) {
       key.startsWith("exclusions.") ||
       key.startsWith("nutritional_info."),
   );
+}
+
+export function getCleanName(data: Record<string, unknown>) {
+  if (typeof data.name !== "string") {
+    return "";
+  }
+
+  return data.name.trim();
+}
+
+export function nameFieldError(message: string, status = 400) {
+  return NextResponse.json(
+    {
+      errors: {
+        name: message,
+      },
+    },
+    { status },
+  );
+}
+
+export function isDuplicateNameError(err: any) {
+  return err?.code === 11000 && err?.keyPattern?.name;
 }

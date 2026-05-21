@@ -22,6 +22,7 @@ import {
   createEmptyFilterSelections,
   CATEGORY_TO_BUCKET,
   RecipeNutritionOnly,
+  CATEGORY_DISPLAY_MAP,
 } from "@/lib/types";
 import { NutritionSummary, emptyNutrition } from "@/lib/nutrition";
 import { useMealData } from "@/hooks/useMealData";
@@ -34,11 +35,81 @@ import { MonthMealCardPreview } from "@/components/menuPlanning/MonthMealCard";
 const today = new Date();
 // Dummy per-day nutrition totals for the week (Mon–Fri), mocking backend data
 const DUMMY_WEEKLY_NUTRITION: Nutrition[] = [
-  { calories: 380, protein: 27, fat: 10, carbs: 49, fiber: 9, sodium: 520 }, // Mon
-  { calories: 420, protein: 30, fat: 12, carbs: 55, fiber: 8, sodium: 610 }, // Tue
-  { calories: 350, protein: 24, fat: 9, carbs: 44, fiber: 7, sodium: 490 }, // Wed
-  { calories: 410, protein: 28, fat: 11, carbs: 52, fiber: 9, sodium: 580 }, // Thu
-  { calories: 390, protein: 25, fat: 10, carbs: 48, fiber: 8, sodium: 530 }, // Fri
+  {
+    calories: 380,
+    protein: 27,
+    fatPercentage: 24,
+    saturatedFatPercentage: 8,
+    fiber: 9,
+    calcium: 350,
+    magnesium: 90,
+    potassium: 750,
+    sodium: 520,
+    vitaminA: 200,
+    vitaminD: 180,
+    vitaminC: 22,
+    vitaminB12: 0.7,
+  }, // Mon
+  {
+    calories: 420,
+    protein: 30,
+    fatPercentage: 26,
+    saturatedFatPercentage: 9,
+    fiber: 8,
+    calcium: 400,
+    magnesium: 100,
+    potassium: 820,
+    sodium: 610,
+    vitaminA: 220,
+    vitaminD: 200,
+    vitaminC: 24,
+    vitaminB12: 0.8,
+  }, // Tue
+  {
+    calories: 350,
+    protein: 24,
+    fatPercentage: 22,
+    saturatedFatPercentage: 7,
+    fiber: 7,
+    calcium: 300,
+    magnesium: 85,
+    potassium: 700,
+    sodium: 490,
+    vitaminA: 180,
+    vitaminD: 160,
+    vitaminC: 20,
+    vitaminB12: 0.6,
+  }, // Wed
+  {
+    calories: 410,
+    protein: 28,
+    fatPercentage: 25,
+    saturatedFatPercentage: 8,
+    fiber: 9,
+    calcium: 380,
+    magnesium: 95,
+    potassium: 800,
+    sodium: 580,
+    vitaminA: 210,
+    vitaminD: 190,
+    vitaminC: 23,
+    vitaminB12: 0.7,
+  }, // Thu
+  {
+    calories: 390,
+    protein: 25,
+    fatPercentage: 23,
+    saturatedFatPercentage: 7,
+    fiber: 8,
+    calcium: 360,
+    magnesium: 88,
+    potassium: 760,
+    sodium: 530,
+    vitaminA: 195,
+    vitaminD: 175,
+    vitaminC: 21,
+    vitaminB12: 0.7,
+  }, // Fri
 ];
 
 export type SidebarDragData =
@@ -122,7 +193,9 @@ function CalendarDragPreview({ item }: CalendarDragData) {
         {item.serving ? <p className="mt-1 truncate text-[15px] leading-tight font-medium">{item.serving}</p> : null}
       </div>
 
-      {item.category ? <span className="shrink-0 text-xs font-medium">{item.category}</span> : null}
+      {item.category ? (
+        <span className="shrink-0 text-xs font-medium">{CATEGORY_DISPLAY_MAP[item.category].label}</span>
+      ) : null}
 
       <GripVertical className="h-5 w-5 shrink-0 text-current opacity-90" aria-hidden="true" />
     </div>
@@ -536,12 +609,6 @@ export default function MenuPlanning() {
                   onDaySelect={setPickedDateFromMonth}
                   userRole={userRole}
                 />
-
-                {userRole && (
-                  <div className="mt-2">
-                    <WarningQuotaMonthly />
-                  </div>
-                )}
 
                 {(userRole === "Admin" || userRole === "Kitchen Staff") && (
                   <div className="mt-2 flex justify-end pb-2 sm:mt-auto sm:pb-4">

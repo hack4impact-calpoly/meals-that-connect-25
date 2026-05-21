@@ -79,7 +79,7 @@ export default function RecipeDatabase({
         </Menu>
       </div>
 
-      <div className="my-4 overflow-x-auto pb-1">
+      <div className="my-4 overflow-x-auto pb-1 shrink-0">
         <CategoryToggle
           options={CATEGORY_DISPLAY}
           selectedCategories={selectedCategories}

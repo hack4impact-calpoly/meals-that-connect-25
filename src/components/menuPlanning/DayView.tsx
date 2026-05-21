@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Image from "next/image";
 import { GripVertical } from "lucide-react";
 import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
 import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
-import { CATEGORY_DISPLAY, CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
 import type { Nutrition, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
 import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutrition";
@@ -21,16 +20,11 @@ interface DayViewProps {
 type CalendarDayResponse = {
   _id: string;
   nutritional_info?: Nutrition;
-} & RecipeBuckets<DayRecipe>;
-
-type DayRecipe = RecipeNutritionOnly & {
-  imageUrl?: string;
-};
+} & RecipeBuckets<RecipeNutritionOnly>;
 
 type DayMealCardProps = {
-  item: DayRecipe;
+  item: RecipeNutritionOnly;
   dayId: string;
-  variant?: "mobile" | "desktop";
   userRole: string | null;
 };
 
@@ -43,24 +37,11 @@ const formatDayId = (date: Date) => {
 };
 
 export type DayMealCardPreviewProps = {
-  item: DayRecipe;
+  item: RecipeNutritionOnly;
 };
-
-function getCategoryLabel(category: DayRecipe["category"]) {
-  return CATEGORY_DISPLAY.find((option) => option.category === category)?.plural ?? category;
-}
-
-function MealThumbnail({ item }: { item: DayRecipe }) {
-  return (
-    <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-jicama sm:h-14 sm:w-14">
-      {item.imageUrl ? <Image src={item.imageUrl} alt={item.name} fill sizes="56px" className="object-cover" /> : null}
-    </div>
-  );
-}
 
 export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
   const tagClassName = TAG_STYLES[item.category];
-  const categoryLabel = getCategoryLabel(item.category);
 
   const calories = item.nutritional_info.calories;
   const servingSize = item.serving;
@@ -70,49 +51,28 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
     caloriesText && servingSize ? `${caloriesText} / ${servingSize}` : caloriesText || `${servingSize} servings`;
 
   return (
-    <>
-      <div className="flex w-72 items-center gap-3 rounded-md border border-medium-gray/70 bg-white p-2 shadow-lg md:hidden">
-        <MealThumbnail item={item} />
+    <div className="flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 shadow-lg">
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate font-montserrat text-xl font-bold" title={item.name}>
+          {item.name}
+        </h3>
 
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-montserrat text-sm font-bold" title={item.name}>
-            {item.name}
-          </h3>
-
-          {metaText ? <p className="font-montserrat text-xs font-semibold text-pepper">{metaText}</p> : null}
-        </div>
-
-        <span className={`shrink-0 rounded-md px-2 py-1 font-montserrat text-[11px] font-bold ${tagClassName}`}>
-          {categoryLabel}
-        </span>
-
-        <GripVertical className="h-4 w-4 shrink-0 text-gray-400" aria-hidden="true" />
+        {metaText ? <p className="font-montserrat text-base font-medium text-pepper/70">{metaText}</p> : null}
       </div>
 
-      <div className="hidden items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 shadow-lg md:flex">
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate font-montserrat text-xl font-bold" title={item.name}>
-            {item.name}
-          </h3>
+      <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
+        {CATEGORY_DISPLAY_MAP[item.category].label}
+      </span>
 
-          {metaText ? <p className="font-montserrat text-base font-medium text-pepper/70">{metaText}</p> : null}
-        </div>
-
-        <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-          {item.category}
-        </span>
-
-        <GripVertical className="h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
-      </div>
-    </>
+      <GripVertical className="h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
+    </div>
   );
 }
 
-function DayMealCard({ item, dayId, variant = "desktop", userRole }: DayMealCardProps) {
+function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
-  const dndId = `calendar-${variant}-${dayId}-${bucket}-${item._id}`;
+  const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
-  const categoryLabel = getCategoryLabel(item.category);
   const canEditCalendar = userRole === "Admin" || userRole === "Kitchen Staff";
 
   const dragData: CalendarDragData = {
@@ -133,44 +93,6 @@ function DayMealCard({ item, dayId, variant = "desktop", userRole }: DayMealCard
   const metaText =
     caloriesText && servingSize ? `${caloriesText} / ${servingSize}` : caloriesText || `${servingSize} servings`;
 
-  if (variant === "mobile") {
-    return (
-      <div
-        ref={setNodeRef}
-        className={`group flex items-center gap-3 rounded-md border border-medium-gray/70 bg-white p-2 shadow-sm transition hover:shadow-md ${
-          isDragging ? "opacity-40" : ""
-        }`}
-      >
-        <MealThumbnail item={item} />
-
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h3 className="truncate font-montserrat text-sm font-bold" title={item.name}>
-            {item.name}
-          </h3>
-
-          {metaText ? <p className="font-montserrat text-xs font-semibold text-pepper">{metaText}</p> : null}
-        </div>
-
-        <span className={`shrink-0 rounded-md px-2 py-1 font-montserrat text-[11px] font-bold ${tagClassName}`}>
-          {categoryLabel}
-        </span>
-
-        {canEditCalendar ? (
-          <button
-            ref={setActivatorNodeRef}
-            type="button"
-            className="shrink-0 cursor-move rounded-md p-1 text-gray-400 transition hover:bg-gray-100"
-            aria-label={`Drag ${item.name}`}
-            {...attributes}
-            {...(listeners ?? {})}
-          >
-            <GripVertical size={18} strokeWidth={1.7} />
-          </button>
-        ) : null}
-      </div>
-    );
-  }
-
   return (
     <div
       ref={setNodeRef}
@@ -189,7 +111,7 @@ function DayMealCard({ item, dayId, variant = "desktop", userRole }: DayMealCard
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <button
@@ -207,7 +129,7 @@ function DayMealCard({ item, dayId, variant = "desktop", userRole }: DayMealCard
 }
 
 export default function DayView({ date, refetchTrigger, userRole }: DayViewProps) {
-  const [meals, setMeals] = useState<DayRecipe[]>([]);
+  const [meals, setMeals] = useState<RecipeNutritionOnly[]>([]);
   const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
   const canEditCalendar = userRole === "Admin" || userRole === "Kitchen Staff";
@@ -254,49 +176,15 @@ export default function DayView({ date, refetchTrigger, userRole }: DayViewProps
 
   return (
     <div className="flex flex-col gap-3 pt-4">
-      <div className="md:hidden">
-        <DroppableCalendarArea
-          dayId={dayId}
-          droppableId={`mobile-${dayId}`}
-          className="flex min-h-14 w-full flex-col gap-2 rounded-md transition-colors"
-        >
+      <div className="rounded-[14px] border border-medium-gray/35 bg-white p-3">
+        <DroppableCalendarArea dayId={dayId}>
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 py-8 text-center font-montserrat text-xs font-medium text-pepper/55">
               Loading meals...
             </div>
           ) : meals.length > 0 ? (
             meals.map((meal) => (
-              <DayMealCard
-                key={`${dayId}-${meal._id}`}
-                item={meal}
-                dayId={dayId}
-                variant="mobile"
-                userRole={userRole}
-              />
-            ))
-          ) : (
-            <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
-              {canEditCalendar ? "Drop a recipe here to add it to today's menu" : "Meal Not Planned for the day"}
-            </div>
-          )}
-        </DroppableCalendarArea>
-      </div>
-
-      <div className="hidden rounded-[14px] border border-medium-gray/35 bg-white p-3 md:block">
-        <DroppableCalendarArea dayId={dayId} droppableId={`desktop-${dayId}`}>
-          {isLoading ? (
-            <div className="flex flex-1 items-center justify-center rounded-[10px] border border-dashed border-pepper/15 bg-white/55 px-3 py-8 text-center font-montserrat text-xs font-medium text-pepper/55">
-              Loading meals...
-            </div>
-          ) : meals.length > 0 ? (
-            meals.map((meal) => (
-              <DayMealCard
-                key={`${dayId}-${meal._id}`}
-                item={meal}
-                dayId={dayId}
-                variant="desktop"
-                userRole={userRole}
-              />
+              <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} userRole={userRole} />
             ))
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">

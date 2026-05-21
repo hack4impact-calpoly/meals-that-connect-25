@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORY_TO_BUCKET, RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_TO_BUCKET, Nutrition, RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
 
 interface WeeklyMenuProps {
   dateToday: Date;
@@ -11,8 +11,8 @@ interface WeeklyMenuProps {
 interface MealItem {
   _id: string;
   name: string;
-  calories: number;
-  servingSize: string;
+  nutritional_info: Nutrition;
+  serving: string;
 
   // TODO: when this is wired to the backend, this should come from Recipe.category.
   category: RecipeCategory;
@@ -21,167 +21,6 @@ interface MealItem {
   // the recipe was stored under: entrees, vegetables, fruits, or grains.
   calendarBucket: RecipeBucket;
 }
-
-// Mock meal data
-// TODO: replace this with calendar data from /api/calendar?year=YYYY&month=MM.
-// Calendar days should store recipe IDs grouped by bucket:
-// entrees, vegetables, fruits, grains.
-const MOCK_MEALS: Record<number, MealItem[]> = {
-  1: [
-    {
-      _id: "entree-chicken-teriyaki-bowl",
-      name: "Chicken Teriyaki Bowl",
-      calories: 320,
-      servingSize: "4 servings",
-      category: "Entree",
-      calendarBucket: CATEGORY_TO_BUCKET.Entree,
-    },
-    {
-      _id: "grain-brown-rice",
-      name: "Brown Rice",
-      calories: 220,
-      servingSize: "6 servings",
-      category: "Grain",
-      calendarBucket: CATEGORY_TO_BUCKET.Grain,
-    },
-    {
-      _id: "vegetable-roasted-broccoli",
-      name: "Roasted Broccoli",
-      calories: 120,
-      servingSize: "4 servings",
-      category: "Vegetable",
-      calendarBucket: CATEGORY_TO_BUCKET.Vegetable,
-    },
-    {
-      _id: "fruit-citrus-orange-wedges",
-      name: "Citrus Orange Wedges",
-      calories: 90,
-      servingSize: "4 servings",
-      category: "Fruit",
-      calendarBucket: CATEGORY_TO_BUCKET.Fruit,
-    },
-  ],
-  2: [
-    {
-      _id: "entree-turkey-taco-meat",
-      name: "Turkey Taco Meat",
-      calories: 260,
-      servingSize: "5 servings",
-      category: "Entree",
-      calendarBucket: CATEGORY_TO_BUCKET.Entree,
-    },
-    {
-      _id: "grain-corn-tortillas",
-      name: "Corn Tortillas",
-      calories: 140,
-      servingSize: "6 servings",
-      category: "Grain",
-      calendarBucket: CATEGORY_TO_BUCKET.Grain,
-    },
-    {
-      _id: "vegetable-corn-and-pepper-saute",
-      name: "Corn and Pepper Sauté",
-      calories: 140,
-      servingSize: "5 servings",
-      category: "Vegetable",
-      calendarBucket: CATEGORY_TO_BUCKET.Vegetable,
-    },
-    {
-      _id: "fruit-watermelon-cups",
-      name: "Watermelon Cups",
-      calories: 70,
-      servingSize: "6 servings",
-      category: "Fruit",
-      calendarBucket: CATEGORY_TO_BUCKET.Fruit,
-    },
-  ],
-  3: [
-    {
-      _id: "entree-beef-and-bean-chili",
-      name: "Beef and Bean Chili",
-      calories: 410,
-      servingSize: "6 servings",
-      category: "Entree",
-      calendarBucket: CATEGORY_TO_BUCKET.Entree,
-    },
-    {
-      _id: "grain-brown-rice",
-      name: "Brown Rice",
-      calories: 220,
-      servingSize: "6 servings",
-      category: "Grain",
-      calendarBucket: CATEGORY_TO_BUCKET.Grain,
-    },
-    {
-      _id: "fruit-cinnamon-apples",
-      name: "Cinnamon Apples",
-      calories: 130,
-      servingSize: "4 servings",
-      category: "Fruit",
-      calendarBucket: CATEGORY_TO_BUCKET.Fruit,
-    },
-  ],
-  4: [
-    {
-      _id: "entree-lemon-herb-salmon",
-      name: "Lemon Herb Salmon",
-      calories: 360,
-      servingSize: "4 servings",
-      category: "Entree",
-      calendarBucket: CATEGORY_TO_BUCKET.Entree,
-    },
-    {
-      _id: "vegetable-garlic-green-beans",
-      name: "Garlic Green Beans",
-      calories: 90,
-      servingSize: "4 servings",
-      category: "Vegetable",
-      calendarBucket: CATEGORY_TO_BUCKET.Vegetable,
-    },
-    {
-      _id: "grain-quinoa-pilaf",
-      name: "Quinoa Pilaf",
-      calories: 240,
-      servingSize: "5 servings",
-      category: "Grain",
-      calendarBucket: CATEGORY_TO_BUCKET.Grain,
-    },
-  ],
-  5: [
-    {
-      _id: "entree-baked-chicken-meatballs",
-      name: "Baked Chicken Meatballs",
-      calories: 310,
-      servingSize: "5 servings",
-      category: "Entree",
-      calendarBucket: CATEGORY_TO_BUCKET.Entree,
-    },
-    {
-      _id: "vegetable-honey-glazed-carrots",
-      name: "Honey Glazed Carrots",
-      calories: 150,
-      servingSize: "4 servings",
-      category: "Vegetable",
-      calendarBucket: CATEGORY_TO_BUCKET.Vegetable,
-    },
-    {
-      _id: "grain-whole-wheat-pasta",
-      name: "Whole Wheat Pasta",
-      calories: 250,
-      servingSize: "6 servings",
-      category: "Grain",
-      calendarBucket: CATEGORY_TO_BUCKET.Grain,
-    },
-    {
-      _id: "fruit-berry-yogurt-cup",
-      name: "Berry Yogurt Cup",
-      calories: 180,
-      servingSize: "4 servings",
-      category: "Fruit",
-      calendarBucket: CATEGORY_TO_BUCKET.Fruit,
-    },
-  ],
-};
 
 const getOffsetDate = (date: Date, offset: number) => {
   const newDate = new Date(date);
@@ -204,11 +43,17 @@ const getWeekDates = (today: Date) => {
 const formatWeekRange = (weekDates: Date[]) => {
   const first = weekDates[0];
   const last = weekDates[4];
-  const month = first.toLocaleDateString("en-US", { month: "short" });
-  const startDay = String(first.getDate()).padStart(2, "0");
-  const endDay = String(last.getDate()).padStart(2, "0");
+  const startMonth = first.toLocaleDateString("en-US", { month: "short" });
+  const endMonth = last.toLocaleDateString("en-US", { month: "short" });
+  const startDay = String(first.getDate());
+  const endDay = String(last.getDate());
+  return `${startMonth} ${startDay} – ${endMonth} ${endDay}`;
+};
 
-  return `${month} ${startDay}–${endDay}`;
+const fetchCalendarById = async (id: string) => {
+  const res = await fetch(`/api/calendar/${id}`);
+  if (!res.ok) throw new Error("Failed to fetch calendar");
+  return await res.json();
 };
 
 export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
@@ -225,9 +70,23 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
   const activeDayIndex = selectedDayIndex !== null ? selectedDayIndex : todayIndexInWeek !== -1 ? todayIndexInWeek : 0;
   const activeDate = weekDates[activeDayIndex];
   const activeDayOfWeek = activeDate.getDay();
-  const meals = MOCK_MEALS[activeDayOfWeek] ?? [];
+  const [meals, setMeals] = useState<MealItem[]>([]);
 
   const isToday = (date: Date) => date.toDateString() === todayStr;
+
+  useEffect(() => {
+    const calendarId = activeDate.toISOString().slice(0, 10).replace(/-/g, "");
+    const getCalendar = async () => {
+      try {
+        const data = await fetchCalendarById(calendarId);
+        console.log([...data.entrees, ...data.vegetables, ...data.fruits, ...data.grains]);
+        setMeals([...data.entrees, ...data.vegetables, ...data.fruits, ...data.grains]);
+      } catch (err) {
+        setMeals([]);
+      }
+    };
+    getCalendar();
+  }, [weekOffset, selectedDayIndex, dateToday]);
 
   return (
     <div className="flex flex-1 flex-col rounded-2xl bg-white p-6 font-montserrat">
@@ -296,7 +155,7 @@ export default function WeeklyMenu({ dateToday }: WeeklyMenuProps) {
               <div key={meal._id} className={`rounded-lg px-4 py-3 ${style}`}>
                 <p className="text-sm leading-tight font-bold">{meal.name}</p>
                 <p className="mt-0.5 text-sm leading-tight font-medium">
-                  {meal.calories} cal / {meal.servingSize}
+                  {meal.nutritional_info.calories} cal / {meal.serving} servings
                 </p>
               </div>
             );

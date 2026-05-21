@@ -641,26 +641,51 @@ function sumNutrition(items: ExportRecipe[]): Nutrition {
       calories: total.calories + numberOrZero(item.nutritional_info?.calories),
       sodium: total.sodium + numberOrZero(item.nutritional_info?.sodium),
       protein: total.protein + numberOrZero(item.nutritional_info?.protein),
-      carbs: total.carbs + numberOrZero(item.nutritional_info?.carbs),
-      fat: total.fat + numberOrZero(item.nutritional_info?.fat),
+      fatPercentage: total.fatPercentage + numberOrZero(item.nutritional_info?.fatPercentage),
+      saturatedFatPercentage:
+        total.saturatedFatPercentage + numberOrZero(item.nutritional_info?.saturatedFatPercentage),
       fiber: total.fiber + numberOrZero(item.nutritional_info?.fiber),
+      calcium: total.calcium + numberOrZero(item.nutritional_info?.calcium),
+      magnesium: total.magnesium + numberOrZero(item.nutritional_info?.magnesium),
+      potassium: total.potassium + numberOrZero(item.nutritional_info?.potassium),
+      vitaminA: total.vitaminA + numberOrZero(item.nutritional_info?.vitaminA),
+      vitaminD: total.vitaminD + numberOrZero(item.nutritional_info?.vitaminD),
+      vitaminC: total.vitaminC + numberOrZero(item.nutritional_info?.vitaminC),
+      vitaminB12: total.vitaminB12 + numberOrZero(item.nutritional_info?.vitaminB12),
     }),
-    { calories: 0, sodium: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 },
+    {
+      calories: 0,
+      sodium: 0,
+      protein: 0,
+      fatPercentage: 0,
+      saturatedFatPercentage: 0,
+      fiber: 0,
+      calcium: 0,
+      magnesium: 0,
+      potassium: 0,
+      vitaminA: 0,
+      vitaminD: 0,
+      vitaminC: 0,
+      vitaminB12: 0,
+    },
   );
 }
 
 function nutritionValues(nutrition: Partial<Nutrition> | undefined) {
-  const fat = numberOrZero(nutrition?.fat);
+  const calories = numberOrZero(nutrition?.calories);
+  const fatPct = numberOrZero(nutrition?.fatPercentage);
+  const fatCalories = round((calories * fatPct) / 100);
+  const fatGrams = round(fatCalories / 9);
 
   return [
-    round(numberOrZero(nutrition?.calories)),
+    round(calories),
     round(numberOrZero(nutrition?.sodium)),
     round(numberOrZero(nutrition?.protein)),
     "--",
     "--",
-    round(numberOrZero(nutrition?.carbs)),
-    round(fat),
-    round(fat * 9),
+    round(numberOrZero(nutrition?.fatPercentage)),
+    fatGrams,
+    fatCalories,
     "--",
     "--",
     "--",
