@@ -5,7 +5,7 @@ import Image from "next/image";
 export type UserPerms = {
   _id: string;
   name: string;
-  avatarUrl?: string;
+  imageUrl?: string;
   role: string;
 };
 
@@ -67,8 +67,8 @@ export default function IndividualPermission({
         {/* Avatar */}
         <div className="md:col-span-1">
           <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-radish-500 bg-gray-100 md:h-14 md:w-14">
-            {user.avatarUrl ? (
-              <Image src={user.avatarUrl} alt="" fill sizes="(min-width: 768px) 56px, 48px" className="object-cover" />
+            {user.imageUrl ? (
+              <Image src={user.imageUrl} alt="" width={56} height={56} className="rounded-full object-cover" />
             ) : null}
           </div>
         </div>
