@@ -3,7 +3,13 @@ import connectDB from "@/database/db";
 import Combo from "@/database/ComboSchema";
 import { getNormalizedParams } from "@/lib/server/searchParams";
 import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_BUCKETS } from "@/lib/types";
-import { deriveComboDataFromRecipeIds, getRecipeBucketsFromBody } from "@/lib/server/comboHelpers";
+import {
+  deriveComboDataFromRecipeIds,
+  getCleanName,
+  getRecipeBucketsFromBody,
+  isDuplicateNameError,
+  nameFieldError,
+} from "@/lib/server/comboHelpers";
 
 type ServingRange = {
   min: number;
@@ -177,11 +183,24 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
+    const name = getCleanName(comboData);
+
+    if (!name) {
+      return nameFieldError("Name cannot be empty.");
+    }
+
+    const existingCombo = await Combo.exists({ name });
+
+    if (existingCombo) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
     const recipeBuckets = getRecipeBucketsFromBody(comboData);
     const calculatedFilters = await deriveComboDataFromRecipeIds(recipeBuckets);
 
     const combo = new Combo({
       ...comboData,
+      name,
 
       // Filters are always derived in the backend.
       // Here we overwrite anything the frontend may have sent.
@@ -192,6 +211,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(combo, { status: 201 });
   } catch (err: any) {
+    if (isDuplicateNameError(err)) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }

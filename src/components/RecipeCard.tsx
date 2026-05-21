@@ -2,7 +2,7 @@ import Image from "next/image";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
-import { Recipe, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, Recipe, TAG_STYLES } from "@/lib/types";
 
 export type RecipeCardProps = {
   item: Recipe;
@@ -15,7 +15,7 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
   const [editMode, setEditMode] = useState(false);
 
   const tagStyle = TAG_STYLES[item.category];
-  const metaText = `${item.nutritional_info.calories} cal / ${item.serving}`;
+  const metaText = `${item.nutritional_info.calories} cal / ${item.serving} ${item.serving > 1 ? "servings" : "serving"}`;
 
   return (
     <div
@@ -39,9 +39,9 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
       </div>
 
       <span
-        className={`w-16 shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:w-20 md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
+        className={`shrink-0 rounded-md px-2 py-1 text-center font-montserrat text-xs font-medium md:px-3 md:py-1.5 md:text-base ${tagStyle}`}
       >
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       {item.isDraft && (
@@ -55,13 +55,15 @@ export default function RecipeCard({ item, isSelected, onSelect, onOpen }: Recip
       )}
 
       {editMode && (
-        <CreateRecipePopUp
-          onClose={() => setEditMode(false)}
-          item={item}
-          open={true}
-          recipeType={null}
-          editMode={true}
-        />
+        <div onClick={(e) => e.stopPropagation()}>
+          <CreateRecipePopUp
+            onClose={() => setEditMode(false)}
+            item={item}
+            open={true}
+            recipeType={null}
+            editMode={true}
+          />
+        </div>
       )}
 
       {item.isDraft && onSelect && (

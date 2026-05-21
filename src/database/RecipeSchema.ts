@@ -6,7 +6,7 @@ import { PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 const RecipeSchema = new Schema(
   {
     _id: { type: String, required: true },
-    name: { type: String, required: true, unique: false },
+    name: { type: String, required: true, unique: true, trim: true },
 
     isSubrecipe: {
       type: Boolean,
@@ -58,6 +58,18 @@ const RecipeSchema = new Schema(
     ingredients: {
       type: [Ingredient.schema],
       required: true,
+    },
+
+    subrecipes: {
+      type: [
+        {
+          recipeId: { type: String, ref: "Recipe", required: true },
+          recipeName: { type: String, required: false },
+          category: { type: String, required: false },
+          quantity: { type: Number, required: true, min: 1 },
+        },
+      ],
+      default: [],
     },
 
     instructions: { type: String, required: false },

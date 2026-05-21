@@ -9,7 +9,6 @@ type Params = {
   selectedCategories: Set<CategoryValue>;
   draftMode: boolean;
   sortBy?: SortOption;
-  pageSize?: number;
   comboPopulate?: ComboPopulate;
 };
 
@@ -37,7 +36,6 @@ export function useMealData<TComboRecipe = string>({
   selectedCategories,
   draftMode,
   sortBy = "createdDate",
-  pageSize = 11,
   comboPopulate,
 }: Params): Return<TComboRecipe> {
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -54,6 +52,8 @@ export function useMealData<TComboRecipe = string>({
 
   const isComboMode = selectedCategories.has("Combo");
   const isSubrecipeOnly = filters.additional?.has("isSubrecipe") ?? false;
+
+  const pageSize = isComboMode ? 6 : 6;
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 250);
@@ -80,7 +80,9 @@ export function useMealData<TComboRecipe = string>({
         params.append("isDraft", draftMode ? "true" : "false");
         params.append("sortBy", sortBy);
         params.append("page", String(currentPage));
-        params.append("limit", String(draftMode ? pageSize - 1 : pageSize));
+
+        const limit = !draftMode ? pageSize - 1 : pageSize;
+        params.append("limit", String(limit));
 
         if (trimmed) {
           params.append("name", trimmed);
@@ -89,7 +91,6 @@ export function useMealData<TComboRecipe = string>({
         appendSetParams(params, "proteinSources", filters.proteinSources);
         appendSetParams(params, "dietary", filters.dietary);
         appendSetParams(params, "exclusions", filters.exclusions);
-        appendSetParams(params, "servings", filters.servings);
 
         // Combo-only population parameter
         if (isComboMode && comboPopulate) {

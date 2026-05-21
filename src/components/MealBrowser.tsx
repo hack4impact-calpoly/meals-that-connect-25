@@ -29,6 +29,8 @@ type Props = {
   topLeftChildren?: ReactNode; // top-left slot for an extra button
   topRightChildren?: ReactNode; // for additional buttons after search bar
   filterButton?: ReactNode; // filter button to display on mobile
+
+  userRole: string | null;
 };
 
 export default function MealBrowser({
@@ -50,9 +52,10 @@ export default function MealBrowser({
   selectedIds,
   onToggleSelect,
   onOpenItem,
+  userRole,
 }: Props) {
   return (
-    <div className="flex flex-1 flex-col gap-3 md:gap-4">
+    <div className="flex flex-1 flex-col h-full gap-3 md:gap-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
 
@@ -61,7 +64,7 @@ export default function MealBrowser({
             <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
           </div>
 
-          <AddNewRecipeButton />
+          {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
 
           {topRightChildren}
         </div>
@@ -99,7 +102,7 @@ export default function MealBrowser({
         </div>
       </div>
 
-      <div className="w-full overflow-auto pb-5">
+      <div className="w-full min-h-0 overflow-auto pb-5">
         <CardGrid
           loading={loading}
           error={error}
@@ -110,6 +113,7 @@ export default function MealBrowser({
           selectedIds={selectedIds}
           onToggleSelect={onToggleSelect}
           onOpenItem={onOpenItem}
+          userRole={userRole}
         />
       </div>
     </div>

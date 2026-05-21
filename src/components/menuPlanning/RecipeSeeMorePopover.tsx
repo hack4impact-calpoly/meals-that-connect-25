@@ -3,18 +3,26 @@
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { TAG_STYLES, type Recipe } from "@/lib/types";
+import {
+  CATEGORY_DISPLAY_MAP,
+  EXCLUSION_KEYS,
+  FILTER_SECTIONS,
+  NUTRIENT_LABELS,
+  TAG_STYLES,
+  type Recipe,
+} from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
   recipeId: string;
   variant?: "compact" | "default";
+  userRole: string | null;
 };
 
 function formatNutritionValue(value?: number) {
   return value == null ? "0" : value.toString();
 }
 
-export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: RecipeSeeMorePopoverProps) {
+export default function RecipeSeeMorePopover({ recipeId, variant = "default", userRole }: RecipeSeeMorePopoverProps) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -124,9 +132,11 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
                       <span
                         className={`rounded-md px-2 py-0.5 text-[11px] font-semibold leading-none ${TAG_STYLES[recipe.category]}`}
                       >
-                        {recipe.category}
+                        {CATEGORY_DISPLAY_MAP[recipe.category].label}
                       </span>
-                      <span className="text-[11px] font-medium leading-none text-pepper/60">
+                      <span
+                        className={`text-[11px] font-medium leading-none text-pepper/60 ${userRole ? "" : "hidden"}`}
+                      >
                         {recipe.serving} servings
                       </span>
                     </div>
@@ -151,14 +161,27 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
 
               {recipe ? (
                 <div className="space-y-3 text-sm">
-                  {recipe.notes ? (
+                  {recipe.exclusions ? (
+                    <section className="space-y-1.5">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Allergens</h4>
+                      {EXCLUSION_KEYS.map((key) =>
+                        recipe.exclusions?.[key] ? (
+                          <p key={key} className="whitespace-pre-wrap leading-snug text-pepper/80">
+                            {FILTER_SECTIONS[0].options.find((option) => option.id === key)?.label || key}
+                          </p>
+                        ) : null,
+                      )}
+                    </section>
+                  ) : null}
+
+                  {userRole && recipe.notes ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Notes</h4>
                       <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.notes}</p>
                     </section>
                   ) : null}
 
-                  {recipe.ingredients?.length ? (
+                  {userRole && recipe.ingredients?.length ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Ingredients</h4>
                       <ul className="space-y-1">
@@ -177,7 +200,7 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
                     </section>
                   ) : null}
 
-                  {recipe.instructions ? (
+                  {userRole && recipe.instructions ? (
                     <section className="space-y-1.5">
                       <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Instructions</h4>
                       <p className="whitespace-pre-wrap leading-snug text-pepper/80">{recipe.instructions}</p>
@@ -188,17 +211,12 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default" }: 
                     <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Nutrition</h4>
 
                     <div className="grid grid-cols-2 gap-1.5 text-xs">
-                      {[
-                        ["Calories", `${formatNutritionValue(recipe.nutritional_info?.calories)} kcal`],
-                        ["Protein", `${formatNutritionValue(recipe.nutritional_info?.protein)} g`],
-                        ["Fat", `${formatNutritionValue(recipe.nutritional_info?.fat)} g`],
-                        ["Carbs", `${formatNutritionValue(recipe.nutritional_info?.carbs)} g`],
-                        ["Fiber", `${formatNutritionValue(recipe.nutritional_info?.fiber)} g`],
-                        ["Sodium", `${formatNutritionValue(recipe.nutritional_info?.sodium)} mg`],
-                      ].map(([label, value]) => (
-                        <div key={label} className="rounded-md bg-light-gray/60 px-2 py-1">
+                      {NUTRIENT_LABELS.map(({ key, label, unit }) => (
+                        <div key={key} className="rounded-md bg-light-gray/60 px-2 py-1">
                           <p className="font-semibold leading-tight text-pepper">{label}</p>
-                          <p className="leading-tight text-pepper/70">{value}</p>
+                          <p className="leading-tight text-pepper/70">
+                            {formatNutritionValue(recipe.nutritional_info?.[key])} {unit}
+                          </p>
                         </div>
                       ))}
                     </div>

@@ -6,7 +6,7 @@ import { useDraggable } from "@dnd-kit/core";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import DailyNutritionSummary from "./DailyNutritionSummary";
 import RecipeSeeMorePopover from "./RecipeSeeMorePopover";
-import { CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
+import { CATEGORY_DISPLAY_MAP, CATEGORY_TO_BUCKET, RECIPE_BUCKETS, TAG_STYLES } from "@/lib/types";
 import type { Nutrition, RecipeBuckets, RecipeNutritionOnly } from "@/lib/types";
 import type { CalendarDragData } from "@/app/menuPlanning/page";
 import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutrition";
@@ -14,6 +14,7 @@ import { emptyNutrition, normalizeNutrition, sumNutrition } from "@/lib/nutritio
 interface DayViewProps {
   date: Date;
   refetchTrigger?: number;
+  userRole: string | null;
 }
 
 type CalendarDayResponse = {
@@ -24,6 +25,7 @@ type CalendarDayResponse = {
 type DayMealCardProps = {
   item: RecipeNutritionOnly;
   dayId: string;
+  userRole: string | null;
 };
 
 const formatDayId = (date: Date) => {
@@ -59,7 +61,7 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <GripVertical className="h-5 w-5 shrink-0 text-gray-500" aria-hidden="true" />
@@ -67,7 +69,7 @@ export function DayMealCardPreview({ item }: DayMealCardPreviewProps) {
   );
 }
 
-function DayMealCard({ item, dayId }: DayMealCardProps) {
+function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
@@ -104,20 +106,20 @@ function DayMealCard({ item, dayId }: DayMealCardProps) {
 
         {metaText ? <p className="font-montserrat text-base font-medium text-pepper/70">{metaText}</p> : null}
 
-        <RecipeSeeMorePopover recipeId={item._id} variant="default" />
+        <RecipeSeeMorePopover recipeId={item._id} variant="default" userRole={userRole} />
       </div>
 
       <span className={`shrink-0 rounded-md px-3 py-1.5 font-montserrat text-base font-medium ${tagClassName}`}>
-        {item.category}
+        {CATEGORY_DISPLAY_MAP[item.category].label}
       </span>
 
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className="shrink-0 cursor-move rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100"
+        className={`shrink-0 rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
         aria-label={`Drag ${item.name}`}
         {...attributes}
-        {...listeners}
+        {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
       >
         <GripVertical size={20} strokeWidth={1.7} />
       </button>
@@ -125,7 +127,7 @@ function DayMealCard({ item, dayId }: DayMealCardProps) {
   );
 }
 
-export default function DayView({ date, refetchTrigger }: DayViewProps) {
+export default function DayView({ date, refetchTrigger, userRole }: DayViewProps) {
   const [meals, setMeals] = useState<RecipeNutritionOnly[]>([]);
   const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
@@ -179,16 +181,20 @@ export default function DayView({ date, refetchTrigger }: DayViewProps) {
               Loading meals...
             </div>
           ) : meals.length > 0 ? (
-            meals.map((meal) => <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} />)
+            meals.map((meal) => (
+              <DayMealCard key={`${dayId}-${meal._id}`} item={meal} dayId={dayId} userRole={userRole} />
+            ))
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
-              Drop a recipe here to add it to today&apos;s menu
+              {userRole === "Admin" || userRole === "Kitchen Staff"
+                ? "Drop a recipe here to add it to today's menu"
+                : "Meal Not Planned for the day"}
             </div>
           )}
         </DroppableCalendarArea>
       </div>
 
-      <DailyNutritionSummary total={nutritionTotal} />
+      {userRole && <DailyNutritionSummary total={nutritionTotal} />}
     </div>
   );
 }
