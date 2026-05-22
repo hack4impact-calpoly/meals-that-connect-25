@@ -13,8 +13,8 @@ export default function DailyNutritionSummary({ recipes = [], total }: DailyNutr
   const totals = total ?? (recipes.length ? sumNutrition(recipes) : emptyNutrition());
 
   return (
-    <div className="rounded-xl border border-pepper/20 bg-white p-4 mt-4">
-      <h3 className="text-base font-semibold font-montserrat text-pepper mb-3">Daily Nutrition Totals</h3>
+    <div className="mt-4 rounded-xl border border-pepper/20 bg-white p-4">
+      <h3 className="mb-3 font-montserrat text-base font-semibold text-pepper">Daily Nutrition Totals</h3>
       <div className="flex flex-wrap gap-2">
         {NUTRIENT_LABELS.map(({ key, label, unit }) => (
           <NutritionalInfo

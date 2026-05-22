@@ -10,7 +10,7 @@ import DraggableRecipeCard from "@/components/menuPlanning/DraggableRecipeCard";
 import MonthView from "@/components/menuPlanning/MonthView";
 import DayView, { DayMealCardPreview } from "@/components/menuPlanning/DayView";
 import CurrentDateButton from "@/components/CurrentDateButton";
-import { ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ArrowDownToLine, GripVertical, Trash2 } from "lucide-react";
 import {
   Combo,
   CategoryValue,
@@ -176,7 +176,10 @@ function SidebarDropZone({ children }: { children: ReactNode }) {
   });
 
   return (
-    <div ref={setNodeRef} className="flex w-full min-w-0 flex-col bg-white lg:w-90 lg:shrink-0">
+    <div
+      ref={setNodeRef}
+      className="flex w-full min-w-0 flex-col bg-gray-100 px-4 pb-4 lg:w-90 lg:shrink-0 lg:bg-white lg:px-0 lg:pb-0"
+    >
       {children}
     </div>
   );
@@ -288,7 +291,6 @@ export default function MenuPlanning() {
       }
     }
     getUserRole();
-    console.log("User role set to:", userRole);
   }, []);
 
   useEffect(() => {
@@ -515,9 +517,11 @@ export default function MenuPlanning() {
       <main className="flex min-h-0 flex-1 flex-col overflow-auto lg:flex-row lg:overflow-hidden">
         <div className="flex w-full min-w-0 justify-center bg-gray-100 px-4 py-4 sm:px-6 lg:flex-1 lg:overflow-auto lg:px-4">
           <div className="flex w-full max-w-[1040px] flex-col">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-1 sm:gap-2">
-                <CurrentDateButton onClick={resetToPlanningToday} />
+                <div className="hidden sm:block">
+                  <CurrentDateButton onClick={resetToPlanningToday} />
+                </div>
 
                 <button
                   type="button"
@@ -527,10 +531,9 @@ export default function MenuPlanning() {
                   <ChevronLeft size={20} strokeWidth={2.5} />
                 </button>
 
-                <span className="min-w-0 truncate text-base font-bold sm:text-xl">
+                <span className="min-w-0 truncate text-[15px] font-bold sm:text-xl">
                   {calendarView === "Day" &&
                     `${viewDates[0].toLocaleDateString(undefined, {
-                      weekday: "long",
                       day: "numeric",
                       month: "long",
                       year: "numeric",
@@ -555,40 +558,25 @@ export default function MenuPlanning() {
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                <div className="flex w-full rounded-md bg-white p-1 sm:w-fit sm:p-0">
-                  <button
-                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold text-black sm:flex-none sm:px-4 sm:text-base ${
-                      calendarView === "Month" ? "bg-radish-900 text-white" : ""
-                    }`}
-                    type="button"
-                    onClick={() => setCalendarView("Month")}
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="relative">
+                  <select
+                    value={calendarView}
+                    onChange={(e) => setCalendarView(e.target.value as "Month" | "Week" | "Day")}
+                    className="cursor-pointer appearance-none rounded-md bg-radish-900 py-1.5 pr-8 pl-3 text-sm font-bold text-white outline-none sm:px-4 sm:pr-9 sm:text-base"
+                    aria-label="Calendar view"
                   >
-                    Month
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold sm:flex-none sm:px-4 sm:text-base ${
-                      calendarView === "Week" ? "bg-radish-900 text-white" : "text-black"
-                    }`}
-                    onClick={() => setCalendarView("Week")}
-                  >
-                    Week
-                  </button>
-
-                  <button
-                    type="button"
-                    className={`flex-1 cursor-pointer rounded-md px-3 py-1 text-sm font-semibold text-black sm:flex-none sm:px-4 sm:text-base ${
-                      calendarView === "Day" ? "bg-radish-900 text-white" : ""
-                    }`}
-                    onClick={() => setCalendarView("Day")}
-                  >
-                    Day
-                  </button>
+                    <option value="Month">Month</option>
+                    <option value="Week">Week</option>
+                    <option value="Day">Day</option>
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 text-white"
+                    aria-hidden="true"
+                  />
                 </div>
 
-                <div className="flex min-w-0 flex-1 items-center justify-end gap-2 sm:ml-2 sm:flex-none">
+                <div className="hidden min-w-0 flex-1 items-center justify-end gap-2 sm:ml-2 sm:flex sm:flex-none">
                   <select
                     value={exportFormat}
                     onChange={(e) => setExportFormat(e.target.value as "Display" | "Nutritional")}

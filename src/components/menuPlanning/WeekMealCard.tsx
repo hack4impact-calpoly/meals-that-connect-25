@@ -16,6 +16,7 @@ export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProp
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
+  const canEditCalendar = userRole === "Admin" || userRole === "Kitchen Staff";
 
   const dragData: CalendarDragData = {
     source: "calendar",
@@ -37,12 +38,11 @@ export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProp
   return (
     <div
       ref={setNodeRef}
-      className={`group flex min-w-[8rem] flex-1 items-stretch gap-2 rounded-md px-3 py-2 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] sm:px-4 sm:py-3 md:min-w-0 md:flex-none md:gap-3 
-        ${tagClassName} 
-        ${isDragging ? "opacity-40" : ""}
-        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "cursor-move" : ""}`}
-      {...attributes}
-      {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
+      className={`group flex min-w-[8rem] flex-1 items-stretch gap-2 rounded-md px-3 py-2 font-montserrat shadow-[0_2px_6px_rgba(72,73,75,0.08)] sm:px-4 sm:py-3 md:min-w-0 md:flex-none md:gap-3 ${tagClassName} ${
+        isDragging ? "opacity-40" : ""
+      } ${canEditCalendar ? "cursor-move" : ""}`}
+      {...(canEditCalendar ? attributes : {})}
+      {...(canEditCalendar ? (listeners ?? {}) : {})}
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <p className="truncate text-sm leading-tight font-bold sm:text-[16px]" title={item.name}>
@@ -57,8 +57,8 @@ export default function WeekMealCard({ item, dayId, userRole }: WeekMealCardProp
       </div>
 
       <GripVertical
-        className={`h-4 w-4 shrink-0 self-center text-current opacity-90 sm:h-5 sm:w-5" aria-hidden="true 
-        ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        className={`h-4 w-4 shrink-0 self-center text-current opacity-90 sm:h-5 sm:w-5 ${canEditCalendar ? "" : "hidden"}`}
+        aria-hidden="true"
       />
     </div>
   );

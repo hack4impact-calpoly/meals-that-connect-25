@@ -25,7 +25,7 @@ interface RecipeDatabaseProps {
 function SortCircle({ selected }: { selected: boolean }) {
   return (
     <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 border-radish-900">
-      {selected && <span className="h-2 w-2 rounded-full bg-radish-900" />}
+      {selected ? <span className="h-2 w-2 rounded-full bg-radish-900" /> : null}
     </span>
   );
 }
@@ -44,8 +44,8 @@ export default function RecipeDatabase({
   onPageChange,
 }: RecipeDatabaseProps) {
   return (
-    <div className="flex min-h-0 flex-col overflow-auto p-4 sm:p-6">
-      <div className="mb-4 text-xl font-semibold sm:mb-6">Recipe Database</div>
+    <div className="flex min-h-0 flex-col overflow-auto rounded-md bg-white p-4 shadow-sm sm:p-6 lg:rounded-none lg:shadow-none">
+      <div className="mb-3 font-montserrat text-lg font-bold text-pepper sm:mb-5 sm:text-xl">Recipe Database</div>
 
       <div className="flex min-w-0 flex-row items-center gap-2 sm:gap-4">
         <SearchBarClient placeholder="Search a recipe" onSearch={onSearch} />
@@ -57,11 +57,7 @@ export default function RecipeDatabase({
 
           <MenuItems
             transition
-            className="absolute right-0 z-50 mt-3 w-40 origin-top-right rounded-xl bg-white p-4 shadow-md outline-none
-                       data-closed:scale-95 data-closed:opacity-0
-                       data-enter:duration-100 data-leave:duration-75
-                       before:absolute before:-top-2 before:right-4 before:h-4 before:w-4 before:rotate-45
-                       before:bg-white before:content-['']"
+            className="absolute right-0 z-50 mt-3 w-40 origin-top-right rounded-xl bg-white p-4 shadow-md outline-none before:absolute before:-top-2 before:right-4 before:h-4 before:w-4 before:rotate-45 before:bg-white before:content-[''] data-closed:scale-95 data-closed:opacity-0 data-enter:duration-100 data-leave:duration-75"
           >
             <div className="mb-2 text-sm font-semibold text-pepper">Sort by:</div>
 

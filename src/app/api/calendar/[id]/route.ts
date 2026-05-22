@@ -16,6 +16,7 @@ type CalendarRecipePreview = {
   name: string;
   category: RecipeCategory;
   serving?: number;
+  imageUrl?: string;
   nutritional_info?: Nutrition;
 };
 
@@ -27,7 +28,7 @@ type CalendarDayResponse = {
 
 const populateBucketPaths = RECIPE_BUCKETS.map((bucket) => ({
   path: bucket,
-  select: "_id name category serving nutritional_info",
+  select: "_id name category serving imageUrl nutritional_info",
 }));
 
 async function getRouteParams(params: Params["params"]) {

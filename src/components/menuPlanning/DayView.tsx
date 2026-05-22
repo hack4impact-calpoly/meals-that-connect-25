@@ -73,6 +73,7 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   const bucket = CATEGORY_TO_BUCKET[item.category];
   const dndId = `calendar-${dayId}-${bucket}-${item._id}`;
   const tagClassName = TAG_STYLES[item.category];
+  const canEditCalendar = userRole === "Admin" || userRole === "Kitchen Staff";
 
   const dragData: CalendarDragData = {
     source: "calendar",
@@ -95,7 +96,7 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`group flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
+      className={`group flex w-full min-w-0 items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
         isDragging ? "opacity-40" : ""
       }`}
     >
@@ -116,10 +117,10 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
       <button
         ref={setActivatorNodeRef}
         type="button"
-        className={`shrink-0 rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${userRole === "Admin" || userRole === "Kitchen Staff" ? "" : "hidden"}`}
+        className={`shrink-0 rounded-md p-1.5 text-gray-500 transition hover:bg-gray-100 ${canEditCalendar ? "" : "hidden"}`}
         aria-label={`Drag ${item.name}`}
-        {...attributes}
-        {...(userRole === "Admin" || userRole === "Kitchen Staff" ? { ...listeners } : {})}
+        {...(canEditCalendar ? attributes : {})}
+        {...(canEditCalendar ? (listeners ?? {}) : {})}
       >
         <GripVertical size={20} strokeWidth={1.7} />
       </button>
@@ -131,6 +132,7 @@ export default function DayView({ date, refetchTrigger, userRole }: DayViewProps
   const [meals, setMeals] = useState<RecipeNutritionOnly[]>([]);
   const [nutritionTotal, setNutritionTotal] = useState<Nutrition>(emptyNutrition());
   const [isLoading, setIsLoading] = useState(true);
+  const canEditCalendar = userRole === "Admin" || userRole === "Kitchen Staff";
 
   const dayId = formatDayId(date);
 
@@ -186,9 +188,7 @@ export default function DayView({ date, refetchTrigger, userRole }: DayViewProps
             ))
           ) : (
             <div className="flex flex-1 items-center justify-center py-8 text-center font-montserrat text-sm font-medium text-pepper/55">
-              {userRole === "Admin" || userRole === "Kitchen Staff"
-                ? "Drop a recipe here to add it to today's menu"
-                : "Meal Not Planned for the day"}
+              {canEditCalendar ? "Drop a recipe here to add it to today's menu" : "Meal Not Planned for the day"}
             </div>
           )}
         </DroppableCalendarArea>
