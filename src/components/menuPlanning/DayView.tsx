@@ -96,7 +96,7 @@ function DayMealCard({ item, dayId, userRole }: DayMealCardProps) {
   return (
     <div
       ref={setNodeRef}
-      className={`group flex items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
+      className={`group flex w-full min-w-0 items-center gap-4 rounded-xl border-2 border-gray-300 bg-white px-5 py-4 transition hover:shadow-md ${
         isDragging ? "opacity-40" : ""
       }`}
     >
