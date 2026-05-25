@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, redirect } from "next/navigation";
-import { useClerk, useUser } from "@clerk/nextjs";
+import { useClerk, useUser, SignInButton } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 import { UserRole } from "@/lib/types";
-import { auth } from "@clerk/nextjs/server";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -147,12 +146,14 @@ export default function Navbar() {
         </div>
       ) : (
         <div className="relative hidden md:block" ref={dropdownRef}>
-          <button
-            onClick={() => redirect("/sign-in")}
-            className="flex items-center gap-3 rounded-lg border border-medium-gray px-4 py-2 hover:bg-light-gray transition-colors cursor-pointer"
-          >
-            Sign In
-          </button>
+          <SignInButton mode="modal">
+            <button
+              type="button"
+              className="flex items-center gap-3 rounded-lg border border-medium-gray px-4 py-2 hover:bg-light-gray transition-colors cursor-pointer"
+            >
+              Sign In
+            </button>
+          </SignInButton>
         </div>
       )}
 
@@ -232,12 +233,15 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
-              <button
-                onClick={() => redirect("/sign-in")}
-                className="w-full rounded-lg px-3 py-2 text-xs font-medium text-pepper border border-medium-gray hover:bg-light-gray transition-colors"
-              >
-                Sign In
-              </button>
+              <SignInButton mode="modal">
+                <button
+                  type="button"
+                  onClick={() => setDrawerOpen(false)}
+                  className="w-full rounded-lg px-3 py-2 text-xs font-medium text-pepper border border-medium-gray hover:bg-light-gray transition-colors"
+                >
+                  Sign In
+                </button>
+              </SignInButton>
             </div>
           )}
         </div>

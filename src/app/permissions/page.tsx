@@ -15,9 +15,5 @@ export default async function Permissions() {
     redirect("/");
   }
 
-  return (
-    <main>
-      <PermissionsClient />
-    </main>
-  );
+  return <PermissionsClient />;
 }

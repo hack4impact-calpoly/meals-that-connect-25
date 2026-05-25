@@ -117,6 +117,12 @@ function formatNutritionValue(value: number, originalServings: number, servings:
   return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
 }
 
+function formatScaledQuantity(quantity: number, originalServings: number, servings: ServingsValue) {
+  const scaled = (quantity / Math.max(1, originalServings)) * toPositiveServings(servings);
+
+  return Number.isInteger(scaled) ? scaled.toString() : scaled.toFixed(1);
+}
+
 function getComboNutrition(comboRecipes: RecipeBuckets<Recipe>, comboServing: number): Nutrition {
   const allRecipes = RECIPE_BUCKETS.flatMap((bucket) => comboRecipes[bucket] ?? []);
 
@@ -282,7 +288,9 @@ function RecipeDetails({
             </div>
           ) : null}
 
-          {recipe.subrecipes?.length ? <SubrecipeSection subrecipes={recipe.subrecipes} /> : null}
+          {recipe.subrecipes?.length ? (
+            <SubrecipeSection subrecipes={recipe.subrecipes} servings={servings} originalServings={originalServings} />
+          ) : null}
         </>
       ) : null}
 
@@ -352,7 +360,15 @@ function mergeSubrecipes(subrecipes: SubrecipeIngredient[]): SubrecipeIngredient
   return Array.from(merged.values());
 }
 
-function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] }) {
+function SubrecipeSection({
+  subrecipes,
+  servings,
+  originalServings,
+}: {
+  subrecipes: SubrecipeIngredient[];
+  servings: ServingsValue;
+  originalServings: number;
+}) {
   const merged = mergeSubrecipes(subrecipes);
 
   const CATEGORY_CONFIG: { key: RecipeCategory; label: string; icon: ReactNode }[] = [
@@ -377,7 +393,9 @@ function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] })
                 {items.map((sr, i) => (
                   <div key={i} className={`flex items-center gap-1 rounded-md px-2 py-1 ${TAG_STYLES[key]}`}>
                     {sr.recipeName || sr.recipeId}
-                    <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                    <span className="text-xs opacity-70 ml-1">
+                      ×{formatScaledQuantity(sr.quantity, originalServings, servings)}
+                    </span>
                     <button
                       type="button"
                       onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}
@@ -399,7 +417,9 @@ function SubrecipeSection({ subrecipes }: { subrecipes: SubrecipeIngredient[] })
             {uncategorized.map((sr, i) => (
               <div key={i} className="flex items-center gap-1 rounded-md px-2 py-1 bg-pepper text-white">
                 {sr.recipeName || sr.recipeId}
-                <span className="text-xs opacity-70 ml-1">×{sr.quantity}</span>
+                <span className="text-xs opacity-70 ml-1">
+                  ×{formatScaledQuantity(sr.quantity, originalServings, servings)}
+                </span>
                 <button
                   type="button"
                   onClick={() => window.open(`/recipe?id=${sr.recipeId}`)}

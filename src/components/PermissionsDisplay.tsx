@@ -14,7 +14,7 @@ export default function PermissionsDisplay({ users, editing = false, onSelect, s
   const otherUsers = users.filter((u) => u._id !== currentUser?.id);
 
   return (
-    <div className="flex flex-col gap-y-3 pt-2 text-black font-montserrat">
+    <div className="flex flex-col gap-y-3 text-black font-montserrat">
       {/* Header */}
       <div className="hidden w-full grid-cols-12 items-center pl-8 pr-6 text-sm font-semibold justify-items-center md:grid">
         <div className="col-span-1"></div>

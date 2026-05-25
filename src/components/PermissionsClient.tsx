@@ -1,14 +1,17 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { UserPerms } from "@/components/IndividualPermission";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
 import EditPermissionsButton from "@/components/EditPermissionsButton";
 import PermissionsPopUp from "@/components/PermissionsPopUp";
 import SearchBarClient from "@/components/SearchbarClient";
+import PaginationDisplay from "@/components/PaginationDisplay";
 import { SortOption, USER_ROLES, UserRole } from "@/lib/types";
 import RoleToggle from "./RoleToggle";
+
+const PAGE_SIZE = 5;
 
 export default function PermissionsClient() {
   const [usersList, setUsersList] = useState<UserPerms[]>([]);
@@ -19,18 +22,32 @@ export default function PermissionsClient() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Set<UserRole>>(new Set<UserRole>());
   const [sortOption, setSortOption] = useState<SortOption>("createdDate");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadUsers() {
       try {
-        const parsed = search.trim().toLowerCase();
+        setIsLoading(true);
+
+        const parsed = search.trim();
 
         const params = new URLSearchParams();
-        params.append("name", parsed);
-        params.append("role", Array.from(selectedRole).join(","));
+
+        if (parsed) {
+          params.append("name", parsed);
+        }
+
+        selectedRole.forEach((role) => {
+          params.append("role", role);
+        });
+
         params.append("sortBy", sortOption);
+        params.append("page", currentPage.toString());
+        params.append("limit", PAGE_SIZE.toString());
 
         const res = await fetch(`/api/users?${params.toString()}`, {
           signal: controller.signal,
@@ -40,31 +57,52 @@ export default function PermissionsClient() {
           throw new Error(`Request failed: ${res.status}`);
         }
 
-        const users = await res.json();
-        console.log(users);
-        setUsersList(users);
+        const result = await res.json();
+
+        setUsersList(result.data);
+        setTotalPages(result.totalPages || 1);
       } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") {
+          return;
+        }
+
         console.error("Error fetching users:", err);
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     }
 
     loadUsers();
-  }, [search, selectedRole, sortOption]);
 
-  /* TODO: Eventually the API should receive: search, selectedRoles, currentPage, PAGE_SIZE. */
+    return () => controller.abort();
+  }, [search, selectedRole, sortOption, currentPage]);
 
-  const toggleRole = (category: UserRole) => {
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (value: SortOption) => {
+    setSortOption(value);
+    setCurrentPage(1);
+  };
+
+  const toggleRole = (role: UserRole) => {
     setSelectedRole((prev) => {
       const next = new Set<UserRole>(prev);
 
-      if (next.has(category)) {
-        next.delete(category);
+      if (next.has(role)) {
+        next.delete(role);
       } else {
-        next.add(category);
+        next.add(role);
       }
 
       return next;
     });
+
+    setCurrentPage(1);
   };
 
   const toggleUserSelection = (user: UserPerms) => {
@@ -123,8 +161,8 @@ export default function PermissionsClient() {
   };
 
   return (
-    <main>
-      <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 lg:px-10">
+    <main className="flex flex-col min-h-0 flex-1">
+      <div className="flex flex-col gap-4 px-4 py-5 sm:px-6 lg:px-10 overflow-hidden">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h1 className="text-lg font-semibold sm:text-xl">Manage Permissions</h1>
           <EditPermissionsButton
@@ -140,15 +178,22 @@ export default function PermissionsClient() {
         </div>
 
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <SearchBarClient placeholder="Search a user" onSearch={setSearch} />{" "}
-          <SortPermissionsButton align="right" activeType={sortOption} onSortChange={setSortOption} />
+          <SearchBarClient placeholder="Search a user" onSearch={handleSearch} />{" "}
+          <SortPermissionsButton align="right" activeType={sortOption} onSortChange={handleSortChange} />
         </div>
 
-        <div>
+        <div className="flex items-center justify-between gap-3">
           <RoleToggle options={[...USER_ROLES]} selectedRoles={selectedRole} onToggle={toggleRole} />
+
+          <PaginationDisplay
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            disabled={isLoading}
+          />
         </div>
 
-        <div>
+        <div className="flex flex-col overflow-auto">
           <PermissionsDisplay
             users={usersList}
             editing={isEditing}
@@ -160,19 +205,21 @@ export default function PermissionsClient() {
 
         {isEditing && selectedUsers.length > 0 && <div className="h-36 sm:h-24"></div>}
       </div>
+
       {isEditing && selectedUsers.length > 0 && (
-        <PermissionsPopUp
-          selectedUsers={selectedUsers}
-          setSelectedUsers={setSelectedUsers}
-          onBulkDelete={() => setShowDeleteModal(true)}
-        />
+        <div className="flex flex-col overflow-auto">
+          <PermissionsPopUp
+            selectedUsers={selectedUsers}
+            setSelectedUsers={setSelectedUsers}
+            onBulkDelete={() => setShowDeleteModal(true)}
+          />
+        </div>
       )}
 
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
           <div className="relative p-4 w-full max-w-md">
             <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
-              {/* Close button */}
               <button
                 type="button"
                 className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center cursor-pointer"
@@ -181,12 +228,10 @@ export default function PermissionsClient() {
                 ✕
               </button>
 
-              {/* Modal content */}
               <h3 className="text-lg font-semibold text-heading">Delete user?</h3>
 
               <p className="text-sm text-body mt-2">This action cannot be undone.</p>
 
-              {/* Buttons */}
               <div className="flex justify-end gap-2 mt-5">
                 <button
                   className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray cursor-pointer"
@@ -211,7 +256,6 @@ export default function PermissionsClient() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 rounded-base">
           <div className="relative p-4 w-full max-w-md">
             <div className="bg-white relative bg-neutral-primary-soft rounded-lg shadow-sm p-4 md:p-6">
-              {/* Close button */}
               <button
                 type="button"
                 className="absolute top-3 right-2.5 text-body bg-transparent hover:bg-neutral-tertiary hover:text-heading rounded-base text-sm w-9 h-9 flex items-center justify-center cursor-pointer"
@@ -220,12 +264,10 @@ export default function PermissionsClient() {
                 ✕
               </button>
 
-              {/* Modal content */}
               <h3 className="text-lg font-semibold text-heading">Save changes?</h3>
 
               <p className="text-sm text-body mt-2">This action cannot be undone.</p>
 
-              {/* Buttons */}
               <div className="flex justify-end gap-2 mt-5">
                 <button
                   className="px-4 py-2 rounded-lg text-white bg-dark-gray hover:bg-medium-gray cursor-pointer"
