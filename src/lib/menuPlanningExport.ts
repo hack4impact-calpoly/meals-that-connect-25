@@ -674,23 +674,28 @@ function sumNutrition(items: ExportRecipe[]): Nutrition {
 function nutritionValues(nutrition: Partial<Nutrition> | undefined) {
   const calories = numberOrZero(nutrition?.calories);
   const fatPct = numberOrZero(nutrition?.fatPercentage);
+  const saturatedFatPct = numberOrZero(nutrition?.saturatedFatPercentage);
+
   const fatCalories = round((calories * fatPct) / 100);
   const fatGrams = round(fatCalories / 9);
+
+  const saturatedFatCalories = round((calories * saturatedFatPct) / 100);
+  const saturatedFatGrams = round(saturatedFatCalories / 9);
 
   return [
     round(calories),
     round(numberOrZero(nutrition?.sodium)),
     round(numberOrZero(nutrition?.protein)),
+    round(numberOrZero(nutrition?.vitaminC)),
+    round(numberOrZero(nutrition?.vitaminA)),
     "--",
-    "--",
-    round(numberOrZero(nutrition?.fatPercentage)),
     fatGrams,
     fatCalories,
     "--",
-    "--",
+    saturatedFatGrams,
     "--",
     round(numberOrZero(nutrition?.fiber)),
-    "--",
+    round(numberOrZero(nutrition?.calcium)),
     "--",
   ];
 }
