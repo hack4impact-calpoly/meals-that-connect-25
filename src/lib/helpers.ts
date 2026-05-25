@@ -1,3 +1,4 @@
+import { Dispatch, SetStateAction } from "react";
 import { CategoryValue, FilterSelections } from "./types";
 
 export function buildFilterTags(filters: FilterSelections) {
@@ -12,21 +13,39 @@ export function buildFilterTags(filters: FilterSelections) {
   return Array.from(new Set(out));
 }
 
-export function normalizeTag(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
+export function toggleCategory(
+  category: CategoryValue,
+  setSelectedCategories: Dispatch<SetStateAction<Set<CategoryValue>>>,
+) {
+  setSelectedCategories((prev) => {
+    if (category === "Combo") {
+      return new Set<CategoryValue>(["Combo"]);
+    }
+
+    const next = new Set<CategoryValue>(prev);
+
+    next.delete("Combo");
+
+    if (next.has(category)) {
+      next.delete(category);
+    } else {
+      next.add(category);
+    }
+
+    if (next.size === 0) {
+      return new Set<CategoryValue>(["Combo"]);
+    }
+
+    return next;
+  });
 }
 
-export function hasCategoryTag(tags: string[] = [], category: CategoryValue) {
-  const normalizedTags = tags.map((t) => normalizeTag(t));
-
-  return normalizedTags.some((tag) => {
-    if (category === "combo") return tag.includes("combo");
-    if (category === "entree") return tag.includes("entree");
-    if (category === "side") return tag.includes("side");
-    return tag.includes("fruit");
-  });
+export function cloneFilterSelections(f: FilterSelections): FilterSelections {
+  return {
+    proteinSources: new Set(f.proteinSources),
+    dietary: new Set(f.dietary),
+    exclusions: new Set(f.exclusions),
+    servings: new Set(f.servings),
+    additional: new Set(f.additional),
+  };
 }

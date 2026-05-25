@@ -1,11 +1,35 @@
 import mongoose, { Schema } from "mongoose";
+import Nutrition from "./NutritionSchema";
 
 const CalendarSchema = new Schema(
   {
     _id: { type: String, required: true }, // YYYYMMDD
-    entrees: [{ type: String, ref: "Recipe", required: false }],
-    fruits: [{ type: String, ref: "Recipe", required: false }],
-    sides: [{ type: String, ref: "Recipe", required: false }],
+
+    entrees: {
+      type: [{ type: String, ref: "Recipe" }],
+      required: true,
+      default: [],
+    },
+
+    vegetables: {
+      type: [{ type: String, ref: "Recipe" }],
+      required: true,
+      default: [],
+    },
+
+    fruits: {
+      type: [{ type: String, ref: "Recipe" }],
+      required: true,
+      default: [],
+    },
+
+    grains: {
+      type: [{ type: String, ref: "Recipe" }],
+      required: true,
+      default: [],
+    },
+
+    nutritional_info: { type: Nutrition.schema, required: true, default: () => ({}) },
   },
   {
     timestamps: true,

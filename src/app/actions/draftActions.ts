@@ -1,7 +1,6 @@
 "use server";
 
 import { bulkDeleteCombos, bulkPublishCombos, bulkPublishRecipes, bulkDeleteRecipes } from "@/database/db";
-import { revalidatePath } from "next/cache";
 
 export async function publishCombos(ids: string[]) {
   if (!Array.isArray(ids) || ids.length === 0) {

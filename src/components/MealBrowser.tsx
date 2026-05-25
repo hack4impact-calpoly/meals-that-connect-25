@@ -1,40 +1,37 @@
-"use client";
-
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 import SearchBarClient from "@/components/SearchbarClient";
 import CategoryToggle from "@/components/CategoryToggle";
 import CardGrid from "@/components/CardGrid";
 import AddNewRecipeButton from "@/components/AddNewRecipeButton";
 import PaginationDisplay from "@/components/PaginationDisplay";
-import { CategoryValue, Combo, Recipe } from "@/lib/types";
+import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, RecipePreview } from "@/lib/types";
+import { toggleCategory } from "@/lib/helpers";
 
 type Props = {
   setSearch: (s: string) => void;
-  items: Recipe[] | Combo[];
+  items: Recipe[] | Combo<RecipePreview>[];
   loading: boolean;
   error: string | null;
   isComboMode: boolean;
   draftCount: number;
   currentPage: number;
   totalPages: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentPage: Dispatch<SetStateAction<number>>;
 
   draftMode: boolean;
   selectedCategories: Set<CategoryValue>;
-  setSelectedCategories: React.Dispatch<React.SetStateAction<Set<CategoryValue>>>;
+  setSelectedCategories: Dispatch<SetStateAction<Set<CategoryValue>>>;
 
   selectedIds?: Set<string>;
   onToggleSelect?: (id: string, name: string) => void;
+  onOpenItem?: (item: Recipe | Combo<RecipePreview>) => void;
 
-  topLeftChildren?: React.ReactNode; // top-left slot for an extra button
-  topRightChildren?: React.ReactNode; // for additional buttons after search bar
+  topLeftChildren?: ReactNode; // top-left slot for an extra button
+  topRightChildren?: ReactNode; // for additional buttons after search bar
+  filterButton?: ReactNode; // filter button to display on mobile
+
+  userRole: string | null;
 };
-
-const categoryOptions: Array<{ value: CategoryValue; label: string }> = [
-  { value: "combo", label: "Combos" },
-  { value: "entree", label: "Entrées" },
-  { value: "side", label: "Sides" },
-  { value: "fruit", label: "Fruits" },
-];
 
 export default function MealBrowser({
   setSearch,
@@ -51,47 +48,61 @@ export default function MealBrowser({
   setSelectedCategories,
   topLeftChildren,
   topRightChildren,
+  filterButton,
   selectedIds,
   onToggleSelect,
+  onOpenItem,
+  userRole,
 }: Props) {
-  const toggleCategory = (category: CategoryValue) => {
-    setSelectedCategories((prev) => {
-      const next = new Set(prev);
-
-      if (category === "combo") {
-        if (next.has("combo")) return new Set<CategoryValue>();
-        return new Set<CategoryValue>(["combo"]);
-      }
-
-      if (next.has("combo")) next.delete("combo");
-
-      if (next.has(category)) next.delete(category);
-      else next.add(category);
-
-      return next;
-    });
-  };
-
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      <div className="flex gap-5 items-center">
+    <div className="flex flex-1 flex-col h-full gap-3 md:gap-4">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-5">
         {topLeftChildren}
-        <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
-        {topRightChildren}
-        <AddNewRecipeButton />
+
+        <div className="flex w-full items-center gap-3">
+          <div className="flex-1">
+            <SearchBarClient placeholder="Search a recipe" onSearch={setSearch} />
+          </div>
+
+          {(userRole === "Admin" || userRole === "Kitchen Staff") && <AddNewRecipeButton />}
+
+          {topRightChildren}
+        </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <CategoryToggle options={categoryOptions} selectedCategories={selectedCategories} onToggle={toggleCategory} />
-        <PaginationDisplay
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={(page) => setCurrentPage(page)}
-          disabled={loading}
-        />
+      <div className="flex flex-col gap-2 md:gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="flex-1">
+            <CategoryToggle
+              options={CATEGORY_DISPLAY}
+              selectedCategories={selectedCategories}
+              onToggle={(category) => toggleCategory(category, setSelectedCategories)}
+            />
+          </div>
+
+          <div className="hidden md:block">
+            <PaginationDisplay
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={(page) => setCurrentPage(page)}
+              disabled={loading}
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 md:hidden">
+          <div>{filterButton}</div>
+
+          <PaginationDisplay
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={(page) => setCurrentPage(page)}
+            disabled={loading}
+          />
+        </div>
       </div>
 
-      <div className="pb-5 overflow-auto">
+      <div className="w-full min-h-0 overflow-auto pb-5">
         <CardGrid
           loading={loading}
           error={error}
@@ -101,6 +112,8 @@ export default function MealBrowser({
           draftCount={draftCount}
           selectedIds={selectedIds}
           onToggleSelect={onToggleSelect}
+          onOpenItem={onOpenItem}
+          userRole={userRole}
         />
       </div>
     </div>

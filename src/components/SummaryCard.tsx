@@ -1,22 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+import { MONTHS } from "@/lib/types";
+import type { NutritionSummary } from "@/lib/nutrition";
 
 interface DonutChartProps {
   value: number;
@@ -24,7 +11,7 @@ interface DonutChartProps {
 }
 
 function DonutChart({ value, total }: DonutChartProps) {
-  const size = 220;
+  const size = 165;
   const strokeWidth = 26;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -60,18 +47,97 @@ function DonutChart({ value, total }: DonutChartProps) {
 
 interface SummaryCardProps {
   title: string;
-  value: number;
-  total: number;
+  value?: number;
+  total?: number;
   labelSuffix: string;
+  metric?: "mealsPlanned" | "nutritionMet";
 }
 
-export default function SummaryCard({ title, value, total, labelSuffix }: SummaryCardProps) {
+type CalendarSummaryDay = {
+  _id: string;
+  entrees?: unknown[];
+};
+
+type SummaryCounts = {
+  value: number;
+  total: number;
+};
+
+function getDaysInMonth(year: number, monthIndex: number) {
+  return new Date(year, monthIndex + 1, 0).getDate();
+}
+
+async function getCalendarDays(year: number, monthIndex: number, signal: AbortSignal) {
+  const response = await fetch(`/api/calendar?year=${year}&month=${monthIndex + 1}`, { signal });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dashboard calendar summary (${response.status})`);
+  }
+
+  return (await response.json()) as CalendarSummaryDay[];
+}
+
+async function getNutritionSummaries(dateIds: string[], signal: AbortSignal) {
+  if (dateIds.length === 0) return [];
+
+  const response = await fetch(`/api/calendar/nutrition?ids=${encodeURIComponent(dateIds.join(","))}`, { signal });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch dashboard nutrition summary (${response.status})`);
+  }
+
+  const body: { data?: NutritionSummary[] } = await response.json();
+  return body.data ?? [];
+}
+
+export default function SummaryCard({ title, value = 0, total = 0, labelSuffix, metric }: SummaryCardProps) {
   const currentMonthIndex = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
   const [selectedMonth, setSelectedMonth] = useState(currentMonthIndex);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [counts, setCounts] = useState<SummaryCounts>({ value, total });
+
+  useEffect(() => {
+    if (!metric) {
+      setCounts({ value, total });
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function fetchCounts() {
+      try {
+        const calendarDays = await getCalendarDays(currentYear, selectedMonth, controller.signal);
+        const plannedDateIds = calendarDays.filter((day) => (day.entrees ?? []).length > 0).map((day) => day._id);
+
+        if (metric === "mealsPlanned") {
+          setCounts({
+            value: plannedDateIds.length,
+            total: getDaysInMonth(currentYear, selectedMonth),
+          });
+          return;
+        }
+
+        const nutritionSummaries = await getNutritionSummaries(plannedDateIds, controller.signal);
+
+        setCounts({
+          value: nutritionSummaries.filter((summary) => summary.quotaMet).length,
+          total: plannedDateIds.length,
+        });
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        console.error("Error loading dashboard summary:", error);
+        setCounts({ value, total });
+      }
+    }
+
+    fetchCounts();
+
+    return () => controller.abort();
+  }, [currentYear, metric, selectedMonth, total, value]);
 
   return (
-    <div className="bg-white rounded-2xl p-6 font-montserrat">
+    <div className="bg-white rounded-2xl p-5 font-montserrat">
       {/* Header row */}
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-black">{title}</h3>
@@ -106,7 +172,7 @@ export default function SummaryCard({ title, value, total, labelSuffix }: Summar
 
       {/* Donut chart + label */}
       <div className="flex flex-col items-center gap-4">
-        <DonutChart value={value} total={total} />
+        <DonutChart value={counts.value} total={counts.total} />
         <p className="text-base font-bold text-black text-center">
           {MONTHS[selectedMonth]} {labelSuffix}
         </p>
