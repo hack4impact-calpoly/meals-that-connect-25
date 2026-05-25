@@ -1,5 +1,8 @@
 import connectDB, { postRecipe } from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
+import { getCleanName, isDuplicateNameError, nameFieldError } from "@/lib/server/comboHelpers";
+import { getNormalizedParams } from "@/lib/server/searchParams";
+import { DIETARY_KEYS, EXCLUSION_KEYS, PROTEIN_SOURCES, RECIPE_CATEGORIES } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 
 type ServingRange = {
@@ -24,15 +27,20 @@ export async function GET(req: NextRequest) {
     const page = Number(searchParams.get("page") ?? 1);
     const limit = Number(searchParams.get("limit") ?? 10);
     const isDraftParam = searchParams.get("isDraft");
+    const isSubrecipeParam = searchParams.get("isSubrecipe");
+    const sortBy = searchParams.get("sortBy") ?? "createdDate";
 
     const tagParams = searchParams
-      .getAll("tags")
-      .map((t) => t.trim().toLowerCase())
+      .getAll("filters")
+      .concat(searchParams.getAll("tags"))
+      .map((tag) => tag.trim().toLowerCase())
       .filter(Boolean);
-    const categoryParams = searchParams
-      .getAll("categories")
-      .map((c) => c.trim().toLowerCase())
-      .filter(Boolean);
+
+    const categoryParams = getNormalizedParams(searchParams, "categories", RECIPE_CATEGORIES);
+    const proteinSourceParams = getNormalizedParams(searchParams, "proteinSources", PROTEIN_SOURCES);
+    const dietaryParams = getNormalizedParams(searchParams, "dietary", DIETARY_KEYS);
+    const exclusionParams = getNormalizedParams(searchParams, "exclusions", EXCLUSION_KEYS);
+
     const servingParams = searchParams
       .getAll("servings")
       .map((s) => s.trim().toLowerCase())
@@ -47,18 +55,34 @@ export async function GET(req: NextRequest) {
     const andClauses: any[] = [];
 
     if (tagParams.length > 0) {
+      const tagRegexes = tagParams.map((tag) => new RegExp(`^${tag}$`, "i"));
+
       andClauses.push({
-        tags: {
-          $all: tagParams.map((tag) => new RegExp(`^${tag}$`, "i")),
-        },
+        $or: [{ filters: { $all: tagRegexes } }, { tags: { $all: tagRegexes } }, { allergens: { $all: tagRegexes } }],
+      });
+    }
+
+    if (proteinSourceParams.length > 0) {
+      andClauses.push({
+        proteinSources: { $in: proteinSourceParams },
+      });
+    }
+
+    for (const dietaryKey of dietaryParams) {
+      andClauses.push({
+        [`dietary.${dietaryKey}`]: true,
+      });
+    }
+
+    for (const exclusionKey of exclusionParams) {
+      andClauses.push({
+        [`exclusions.${exclusionKey}`]: true,
       });
     }
 
     if (categoryParams.length > 0) {
       andClauses.push({
-        $or: categoryParams.map((category) => ({
-          tags: { $elemMatch: { $regex: category, $options: "i" } },
-        })),
+        category: { $in: categoryParams },
       });
     }
 
@@ -86,11 +110,40 @@ export async function GET(req: NextRequest) {
       filter.isDraft = false;
     }
 
-    const totalCount = await Recipe.countDocuments(filter);
+    if (isSubrecipeParam === "true") {
+      filter.isSubrecipe = true;
+    } else if (isSubrecipeParam === "false") {
+      filter.isSubrecipe = false;
+    }
 
-    const recipes = await Recipe.find(filter)
+    let sort: Record<string, 1 | -1> = { createdAt: -1 };
+
+    switch (sortBy) {
+      case "lastUpdated":
+        sort = { updatedAt: -1 };
+        break;
+      case "createdDate":
+        sort = { createdAt: -1 };
+        break;
+      case "aToZ":
+        sort = { name: 1 };
+        break;
+      case "zToA":
+        sort = { name: -1 };
+        break;
+    }
+
+    const totalCount = await Recipe.countDocuments(filter);
+    let query = Recipe.find(filter)
+      .sort(sort)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    if (sortBy === "aToZ" || sortBy === "zToA") {
+      query = query.collation({ locale: "en", strength: 2 });
+    }
+
+    const recipes = await query;
 
     return NextResponse.json(
       {
@@ -109,14 +162,46 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  let recipeData: Record<string, unknown>;
+
   try {
-    const recipeData = await req.json();
-    const response = await postRecipe(recipeData);
-    return NextResponse.json(response, { status: 201 });
+    recipeData = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  try {
+    await connectDB();
+
+    const name = getCleanName(recipeData);
+
+    if (!name) {
+      return nameFieldError("Name cannot be empty.");
+    }
+
+    const existingRecipe = await Recipe.exists({ name });
+
+    if (existingRecipe) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
+    const recipe = new Recipe({
+      ...recipeData,
+      name,
+    });
+
+    await recipe.save();
+
+    return NextResponse.json(recipe, { status: 201 });
   } catch (err: any) {
+    if (isDuplicateNameError(err)) {
+      return nameFieldError("Name is already taken.", 409);
+    }
+
     if (err?.name === "ValidationError") {
       return NextResponse.json({ error: err.message }, { status: 400 });
     }
+
     console.error("Error creating recipe:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

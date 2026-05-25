@@ -1,27 +1,27 @@
-"use client";
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { ListFilter } from "lucide-react";
+import { SORT_OPTIONS, SortOption } from "@/lib/types";
 
-export type CreateSortType = {
-  id: string;
-  label: string;
-};
+// export type CreateSortType = {
+//   id: string;
+//   label: string;
+// };
 
-const FILTER_TYPES: CreateSortType[] = [
-  { id: "last-updated", label: "Last Updated" },
-  { id: "created-date", label: "Created Date" },
-  { id: "a-to-z", label: "A to Z" },
-  { id: "z-to-a", label: "Z to A" },
-];
+// const FILTER_TYPES: CreateSortType[] = [
+//   { id: "last-updated", label: "Last Updated" },
+//   { id: "created-date", label: "Created Date" },
+//   { id: "a-to-z", label: "A to Z" },
+//   { id: "z-to-a", label: "Z to A" },
+// ];
 
 function RecipeMenuItem({
   type,
   onSelect,
   isSelected,
 }: {
-  type: CreateSortType;
-  onSelect: (type: CreateSortType) => void;
+  type: { value: SortOption; label: string };
+  onSelect: (type: SortOption) => void;
   isSelected?: boolean;
 }) {
   return (
@@ -29,7 +29,7 @@ function RecipeMenuItem({
       <button
         onClick={(e) => {
           e.preventDefault();
-          onSelect(type);
+          onSelect(type.value);
         }}
         className="flex w-full items-center gap-3 px-4 py-2 text-base font-montserrat font-medium text-black"
       >
@@ -44,16 +44,25 @@ function RecipeMenuItem({
 
 export default function SortPermissionsButton({
   align = "right",
+  activeType = "createdDate",
+  onSortChange,
 }: {
   align?: "left" | "right";
-  onSortChange?: (filterId: string) => void;
+  activeType: SortOption;
+  onSortChange: (filterId: SortOption) => void;
 }) {
-  const [activeType, setActiveType] = useState<CreateSortType | null>(null);
+  // const [activeType, setActiveType] = useState<SortOption>("createdDate");
   const isRight = align === "right";
+
+  // const handleSelect = (type: SortOption) => {
+  //   setActiveType(type);
+  //   if (onSortChange) onSortChange(type);
+  // };
+
   return (
     <>
-      <Menu as="div" className="relative">
-        <MenuButton className="w-10 w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
+      <Menu as="div" className="relative shrink-0">
+        <MenuButton className="w-fit h-10 bg-medium-gray rounded-lg flex items-center justify-center p-2.5">
           <ListFilter className="text-pepper" />
         </MenuButton>
         <MenuItems
@@ -75,13 +84,13 @@ export default function SortPermissionsButton({
         >
           <div className="px-4 py-2 font-montserrat font-bold text-pepper">Sort by:</div>
           <div className="relative">
-            {FILTER_TYPES.map((type, index) => (
-              <div key={type.id}>
+            {SORT_OPTIONS.map((type, index) => (
+              <div key={type.value}>
                 <RecipeMenuItem
-                  key={type.id}
+                  key={type.value}
                   type={type}
-                  onSelect={setActiveType}
-                  isSelected={type.id === activeType?.id}
+                  onSelect={onSortChange}
+                  isSelected={type.value === activeType}
                 />
               </div>
             ))}

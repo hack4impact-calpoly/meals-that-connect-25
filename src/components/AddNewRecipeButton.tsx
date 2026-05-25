@@ -1,31 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, MenuButton, MenuItems, MenuItem, Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
-import CreateRecipePopUp, { CreateRecipeType } from "./CreateRecipePopUp";
+import CreateRecipePopUp from "./CreateRecipePopUp";
+import { CATEGORY_DISPLAY, CategoryDisplayType } from "@/lib/types";
 
 /* Dropdown options for creating a new recipe. Add/remove entries here to change
    what appears in the menu. */
-const RECIPE_TYPES: CreateRecipeType[] = [
-  { id: "combo", label: "Add Combo", icon: Utensils },
-  { id: "entree", label: "Add Entrée", icon: Soup },
-  { id: "side", label: "Add Side", icon: Carrot },
-  { id: "fruit", label: "Add Fruit", icon: Apple },
-];
 
-function RecipeMenuItem({ type, onSelect }: { type: CreateRecipeType; onSelect: (type: CreateRecipeType) => void }) {
+function RecipeMenuItem({
+  type,
+  onSelect,
+}: {
+  type: CategoryDisplayType;
+  onSelect: (type: CategoryDisplayType) => void;
+}) {
   const Icon = type.icon;
 
   return (
     <MenuItem>
       <button
         onClick={() => onSelect(type)}
-        className="flex w-full items-center gap-3 px-2 py-2 text-xl font-montserrat font-medium text-pepper
+        className="flex w-full items-center gap-3 px-2 py-2 text-xl font-montserrat text-nowrap font-medium text-pepper
                    data-focus:text-radish-900"
       >
         <Icon size={32} />
-        {type.label}
+        Add {type.label}
       </button>
     </MenuItem>
   );
@@ -36,17 +37,18 @@ export default function AddNewRecipeButton() {
     - Null => popup is closed. 
     - Non-null => CreateRecipePopUp is open.
     The type is passed to CreateRecipePopUp so behavior can be customized based on the selected recipe type. */
-  const [activeType, setActiveType] = useState<CreateRecipeType | null>(null);
+  const [activeType, setActiveType] = useState<CategoryDisplayType | null>(null);
 
   return (
     <>
       <Menu as="div" className="relative">
         <MenuButton
-          className="inline-flex items-center gap-2 rounded-lg bg-radish-900 p-3
-                               text-base font-bold font-montserrat text-white text-nowrap"
+          className="inline-flex items-center gap-1 md:gap-2 rounded-lg bg-radish-900 p-2 md:p-2.5
+                               text-xs md:text-base font-bold font-montserrat text-white text-nowrap whitespace-nowrap"
         >
-          Add New Recipe
-          <Plus size={20} strokeWidth={2.5} />
+          <span className="hidden md:inline">Add New Recipe</span>
+          <span className="md:hidden">New</span>
+          <Plus size={18} className="md:w-5 md:h-5" strokeWidth={3} />
         </MenuButton>
 
         <MenuItems
@@ -64,8 +66,8 @@ export default function AddNewRecipeButton() {
                     before:z-10"
         >
           <div className="relative">
-            {RECIPE_TYPES.map((type, index) => (
-              <div key={type.id} className={index !== 0 ? "border-t border-medium-gray" : ""}>
+            {CATEGORY_DISPLAY.map((type, index) => (
+              <div key={type.category} className={index !== 0 ? "border-t border-medium-gray" : ""}>
                 <RecipeMenuItem type={type} onSelect={setActiveType} />
               </div>
             ))}
@@ -73,7 +75,13 @@ export default function AddNewRecipeButton() {
         </MenuItems>
       </Menu>
 
-      <CreateRecipePopUp open={!!activeType} onClose={() => setActiveType(null)} recipeType={activeType} />
+      <CreateRecipePopUp
+        item={null}
+        open={!!activeType}
+        onClose={() => setActiveType(null)}
+        recipeType={activeType}
+        editMode={false}
+      />
     </>
   );
 }

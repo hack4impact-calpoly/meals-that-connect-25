@@ -16,6 +16,8 @@
 
   --color-cucumber: #20a359;
 
+  --color-brown: #624002;
+
   --color-pepper: #48494b;
 
   --color-jicama: #f8ece0;
@@ -25,15 +27,21 @@
   --color-dark-gray: #969696;
 
   /* misc, used for tags, pulled from the figma */
-  --color-combo-900: var(--color-radish-900);
-  --color-combo-500: var(--color-jicama);
+  --color-combo-bg: var(--color-jicama);
+  --color-combo-text: var(--color-radish-900);
 
-  --color-sides-900: var(--color-cucumber);
-  --color-sides-500: --alpha(var(--color-lime) / 40%);
+  --color-vegetable-bg: var(--color-lime);
+  --color-vegetable-text: var(--color-pepper);
 
-  --color-fruit-900: #ea7105;
-  --color-fruit-500: #fdecbc;
+  --color-grain-bg: #e6bb72;
+  --color-grain-text: var(--color-pepper);
 
-  --color-entree-900: var(--color-cucumber);
-  --color-entree-500: #e7efb7;
+  --color-subrecipe-bg: var(--color-medium-gray);
+  --color-subrecipe-text: var(--color-pepper);
+
+  --color-fruit-bg: #ea7105;
+  --color-fruit-text: #ffffff;
+
+  --color-entree-bg: var(--color-brown);
+  --color-entree-text: #ffffff;
 }
