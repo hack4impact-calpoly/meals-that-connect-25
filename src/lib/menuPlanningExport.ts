@@ -1,4 +1,4 @@
-import { Nutrition } from "@/lib/types";
+import { Nutrition, NUTRIENT_LABELS } from "@/lib/types";
 
 export type MenuExportFormat = "Display" | "Nutritional";
 
@@ -65,23 +65,10 @@ const NUTRITION_HEADERS = [
   "Item Name",
   "Quantity",
   "Measure",
-  "Cals (kcal)",
-  "Sod (mg)",
-  "Prot (g)",
-  "Vit C (mg)",
-  "Vit A-RAE (mcg)",
-  "Carb (g)",
-  "Fat (g)",
-  "FatCals (kcal)",
-  "TransFat (g)",
-  "SatFat (g)",
-  "Chol (mg)",
-  "TotFib (g)",
-  "Calc (mg)",
-  "Iron (mg)",
+  ...NUTRIENT_LABELS.map((nutrient) => `${nutrient.label} (${nutrient.unit})`),
 ] as const;
 
-const NUTRITION_COLUMN_COUNT = 19;
+const NUTRITION_COLUMN_COUNT = NUTRITION_HEADERS.length + 2;
 
 const DISPLAY_STYLES = {
   date: 8,
@@ -635,69 +622,18 @@ function round(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function sumNutrition(items: ExportRecipe[]): Nutrition {
-  return items.reduce(
-    (total, item) => ({
-      calories: total.calories + numberOrZero(item.nutritional_info?.calories),
-      sodium: total.sodium + numberOrZero(item.nutritional_info?.sodium),
-      protein: total.protein + numberOrZero(item.nutritional_info?.protein),
-      fatPercentage: total.fatPercentage + numberOrZero(item.nutritional_info?.fatPercentage),
-      saturatedFatPercentage:
-        total.saturatedFatPercentage + numberOrZero(item.nutritional_info?.saturatedFatPercentage),
-      fiber: total.fiber + numberOrZero(item.nutritional_info?.fiber),
-      calcium: total.calcium + numberOrZero(item.nutritional_info?.calcium),
-      magnesium: total.magnesium + numberOrZero(item.nutritional_info?.magnesium),
-      potassium: total.potassium + numberOrZero(item.nutritional_info?.potassium),
-      vitaminA: total.vitaminA + numberOrZero(item.nutritional_info?.vitaminA),
-      vitaminD: total.vitaminD + numberOrZero(item.nutritional_info?.vitaminD),
-      vitaminC: total.vitaminC + numberOrZero(item.nutritional_info?.vitaminC),
-      vitaminB12: total.vitaminB12 + numberOrZero(item.nutritional_info?.vitaminB12),
-    }),
-    {
-      calories: 0,
-      sodium: 0,
-      protein: 0,
-      fatPercentage: 0,
-      saturatedFatPercentage: 0,
-      fiber: 0,
-      calcium: 0,
-      magnesium: 0,
-      potassium: 0,
-      vitaminA: 0,
-      vitaminD: 0,
-      vitaminC: 0,
-      vitaminB12: 0,
-    },
-  );
+function sumNutrition(items: ExportRecipe[]): Partial<Nutrition> {
+  return items.reduce<Partial<Nutrition>>((total, item) => {
+    NUTRIENT_LABELS.forEach(({ key }) => {
+      total[key] = numberOrZero(total[key]) + numberOrZero(item.nutritional_info?.[key]);
+    });
+
+    return total;
+  }, {});
 }
 
 function nutritionValues(nutrition: Partial<Nutrition> | undefined) {
-  const calories = numberOrZero(nutrition?.calories);
-  const fatPct = numberOrZero(nutrition?.fatPercentage);
-  const saturatedFatPct = numberOrZero(nutrition?.saturatedFatPercentage);
-
-  const fatCalories = round((calories * fatPct) / 100);
-  const fatGrams = round(fatCalories / 9);
-
-  const saturatedFatCalories = round((calories * saturatedFatPct) / 100);
-  const saturatedFatGrams = round(saturatedFatCalories / 9);
-
-  return [
-    round(calories),
-    round(numberOrZero(nutrition?.sodium)),
-    round(numberOrZero(nutrition?.protein)),
-    round(numberOrZero(nutrition?.vitaminC)),
-    round(numberOrZero(nutrition?.vitaminA)),
-    "--",
-    fatGrams,
-    fatCalories,
-    "--",
-    saturatedFatGrams,
-    "--",
-    round(numberOrZero(nutrition?.fiber)),
-    round(numberOrZero(nutrition?.calcium)),
-    "--",
-  ];
+  return NUTRIENT_LABELS.map(({ key }) => round(numberOrZero(nutrition?.[key])));
 }
 
 function buildDisplayWorkbook(days: CalendarDayExport[], year: number, monthIndex: number): WorkbookDefinition {
