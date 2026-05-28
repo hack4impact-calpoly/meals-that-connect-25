@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useUser } from "@clerk/nextjs";
 import { UserPerms } from "@/components/IndividualPermission";
 import PermissionsDisplay from "@/components/PermissionsDisplay";
 import SortPermissionsButton from "@/components/SortPermissionsButton";
@@ -14,6 +15,9 @@ import RoleToggle from "./RoleToggle";
 const PAGE_SIZE = 5;
 
 export default function PermissionsClient() {
+  const { user: clerkUser } = useUser();
+  const currentClerkId = clerkUser?.id;
+
   const [usersList, setUsersList] = useState<UserPerms[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<UserPerms[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -59,7 +63,10 @@ export default function PermissionsClient() {
 
         const result = await res.json();
 
-        setUsersList(result.data);
+        const fetched: UserPerms[] = result.data ?? [];
+        const withoutSelf = currentClerkId ? fetched.filter((user) => user.clerkId !== currentClerkId) : fetched;
+
+        setUsersList(withoutSelf);
         setTotalPages(result.totalPages || 1);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") {
@@ -77,7 +84,12 @@ export default function PermissionsClient() {
     loadUsers();
 
     return () => controller.abort();
-  }, [search, selectedRole, sortOption, currentPage]);
+  }, [search, selectedRole, sortOption, currentPage, currentClerkId]);
+
+  const visibleUsers = useMemo(() => {
+    if (!currentClerkId) return usersList;
+    return usersList.filter((user) => user.clerkId !== currentClerkId);
+  }, [usersList, currentClerkId]);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -195,7 +207,7 @@ export default function PermissionsClient() {
 
         <div className="flex flex-col overflow-auto">
           <PermissionsDisplay
-            users={usersList}
+            users={visibleUsers}
             editing={isEditing}
             onSelect={toggleUserSelection}
             selectedIds={selectedUsers.map((u) => u._id)}
