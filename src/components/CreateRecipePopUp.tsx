@@ -121,6 +121,31 @@ function comboHasRecipe(combo: Combo, recipeId: string) {
   );
 }
 
+function recipeReferencesSubrecipe(recipe: Recipe, recipeId: string) {
+  return (recipe.subrecipes ?? []).some((sr) => sr.recipeId === recipeId);
+}
+
+async function findPublishedUsageOfRecipe(recipeId: string) {
+  const params = new URLSearchParams({ isDraft: "false", page: "1", limit: "500" });
+  const [comboRes, recipeRes] = await Promise.all([fetch(`/api/combos?${params}`), fetch(`/api/recipes?${params}`)]);
+
+  if (!comboRes.ok || !recipeRes.ok) {
+    throw new Error("Failed to check recipe usage");
+  }
+
+  const comboJson = await comboRes.json();
+  const recipeJson = await recipeRes.json();
+  const combos: Combo[] = comboJson.data ?? [];
+  const recipes: Recipe[] = recipeJson.data ?? [];
+
+  return {
+    usedInCombo: combos.some((combo) => comboHasRecipe(combo, recipeId)),
+    usedInRecipe: recipes.some(
+      (recipe) => recipe._id !== recipeId && !recipe.isDraft && recipeReferencesSubrecipe(recipe, recipeId),
+    ),
+  };
+}
+
 function getFilterSectionOptions(sectionId: FilterSectionId): FilterOption[] {
   const section = FILTER_SECTIONS.find((section) => section.id === sectionId);
   return section?.options ?? [];
@@ -189,6 +214,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
   const [loadingOptions, setLoadingOptions] = useState(false);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageDialog, setMessageDialog] = useState<{ title: string; body: string } | null>(null);
 
   const [name, setName] = useState("");
   const [nameError, setNameError] = useState("");
@@ -464,23 +490,28 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       return;
     }
 
-    // make sure that published recipes cannot be saved as drafts IF they are being used in an existing combo
-    if (!isCombo && isDraft && itemId !== "") {
-      // FIXME: Shoudn't this happen server side? Due to pagination I don't think this works.
-      const res = await fetch(`/api/combos`, { method: "GET" });
-      if (!res.ok) {
-        console.error("Failed to check recipe combos", res.status);
-        alert("Failed to save recipe. Please try again.");
-        return;
-      }
+    // Published recipes cannot become drafts if used by a published combo or recipe.
+    if (!isCombo && isDraft && itemId !== "" && id) {
+      try {
+        const { usedInCombo, usedInRecipe } = await findPublishedUsageOfRecipe(id);
 
-      const json = await res.json();
-      const data = json.data;
+        if (usedInCombo || usedInRecipe) {
+          const reasons: string[] = [];
+          if (usedInCombo) reasons.push("a published combo");
+          if (usedInRecipe) reasons.push("another published recipe");
 
-      const isUsed = data.some((combo: Combo) => id && comboHasRecipe(combo, id));
-
-      if (isUsed === true) {
-        alert("Failed to save recipe as a draft. Recipe is being used in an existing combo.");
+          setMessageDialog({
+            title: "Cannot save as draft",
+            body: `This recipe is used by ${reasons.join(" and ")}. Remove it from those items before converting it to a draft.`,
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to check recipe usage", error);
+        setMessageDialog({
+          title: "Unable to save",
+          body: "We could not verify whether this recipe is in use. Please try again.",
+        });
         return;
       }
     }
@@ -532,7 +563,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
           item && isRecipeItem(item) ? item.category : recipeType?.category !== "Combo" ? recipeType?.category : null;
 
         if (!recipeCategory) {
-          alert("Missing recipe category.");
+          setMessageDialog({
+            title: "Missing category",
+            body: "Please choose a recipe category before saving.",
+          });
           return;
         }
 
@@ -624,7 +658,10 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
       window.location.reload();
     } catch (error) {
       console.error("Failed to save item:", error);
-      alert("Failed to save item. Please try again.");
+      setMessageDialog({
+        title: "Save failed",
+        body: "Something went wrong while saving. Please try again.",
+      });
     } finally {
       setBusy(null);
     }
@@ -635,22 +672,26 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
     // check if valid deletion can occur - no recipe should be able to be deleted if it's being used in an existing combo, but combos can be deleted regardless
     if (!isCombo) {
-      // FIXME: we are checking client side every single combo ever created???
-      // this doesn't currently work anyway due to pagination.
-      const res = await fetch(`/api/combos`, { method: "GET" });
-      if (!res.ok) {
-        console.error("Failed to check recipe combos", res.status);
-        alert("Failed to delete recipe. Please try again.");
-        return;
-      }
+      try {
+        const { usedInCombo, usedInRecipe } = await findPublishedUsageOfRecipe(id);
 
-      const json = await res.json();
-      const data = json.data;
+        if (usedInCombo || usedInRecipe) {
+          const reasons: string[] = [];
+          if (usedInCombo) reasons.push("a published combo");
+          if (usedInRecipe) reasons.push("another published recipe");
 
-      const isUsed = data.some((combo: Combo) => comboHasRecipe(combo, id));
-
-      if (isUsed === true) {
-        alert("Failed to delete. Recipe is being used in an existing combo.");
+          setMessageDialog({
+            title: "Cannot delete recipe",
+            body: `This recipe is used by ${reasons.join(" and ")}. Remove it from those items before deleting.`,
+          });
+          return;
+        }
+      } catch (error) {
+        console.error("Failed to check recipe usage", error);
+        setMessageDialog({
+          title: "Unable to delete",
+          body: "We could not verify whether this recipe is in use. Please try again.",
+        });
         return;
       }
     }
@@ -676,6 +717,37 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
 
   return (
     <>
+      <Dialog open={messageDialog !== null} onClose={() => setMessageDialog(null)} className="relative z-[200]">
+        <DialogBackdrop className="fixed inset-0 bg-black/50" />
+
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="relative w-full max-w-md rounded-lg bg-white p-6 font-montserrat shadow-lg">
+            <button
+              type="button"
+              className="absolute top-3 right-3 flex h-9 w-9 items-center justify-center rounded-md text-pepper/50 transition hover:bg-light-gray hover:text-pepper"
+              onClick={() => setMessageDialog(null)}
+              aria-label="Close"
+            >
+              <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </button>
+
+            <h3 className="pr-8 text-lg font-semibold text-pepper">{messageDialog?.title}</h3>
+
+            <p className="mt-2 text-sm leading-relaxed text-pepper/70">{messageDialog?.body}</p>
+
+            <div className="mt-5 flex justify-end">
+              <button
+                type="button"
+                className="rounded-lg bg-radish-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-radish-800"
+                onClick={() => setMessageDialog(null)}
+              >
+                OK
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </Dialog>
+
       <Dialog open={showCloseConfirm} onClose={() => setShowCloseConfirm(false)} className="relative z-100">
         <DialogBackdrop className="fixed inset-0 bg-black/50" />
 
