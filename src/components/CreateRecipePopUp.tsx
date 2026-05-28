@@ -37,6 +37,7 @@ import Image from "next/image";
 import { NutritionalInfo } from "./createMeal/NutritionalInfo";
 import { FieldRow } from "./createMeal/FieldRow";
 import { DropdownField } from "./createMeal/DropdownField";
+import SearchableRecipeSelect from "./createMeal/SearchableRecipeSelect";
 
 // TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
@@ -866,6 +867,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                       );
                     }}
                     placeholder={loadingOptions ? "Loading entrees..." : `Select ${ENTREE_CATEGORY_DISPLAY.label}(s)`}
+                    searchable
                   />
 
                   <DropdownField
@@ -883,6 +885,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                       );
                     }}
                     placeholder={loadingOptions ? "Loading vegetables..." : "Select Vegetable(s)"}
+                    searchable
                   />
 
                   <DropdownField
@@ -900,6 +903,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                       );
                     }}
                     placeholder={loadingOptions ? "Loading fruit..." : "Select Fruit(s)"}
+                    searchable
                   />
 
                   <DropdownField
@@ -917,6 +921,7 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                       );
                     }}
                     placeholder={loadingOptions ? "Loading grains..." : "Select Grain(s)"}
+                    searchable
                   />
                 </>
               )}
@@ -1085,19 +1090,16 @@ export default function CreateRecipePopUp({ item, open, onClose, recipeType, edi
                             ))}
                           </select>
 
-                          <select
+                          <SearchableRecipeSelect
                             value={sr.recipeId}
-                            onChange={(e) => handleSubrecipeRecipeChange(index, e.target.value)}
-                            className="flex-1 h-12.5 px-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                            disabled={!sr.category}
-                          >
-                            <option value="">{sr.category ? "Select Recipe" : "Select category first"}</option>
-                            {getOptionsForCategory(sr.category).map((recipe) => (
-                              <option key={recipe._id} value={recipe._id}>
-                                {recipe.name}
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(recipeId) => handleSubrecipeRecipeChange(index, recipeId)}
+                            options={getOptionsForCategory(sr.category).map((recipe) => ({
+                              id: recipe._id,
+                              label: recipe.name,
+                            }))}
+                            placeholder={sr.category ? "Select recipe" : "Select category first"}
+                            disabled={!sr.category || loadingOptions}
+                          />
 
                           <input
                             type="number"
