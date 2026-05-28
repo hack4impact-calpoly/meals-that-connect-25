@@ -20,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   try {
     await connectDB();
     const updatedUser = await User.findOneAndUpdate(
-      { clerkId: id },
+      { _id: id },
       { $set: updates },
       {
         new: true,
@@ -37,7 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (err?.name === "ValidationError" || err?.name === "StrictModeError") {
       return NextResponse.json({ error: "Invalid Data" }, { status: 400 });
     }
-    console.error("Error updating recipe:", err);
+    console.error("Error updating user:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -50,14 +50,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     await connectDB();
+
+    const user = await User.findOne({ _id: id });
+    const clerkId = user?.clerkId;
+
     const client = await clerkClient();
     try {
-      await client.users.deleteUser(id);
+      await client.users.deleteUser(clerkId);
     } catch (clerkErr) {
       console.error("Clerk Delete Error:", clerkErr);
     }
 
-    const deletedUser = await User.findOneAndDelete({ clerkId: id });
+    const deletedUser = await User.findOneAndDelete({ _id: id });
 
     if (!deletedUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
