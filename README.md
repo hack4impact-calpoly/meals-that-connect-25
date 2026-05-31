@@ -43,17 +43,15 @@ The **Meals That Connect** team consists of \*\*13 Cal Poly students. Over the c
 - [Bryan Lai](https://www.linkedin.com/in/bryanlai2004/) - Project Manager
 - [Sophia Chang](https://www.linkedin.com/in/sophiachang7/) - Tech Lead
 - [Angela Chen](https://www.linkedin.com/in/anvch/) - Tech Lead
-- [Stella Kwon](https://www.linkedin.com/) - Designer
-- [Apoorva Gowda](https://www.linkedin.com/) - Designer
+- [Stella Kwon](https://www.linkedin.com/in/stella-b-kwon/) - Designer
+- [Apoorva Gowda](https://www.linkedin.com/in/apoorvagowda/) - Designer
 - [Kevin Diaz](https://www.linkedin.com/in/kjdiaz508/) - Software Developer
 - [Ida Voong](https://www.linkedin.com/in/ida-voong-6b87a1201/) - Software Developer
 - [Dominic Siino](https://www.linkedin.com/in/dominic-siino/) - Software Developer
 - [Haixin Huang](www.linkedin.com/in/haixin-huang-116799200) - Software Developer
 - [Srinithi Doddapaneni](https://www.linkedin.com/in/srinithi-doddapaneni-5592b0309/) - Software Developer
-- [Xavier Royer] - Software Developer
-- [Taiki Jeffers] - Software Developer
-- [Derrick Phan] - Software Developer
-
+- [Xavier Royer](https://www.linkedin.com/in/) - Software Developer
+- [Derrick Phan](https://www.linkedin.com/in/derrick-phan/) - Software Developer
 - [Austin Wright](https://www.linkedin.com/in/austin-wright-613275122/) - Faculty Advisor
 
 ## Getting Started And Contributing

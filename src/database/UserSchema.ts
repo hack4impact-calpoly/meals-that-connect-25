@@ -22,7 +22,7 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: USER_ROLES,
       required: true,
-      default: "Kitchen Staff",
+      default: "Dining Site Staff",
     },
     lastLoginDate: { type: Date, required: false },
   },
