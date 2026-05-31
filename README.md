@@ -38,7 +38,7 @@ This system will directly help Meals That Connect scale its services and better 
 
 ### Team
 
-The **Meals That Connect** team consists of \*\*13 Cal Poly students. Over the course of about 9 months, we worked as a team to deploy this web application. The team members are listed below:
+The **Meals That Connect** team consists of \*\*12 Cal Poly students. Over the course of about 9 months, we worked as a team to deploy this web application. The team members are listed below:
 
 - [Bryan Lai](https://www.linkedin.com/in/bryanlai2004/) - Project Manager
 - [Sophia Chang](https://www.linkedin.com/in/sophiachang7/) - Tech Lead
