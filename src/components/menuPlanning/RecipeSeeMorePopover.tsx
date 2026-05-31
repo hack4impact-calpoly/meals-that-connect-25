@@ -2,14 +2,17 @@
 
 import { Popover, PopoverButton, PopoverPanel } from "@headlessui/react";
 import { ArrowUpRight, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   CATEGORY_DISPLAY_MAP,
   EXCLUSION_KEYS,
   FILTER_SECTIONS,
   NUTRIENT_LABELS,
+  RECIPE_CATEGORIES,
   TAG_STYLES,
   type Recipe,
+  type RecipeCategory,
+  type SubrecipeIngredient,
 } from "@/lib/types";
 
 type RecipeSeeMorePopoverProps = {
@@ -22,8 +25,40 @@ function formatNutritionValue(value?: number) {
   return value == null ? "0" : value.toString();
 }
 
+type NestedSubrecipe = SubrecipeIngredient & {
+  nestedRecipe: Recipe | null;
+};
+
+function resolveSubrecipeCategory(subrecipe: NestedSubrecipe): RecipeCategory | null {
+  return subrecipe.category ?? subrecipe.nestedRecipe?.category ?? null;
+}
+
+async function fetchNestedSubrecipes(subrecipes: SubrecipeIngredient[]): Promise<NestedSubrecipe[]> {
+  if (subrecipes.length === 0) {
+    return [];
+  }
+
+  return Promise.all(
+    subrecipes.map(async (subrecipe) => {
+      try {
+        const response = await fetch(`/api/recipes/${encodeURIComponent(subrecipe.recipeId)}`);
+
+        if (!response.ok) {
+          return { ...subrecipe, nestedRecipe: null };
+        }
+
+        const nestedRecipe: Recipe = await response.json();
+        return { ...subrecipe, nestedRecipe };
+      } catch {
+        return { ...subrecipe, nestedRecipe: null };
+      }
+    }),
+  );
+}
+
 export default function RecipeSeeMorePopover({ recipeId, variant = "default", userRole }: RecipeSeeMorePopoverProps) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [nestedSubrecipes, setNestedSubrecipes] = useState<NestedSubrecipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
@@ -39,6 +74,7 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
 
     setIsLoading(true);
     setError(null);
+    setNestedSubrecipes([]);
 
     try {
       const response = await fetch(`/api/recipes/${encodeURIComponent(recipeId)}`);
@@ -47,7 +83,13 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
         throw new Error(`Failed to load recipe (${response.status})`);
       }
 
-      setRecipe(await response.json());
+      const loadedRecipe: Recipe = await response.json();
+      setRecipe(loadedRecipe);
+
+      if (loadedRecipe.subrecipes?.length) {
+        const nested = await fetchNestedSubrecipes(loadedRecipe.subrecipes);
+        setNestedSubrecipes(nested);
+      }
     } catch (err) {
       console.error(err);
       setError("Recipe details could not be loaded.");
@@ -56,6 +98,26 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
     }
   };
   const [isOpen, setIsOpen] = useState(false);
+
+  const nestedByCategory = useMemo(() => {
+    const grouped = new Map<RecipeCategory, NestedSubrecipe[]>();
+    const uncategorized: NestedSubrecipe[] = [];
+
+    for (const subrecipe of nestedSubrecipes) {
+      const category = resolveSubrecipeCategory(subrecipe);
+
+      if (!category) {
+        uncategorized.push(subrecipe);
+        continue;
+      }
+
+      const list = grouped.get(category) ?? [];
+      list.push(subrecipe);
+      grouped.set(category, list);
+    }
+
+    return { grouped, uncategorized };
+  }, [nestedSubrecipes]);
 
   const cancelClose = () => {
     if (closeTimerRef.current) {
@@ -198,6 +260,89 @@ export default function RecipeSeeMorePopover({ recipeId, variant = "default", us
                         ))}
                       </ul>
                     </section>
+                  ) : null}
+
+                  {nestedSubrecipes.length > 0 ? (
+                    <div className="space-y-3">
+                      {RECIPE_CATEGORIES.map((category) => {
+                        const items = nestedByCategory.grouped.get(category);
+                        if (!items?.length) return null;
+
+                        const categoryLabel = CATEGORY_DISPLAY_MAP[category].plural.toUpperCase();
+
+                        return (
+                          <section key={category} className="space-y-1.5">
+                            <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">
+                              {categoryLabel}
+                            </h4>
+                            <ul className="space-y-2">
+                              {items.map((subrecipe) => {
+                                const nestedName =
+                                  subrecipe.nestedRecipe?.name ?? subrecipe.recipeName ?? subrecipe.recipeId;
+
+                                return (
+                                  <li
+                                    key={`${category}-${subrecipe.recipeId}-${subrecipe.quantity}`}
+                                    className="rounded-md border border-medium-gray/40 bg-light-gray/40 p-2"
+                                  >
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <span
+                                        className={`rounded-md px-2 py-0.5 text-xs font-semibold ${TAG_STYLES[category]}`}
+                                      >
+                                        {nestedName}
+                                      </span>
+                                      <span className="text-xs font-medium text-pepper/60">×{subrecipe.quantity}</span>
+                                    </div>
+
+                                    {userRole && subrecipe.nestedRecipe?.ingredients?.length ? (
+                                      <ul className="mt-2 space-y-1 border-t border-medium-gray/30 pt-2">
+                                        {subrecipe.nestedRecipe.ingredients.map((ingredient, index) => (
+                                          <li
+                                            key={`${subrecipe.recipeId}-ing-${index}`}
+                                            className="flex justify-between gap-2 text-xs text-pepper/80"
+                                          >
+                                            <span>{ingredient.name}</span>
+                                            <span className="shrink-0 text-pepper/60">
+                                              {ingredient.quantity} {ingredient.units}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : null}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </section>
+                        );
+                      })}
+
+                      {nestedByCategory.uncategorized.length > 0 ? (
+                        <section className="space-y-1.5">
+                          <h4 className="text-[11px] font-bold uppercase tracking-wide text-pepper/50">Other</h4>
+                          <ul className="space-y-2">
+                            {nestedByCategory.uncategorized.map((subrecipe) => {
+                              const nestedName =
+                                subrecipe.nestedRecipe?.name ?? subrecipe.recipeName ?? subrecipe.recipeId;
+
+                              return (
+                                <li
+                                  key={`other-${subrecipe.recipeId}-${subrecipe.quantity}`}
+                                  className="rounded-md border border-medium-gray/40 bg-light-gray/40 p-2"
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="rounded-md bg-pepper px-2 py-0.5 text-xs font-semibold text-white">
+                                      {nestedName}
+                                    </span>
+                                    <span className="text-xs font-medium text-pepper/60">×{subrecipe.quantity}</span>
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </section>
+                      ) : null}
+                    </div>
                   ) : null}
 
                   {userRole && recipe.instructions ? (
