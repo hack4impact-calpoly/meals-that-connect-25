@@ -4,6 +4,7 @@ import Image from "next/image";
 
 export type UserPerms = {
   _id: string;
+  clerkId?: string;
   name: string;
   imageUrl?: string;
   role: string;
