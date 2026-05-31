@@ -1,6 +1,6 @@
-import RecipeCard from "@/components/RecipeCard";
-import ComboCard from "@/components/ComboCard";
-import DraftEntryCard from "@/components/DraftEntryCard";
+import RecipeCard from "@/components/recipe/RecipeCard";
+import ComboCard from "@/components/recipe/ComboCard";
+import DraftEntryCard from "@/components/recipe/DraftEntryCard";
 
 import { Recipe, Combo, RecipePreview } from "@/lib/types";
 
@@ -17,7 +17,6 @@ type Props = {
   userRole: string | null;
 };
 
-// FIXME: layouts are currently sortof broken (max 2 cols for some reason). Figure out why
 export default function CardGrid({
   loading,
   error,

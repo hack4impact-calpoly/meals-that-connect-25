@@ -1,4 +1,4 @@
-import PillToggle from "@/components/PillToggle";
+import PillToggle from "@/components/shared/PillToggle";
 import { UserRole } from "@/lib/types";
 
 export default function RoleToggle({

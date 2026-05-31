@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useUser } from "@clerk/nextjs";
-import { UserPerms } from "@/components/IndividualPermission";
-import PermissionsDisplay from "@/components/PermissionsDisplay";
-import SortPermissionsButton from "@/components/SortPermissionsButton";
-import EditPermissionsButton from "@/components/EditPermissionsButton";
-import PermissionsPopUp from "@/components/PermissionsPopUp";
-import SearchBarClient from "@/components/SearchbarClient";
-import PaginationDisplay from "@/components/PaginationDisplay";
+import { UserPerms } from "@/components/permissions/IndividualPermission";
+import PermissionsDisplay from "@/components/permissions/PermissionsDisplay";
+import SortPermissionsButton from "@/components/permissions/SortPermissionsButton";
+import EditPermissionsButton from "@/components/permissions/EditPermissionsButton";
+import PermissionsPopUp from "@/components/permissions/PermissionsPopUp";
+import SearchBarClient from "@/components/shared/SearchbarClient";
+import PaginationDisplay from "@/components/recipe/PaginationDisplay";
 import { SortOption, USER_ROLES, UserRole } from "@/lib/types";
 import RoleToggle from "./RoleToggle";
 

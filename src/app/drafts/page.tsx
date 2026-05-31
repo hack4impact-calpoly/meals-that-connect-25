@@ -1,10 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import MealBrowser from "@/components/MealBrowser";
-import FilterMenu from "@/components/FilterMenu";
-import ViewRecipePopUp from "@/components/ViewRecipePopUp";
-import CreateRecipePopUp from "@/components/CreateRecipePopUp";
+import MealBrowser from "@/components/recipe/MealBrowser";
+import FilterMenu from "@/components/recipe/FilterMenu";
+import ViewRecipePopUp from "@/components/recipe/ViewRecipePopUp";
+import CreateRecipePopUp from "@/components/recipe/CreateRecipePopUp";
 import {
   CategoryDisplayType,
   CategoryValue,

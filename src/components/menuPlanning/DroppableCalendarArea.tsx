@@ -9,7 +9,7 @@ interface DroppableCalendarAreaProps {
   className?: string;
   droppableId?: string;
 }
-// TODO: figure out how this looks and if I can reuse it
+
 export default function DroppableCalendarArea({ dayId, children, className, droppableId }: DroppableCalendarAreaProps) {
   const dropData: DropZoneData = {
     dest: "calendar",

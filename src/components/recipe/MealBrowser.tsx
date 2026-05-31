@@ -1,9 +1,9 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
-import SearchBarClient from "@/components/SearchbarClient";
-import CategoryToggle from "@/components/CategoryToggle";
-import CardGrid from "@/components/CardGrid";
-import AddNewRecipeButton from "@/components/AddNewRecipeButton";
-import PaginationDisplay from "@/components/PaginationDisplay";
+import SearchBarClient from "@/components/shared/SearchbarClient";
+import CategoryToggle from "@/components/shared/CategoryToggle";
+import CardGrid from "@/components/recipe/CardGrid";
+import AddNewRecipeButton from "@/components/recipe/AddNewRecipeButton";
+import PaginationDisplay from "@/components/recipe/PaginationDisplay";
 import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, RecipePreview } from "@/lib/types";
 import { toggleCategory } from "@/lib/helpers";
 

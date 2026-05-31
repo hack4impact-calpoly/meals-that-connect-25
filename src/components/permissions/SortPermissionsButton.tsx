@@ -1,19 +1,6 @@
-import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
 import { ListFilter } from "lucide-react";
 import { SORT_OPTIONS, SortOption } from "@/lib/types";
-
-// export type CreateSortType = {
-//   id: string;
-//   label: string;
-// };
-
-// const FILTER_TYPES: CreateSortType[] = [
-//   { id: "last-updated", label: "Last Updated" },
-//   { id: "created-date", label: "Created Date" },
-//   { id: "a-to-z", label: "A to Z" },
-//   { id: "z-to-a", label: "Z to A" },
-// ];
 
 function RecipeMenuItem({
   type,
@@ -51,13 +38,7 @@ export default function SortPermissionsButton({
   activeType: SortOption;
   onSortChange: (filterId: SortOption) => void;
 }) {
-  // const [activeType, setActiveType] = useState<SortOption>("createdDate");
   const isRight = align === "right";
-
-  // const handleSelect = (type: SortOption) => {
-  //   setActiveType(type);
-  //   if (onSortChange) onSortChange(type);
-  // };
 
   return (
     <>

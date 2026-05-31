@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import connectDB, { getRecipeById } from "@/database/db";
+import connectDB from "@/database/db";
 import User from "@/database/UserSchema";
 import { clerkClient } from "@clerk/nextjs/server";
 

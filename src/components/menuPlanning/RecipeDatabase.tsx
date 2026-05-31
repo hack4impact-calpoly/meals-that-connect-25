@@ -3,9 +3,9 @@
 import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { SlidersHorizontal } from "lucide-react";
 import DraggableRecipeCard from "./DraggableRecipeCard";
-import SearchBarClient from "@/components/SearchbarClient";
-import CategoryToggle from "@/components/CategoryToggle";
-import PaginationDisplay from "@/components/PaginationDisplay";
+import SearchBarClient from "@/components/shared/SearchbarClient";
+import CategoryToggle from "@/components/shared/CategoryToggle";
+import PaginationDisplay from "@/components/recipe/PaginationDisplay";
 import { CATEGORY_DISPLAY, CategoryValue, Combo, Recipe, SORT_OPTIONS, SortOption } from "@/lib/types";
 
 interface RecipeDatabaseProps {

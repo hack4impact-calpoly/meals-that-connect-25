@@ -1,4 +1,4 @@
-import PillToggle from "@/components/PillToggle";
+import PillToggle from "@/components/shared/PillToggle";
 import { CategoryDisplayType, CategoryValue } from "@/lib/types";
 
 export default function CategoryToggle({

@@ -1,5 +1,5 @@
-import WeeklyMenu from "@/components/WeeklyMenu";
-import SummaryCard from "@/components/SummaryCard";
+import WeeklyMenu from "@/components/menuPlanning/WeeklyMenu";
+import SummaryCard from "@/components/shared/SummaryCard";
 import { auth } from "@clerk/nextjs/server";
 import dbConnect from "@/database/db";
 import User from "@/database/UserSchema";

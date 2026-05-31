@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { usePathname, redirect } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useClerk, useUser, SignInButton } from "@clerk/nextjs";
 import { Menu, X } from "lucide-react";
 import { UserRole } from "@/lib/types";

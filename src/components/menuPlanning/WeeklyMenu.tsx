@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { CATEGORY_TO_BUCKET, Nutrition, RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
+import { Nutrition, RecipeBucket, RecipeCategory, TAG_STYLES } from "@/lib/types";
 
 interface WeeklyMenuProps {
   dateToday: Date;
@@ -14,10 +14,10 @@ interface MealItem {
   nutritional_info: Nutrition;
   serving: string;
 
-  // TODO: when this is wired to the backend, this should come from Recipe.category.
+  // future TODO: when this is wired to the backend, this should come from Recipe.category.
   category: RecipeCategory;
 
-  // TODO: when this is wired to the backend, this should come from the Calendar bucket
+  // future TODO: when this is wired to the backend, this should come from the Calendar bucket
   // the recipe was stored under: entrees, vegetables, fruits, or grains.
   calendarBucket: RecipeBucket;
 }

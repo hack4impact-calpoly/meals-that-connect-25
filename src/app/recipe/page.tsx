@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import RecipePageClient from "@/components/RecipePageClient";
+import RecipePageClient from "@/components/recipe/RecipePageClient";
 
 export default function RecipePage() {
   return (

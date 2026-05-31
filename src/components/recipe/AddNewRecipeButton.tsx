@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Menu, MenuButton, MenuItems, MenuItem } from "@headlessui/react";
-import { Plus, Utensils, Soup, Apple, Carrot } from "lucide-react";
+import { Plus } from "lucide-react";
 import CreateRecipePopUp from "./CreateRecipePopUp";
 import { CATEGORY_DISPLAY, CategoryDisplayType } from "@/lib/types";
 

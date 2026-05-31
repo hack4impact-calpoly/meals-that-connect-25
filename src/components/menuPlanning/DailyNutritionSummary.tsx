@@ -1,6 +1,6 @@
 "use client";
 
-import NutritionalInfo from "@/components/NutrionalInfo";
+import NutritionalInfo from "@/components/recipe/NutrionalInfo";
 import { NUTRIENT_LABELS, Nutrition } from "@/lib/types";
 import { emptyNutrition, sumNutrition } from "@/lib/nutrition";
 

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DroppableCalendarArea from "./DroppableCalendarArea";
 import MonthMealCard from "./MonthMealCard";
-import WarningQuotaMonthly from "@/components/WarningQuotaMonthly";
+import WarningQuotaMonthly from "@/components/menuPlanning/WarningQuotaMonthly";
 import { RECIPE_BUCKETS } from "@/lib/types";
 import type { NutritionSummary } from "@/lib/nutrition";
 import type { CalendarDay, RecipeNutritionOnly } from "@/lib/types";

@@ -1,4 +1,4 @@
-import connectDB, { postRecipe } from "@/database/db";
+import connectDB from "@/database/db";
 import Recipe from "@/database/RecipeSchema";
 import { getCleanName, isDuplicateNameError, nameFieldError } from "@/lib/server/comboHelpers";
 import { getNormalizedParams } from "@/lib/server/searchParams";

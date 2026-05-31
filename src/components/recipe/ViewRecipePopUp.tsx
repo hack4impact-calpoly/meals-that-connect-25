@@ -13,7 +13,6 @@ import {
   GRAIN_ICON,
   NUTRIENT_LABELS,
   RECIPE_BUCKETS,
-  RECIPE_CATEGORIES,
   TAG_STYLES,
   VEGETABLE_ICON,
 } from "@/lib/types";
@@ -28,18 +27,7 @@ import type {
   RecipeCategory,
   SubrecipeIngredient,
 } from "@/lib/types";
-import {
-  ArrowLeft,
-  Maximize2,
-  Pencil,
-  Tag,
-  CircleAlert,
-  SquarePen,
-  Minus,
-  Plus,
-  ArrowUpRight,
-  Key,
-} from "lucide-react";
+import { ArrowLeft, Maximize2, Pencil, Tag, CircleAlert, SquarePen, Minus, Plus, ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import NutritionalInfo from "./NutrionalInfo";
 

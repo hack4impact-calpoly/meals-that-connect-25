@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
-import { AlignLeft, ChefHat, ChevronDown, Minus, Plus, Save, Trash2, X, type LucideIcon } from "lucide-react";
-import ImageUploader from "@/components/ImageUploader";
+import { AlignLeft, ChefHat, Minus, Plus, Save, Trash2, X } from "lucide-react";
+import ImageUploader from "@/components/recipe/ImageUploader";
 import {
   FILTER_SECTIONS,
   ENTREE_ICON,
@@ -38,8 +38,6 @@ import { NutritionalInfo } from "./createMeal/NutritionalInfo";
 import { FieldRow } from "./createMeal/FieldRow";
 import { DropdownField } from "./createMeal/DropdownField";
 import SearchableRecipeSelect from "./createMeal/SearchableRecipeSelect";
-
-// TODO: this whole thing should be split into Create Combo / Create Recipe subcomponents
 
 export type EditableCombo = Combo<Recipe>;
 export type EditableItem = Recipe | EditableCombo;
