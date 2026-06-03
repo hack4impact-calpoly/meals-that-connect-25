@@ -63,8 +63,21 @@ type SummaryCounts = {
   total: number;
 };
 
+// excluding weekends
 function getDaysInMonth(year: number, monthIndex: number) {
-  return new Date(year, monthIndex + 1, 0).getDate();
+  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+  let weekdays = 0;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dayOfWeek = new Date(year, monthIndex, day).getDay();
+
+    // 0 = Sunday, 6 = Saturday
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      weekdays++;
+    }
+  }
+
+  return weekdays;
 }
 
 async function getCalendarDays(year: number, monthIndex: number, signal: AbortSignal) {
