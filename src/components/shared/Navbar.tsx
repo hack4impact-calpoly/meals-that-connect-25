@@ -93,9 +93,7 @@ export default function Navbar() {
 
   return (
     <nav className="flex items-center justify-between border-b bg-white border-medium-gray px-6 py-4">
-      <Link href="/">
-        <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} priority className="w-24 h-auto" />
-      </Link>
+      <Image src="/MTC_logo.png" alt="MTC logo" width={120} height={120} priority className="w-24 h-auto" />
 
       <div className="ml-auto mr-20 hidden md:flex items-center gap-10">
         {navLinks.map((link) => (
@@ -145,7 +143,8 @@ export default function Navbar() {
           )}
         </div>
       ) : (
-        <div className="relative hidden md:block" ref={dropdownRef}>
+        <div>
+          {/*<div className="relative hidden md:block" ref={dropdownRef}>
           <SignInButton mode="modal">
             <button
               type="button"
@@ -154,6 +153,7 @@ export default function Navbar() {
               Sign In
             </button>
           </SignInButton>
+        </div>*/}
         </div>
       )}
 
@@ -232,7 +232,8 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
+            <div>
+              {/*<div className="mt-auto flex flex-col gap-2" ref={mobileDropdownRef}>
               <SignInButton mode="modal">
                 <button
                   type="button"
@@ -242,6 +243,7 @@ export default function Navbar() {
                   Sign In
                 </button>
               </SignInButton>
+            </div>*/}
             </div>
           )}
         </div>
